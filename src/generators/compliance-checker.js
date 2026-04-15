@@ -1,9 +1,10 @@
 import { generate } from "../utils/claude-client.js";
 import { getChannel } from "../../config/channels.js";
 import { getMonetization } from "../../config/monetization.js";
-import { readInput, writeOutput, timestamp } from "../utils/file-helpers.js";
+import { readInput, writeOutput, timestamp, fileExists } from "../utils/file-helpers.js";
 import { validateChannelId, validateContentPath } from "../utils/validators.js";
 import { complianceSchema, validateOutput } from "../utils/schemas.js";
+import { extractSourceMetadata } from "../utils/source-extractor.js";
 
 /**
  * 台本のコンプライアンス・品質チェック
@@ -33,21 +34,50 @@ You check content for:
 3. Exaggerated or misleading claims
 4. Quality and originality
 5. Human editing opportunities — where a human voice would add the most value
-${isFinance ? `6. Primary source verification — every factual claim MUST have a [SOURCE: URL] marker
+${
+  isFinance
+    ? `6. Primary source verification — every factual claim MUST have a [SOURCE: URL] marker
 7. Information date verification — time-sensitive data MUST have [INFO DATE: YYYY-MM-DD]
 8. Content type labeling — statements must be tagged [INFO TYPE: fact|general|opinion]
 9. Disclaimer presence — 投資は自己責任 disclaimer MUST exist
-10. Forbidden expressions — 「必ず儲かる」「絶対損しない」「誰でも勝てる」are BANNED` : ""}
+10. Forbidden expressions — 「必ず儲かる」「絶対損しない」「誰でも勝てる」are BANNED`
+    : ""
+}
 
 Be strict. Flag anything borderline. The goal is to make AI-assisted content indistinguishable from expert human content.
 
 Respond in valid JSON only — no markdown fences.`;
 
-  const existingList = existingTitles.length > 0
-    ? `\n\nExisting video titles (check for overlap):\n${existingTitles.map((t, i) => `${i + 1}. ${t}`).join("\n")}`
-    : "";
+  const existingList =
+    existingTitles.length > 0
+      ? `\n\nExisting video titles (check for overlap):\n${existingTitles.map((t, i) => `${i + 1}. ${t}`).join("\n")}`
+      : "";
 
   const complianceRules = monetConfig.compliance.map((c) => `- ${c}`).join("\n");
+
+  // 金融系: 構造化ソースデータがあれば読み込み、なければ台本から抽出
+  let sourceContext = "";
+  if (isFinance) {
+    const sourcesPath = scriptPath.replace(/\.md$/, "_sources.json");
+    let sourceMeta;
+    if (fileExists(sourcesPath)) {
+      try {
+        sourceMeta = JSON.parse(readInput(sourcesPath));
+      } catch {
+        sourceMeta = null;
+      }
+    }
+    if (!sourceMeta) {
+      sourceMeta = extractSourceMetadata(scriptContent, channelId, "unknown", "unknown");
+    }
+    const s = sourceMeta.summary;
+    sourceContext = `\n\n## Pre-extracted Source Analysis:
+- Sourced claims: ${s.sourced}/${s.total_claims}
+- Unsourced claims: ${s.unsourced}
+- Disclaimer present: ${s.has_disclaimer ? "YES" : "NO"}
+- Info types: fact=${s.info_types.fact}, general=${s.info_types.general}, opinion=${s.info_types.opinion}
+${sourceMeta.sources.length > 0 ? `- Sources found:\n${sourceMeta.sources.map((src) => `  - ${src.url} → "${src.claim.slice(0, 60)}"`).join("\n")}` : "- No [SOURCE:] markers found in script"}`;
+  }
 
   const userPrompt = `Audit this YouTube script for compliance and quality.
 
@@ -57,7 +87,7 @@ ${complianceRules}
 
 ## Script Content:
 ${scriptContent.slice(0, 6000)}
-${existingList}
+${existingList}${sourceContext}
 
 ## Required JSON Output:
 {
@@ -87,7 +117,9 @@ ${existingList}
       "verdict": "pass|warn|fail",
       "issues": [
         {"rule": "which compliance rule", "text": "problematic text", "suggestion": "fix"}
-      ]${isFinance ? `,
+      ]${
+        isFinance
+          ? `,
       "has_disclaimer": true,
       "has_source_citations": false,
       "separates_info_from_advice": true,
@@ -97,21 +129,27 @@ ${existingList}
         "unsourced_claims": ["list of factual claims without [SOURCE:] markers"],
         "missing_info_dates": ["time-sensitive info without [INFO DATE:] markers"]
       },
-      "forbidden_expressions": ["any instances of banned phrases like 必ず儲かる, 絶対損しない, etc."]` : ""}
+      "forbidden_expressions": ["any instances of banned phrases like 必ず儲かる, 絶対損しない, etc."]`
+          : ""
+      }
     },
     "originality": {
       "score": 80,
       "verdict": "pass|warn|fail",
       "overlap_with_existing": ["title of similar existing video if any"],
       "unique_angle": "What makes this script different"
-    }${isEnglish ? `,
+    }${
+      isEnglish
+        ? `,
     "english_quality": {
       "score": 85,
       "verdict": "pass|warn|fail",
       "issues": [
         {"text": "unnatural phrase", "suggestion": "natural alternative"}
       ]
-    }` : ""}
+    }`
+        : ""
+    }
   },
   "human_edit_priority": [
     {"section": "Section name", "action": "What the human should add/change", "why": "Why this needs human touch"}
@@ -126,7 +164,10 @@ ${existingList}
 
   let checkData;
   try {
-    const cleaned = result.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const cleaned = result
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
     checkData = JSON.parse(cleaned);
   } catch {
     checkData = { raw: result, parseError: true };
@@ -155,7 +196,7 @@ export function formatComplianceReport(checkData) {
   if (checkData.parseError) return checkData.raw;
 
   let output = "";
-  const icon = (v) => v === "pass" ? "[OK]" : v === "warn" ? "[!!]" : "[NG]";
+  const icon = (v) => (v === "pass" ? "[OK]" : v === "warn" ? "[!!]" : "[NG]");
 
   output += `\n  Overall: ${icon(checkData.overall_verdict)} ${checkData.overall_score}/100\n`;
   output += `  ${checkData.summary}\n`;

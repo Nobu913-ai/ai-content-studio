@@ -18,8 +18,7 @@ export async function generateRepurpose(channelId, scriptPath) {
 
   const lang = channel.language === "ja" ? "日本語" : "English";
 
-  const formatPrice = (price, currency) =>
-    currency === "USD" ? `$${price}` : `¥${price.toLocaleString()}`;
+  const formatPrice = (price, currency) => (currency === "USD" ? `$${price}` : `¥${price.toLocaleString()}`);
 
   const affiliateList = monetConfig.affiliates
     .map((a) => `- ${a.name} (${a.asp}, ${a.cpa ? "CPA: " + formatPrice(a.cpa, a.currency) : a.commission})`)
@@ -89,7 +88,10 @@ ${monetConfig.descriptionTemplate}
 
   let repurposeData;
   try {
-    const cleaned = result.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const cleaned = result
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
     repurposeData = JSON.parse(cleaned);
   } catch {
     repurposeData = { raw: result, parseError: true };

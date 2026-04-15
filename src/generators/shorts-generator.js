@@ -65,7 +65,10 @@ ${scriptContent.slice(0, 5000)}
 
   let shortsData;
   try {
-    const cleaned = result.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const cleaned = result
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
     shortsData = JSON.parse(cleaned);
   } catch {
     shortsData = { raw: result, parseError: true };
@@ -159,7 +162,10 @@ Each Short should test a DIFFERENT angle on this topic to find the best-performi
 
   let shortsData;
   try {
-    const cleaned = result.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const cleaned = result
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
     shortsData = JSON.parse(cleaned);
   } catch {
     shortsData = { raw: result, parseError: true };

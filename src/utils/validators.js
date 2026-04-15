@@ -14,9 +14,7 @@ export function validateChannelId(channelId) {
   const id = channelId.trim();
   const validIds = getChannelIds();
   if (!validIds.includes(id)) {
-    throw new Error(
-      `不明なチャンネル: "${id}"\n  有効なチャンネル: ${validIds.join(", ")}`
-    );
+    throw new Error(`不明なチャンネル: "${id}"\n  有効なチャンネル: ${validIds.join(", ")}`);
   }
   return id;
 }
@@ -52,9 +50,7 @@ export function validateContentPath(inputPath) {
   const resolved = normalize(resolve(inputPath));
 
   if (!resolved.startsWith(contentRoot)) {
-    throw new Error(
-      `パスは content/ ディレクトリ内を指定してください。\n  指定されたパス: ${inputPath}`
-    );
+    throw new Error(`パスは content/ ディレクトリ内を指定してください。\n  指定されたパス: ${inputPath}`);
   }
 
   return inputPath.trim();

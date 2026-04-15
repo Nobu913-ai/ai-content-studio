@@ -8,8 +8,9 @@
     "channels": "node src/cli.js channels",
     "status": "node src/cli.js status",
     "test": "node --test src/tests/**/*.test.js",
-    "lint": "echo 'TODO: eslint setup' && exit 0",
-    "check": "node src/cli.js check"
+    "lint": "eslint src/ config/",
+    "format": "prettier --write src/ config/",
+    "format:check": "prettier --check src/ config/"
   },
   "keywords": [
     "youtube",
@@ -36,5 +37,10 @@
     "commander": "^14.0.3",
     "dotenv": "^17.4.2",
     "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "eslint": "^10.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.3"
   }
 }

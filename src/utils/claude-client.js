@@ -11,9 +11,9 @@ export function getClient() {
     if (!process.env.ANTHROPIC_API_KEY) {
       throw new Error(
         "ANTHROPIC_API_KEY が設定されていません。\n" +
-        "  1. cp .env.example .env\n" +
-        "  2. .env ファイルに API キーを記入してください\n" +
-        "  取得先: https://console.anthropic.com/"
+          "  1. cp .env.example .env\n" +
+          "  2. .env ファイルに API キーを記入してください\n" +
+          "  取得先: https://console.anthropic.com/",
       );
     }
     client = new Anthropic();
@@ -37,8 +37,8 @@ function backoff(attempt) {
  * リトライ可能なエラーかどうかを判定
  */
 function isRetryable(error) {
-  if (error.status === 429) return true;           // Rate limit
-  if (error.status === 529) return true;           // Overloaded
+  if (error.status === 429) return true; // Rate limit
+  if (error.status === 529) return true; // Overloaded
   if (error.status >= 500 && error.status < 600) return true; // Server error
   if (error.code === "ECONNRESET" || error.code === "ETIMEDOUT") return true;
   return false;

@@ -12,9 +12,7 @@ export async function generateCalendar(channelId, options = {}) {
   const weeks = validateWeeks(options.weeks || 4);
   const startDate = options.startDate || new Date().toISOString().slice(0, 10);
 
-  const allTopics = channel.categories.flatMap((cat) =>
-    cat.topics.map((t) => `[${cat.name}] ${t.title}`)
-  );
+  const allTopics = channel.categories.flatMap((cat) => cat.topics.map((t) => `[${cat.name}] ${t.title}`));
 
   const lang = channel.language === "ja" ? "日本語" : "English";
 
@@ -76,7 +74,10 @@ You may also suggest NEW topics not in the bank if they fit the channel.
 
   let calendarData;
   try {
-    const cleaned = result.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const cleaned = result
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
     calendarData = JSON.parse(cleaned);
   } catch {
     calendarData = { raw: result, parseError: true };

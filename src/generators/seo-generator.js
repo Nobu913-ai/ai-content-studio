@@ -72,7 +72,10 @@ ${scriptContent.slice(0, 4000)}
 
   let seoData;
   try {
-    const cleaned = result.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const cleaned = result
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
     seoData = JSON.parse(cleaned);
   } catch {
     seoData = { raw: result, parseError: true };

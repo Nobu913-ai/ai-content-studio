@@ -17,10 +17,7 @@ import { resolve } from "./utils/file-helpers.js";
 
 const program = new Command();
 
-program
-  .name("acs")
-  .description("AI Content Studio — 3チャンネル統合コンテンツ制作CLI")
-  .version("2.0.0");
+program.name("acs").description("AI Content Studio — 3チャンネル統合コンテンツ制作CLI").version("2.2.0");
 
 // ─── チャンネル一覧 ──────────────────────────────
 program
@@ -197,7 +194,7 @@ program
 
       if (result.compliance && !result.compliance.check.parseError) {
         const c = result.compliance.check;
-        const icon = (v) => v === "pass" ? "[OK]" : v === "warn" ? "[!!]" : "[NG]";
+        const icon = (v) => (v === "pass" ? "[OK]" : v === "warn" ? "[!!]" : "[NG]");
         console.log(`\n  Compliance: ${icon(c.overall_verdict)} ${c.overall_score}/100`);
         if (c.summary) console.log(`  ${c.summary}`);
       }
@@ -349,7 +346,9 @@ program
       const icon = result.kpi.verdict === "win" ? "[W]" : result.kpi.verdict === "lose" ? "[L]" : "[-]";
       console.log(`\n  KPI saved: ${result.path}`);
       console.log(`  Verdict: ${icon} ${result.kpi.verdict}`);
-      console.log(`  Views: ${result.kpi.metrics.views} | CTR: ${result.kpi.metrics.ctr}% | Retention: ${result.kpi.metrics.retentionRate}%`);
+      console.log(
+        `  Views: ${result.kpi.metrics.views} | CTR: ${result.kpi.metrics.ctr}% | Retention: ${result.kpi.metrics.retentionRate}%`,
+      );
       console.log(`\n  このデータは次回の shorts-first 生成時に自動で参照されます。\n`);
     } catch (err) {
       console.error(`  Error: ${err.message}`);
@@ -406,7 +405,9 @@ program
         for (const [month, data] of Object.entries(targets)) {
           const b = data.breakdown;
           console.log(`  ${month}: ¥${data.total.toLocaleString()}`);
-          console.log(`    Affiliate: ¥${b.affiliate.toLocaleString()} | Digital: ¥${b.digital.toLocaleString()} | Ads: ¥${b.ads.toLocaleString()} | Sponsor: ¥${b.sponsor.toLocaleString()}`);
+          console.log(
+            `    Affiliate: ¥${b.affiliate.toLocaleString()} | Digital: ¥${b.digital.toLocaleString()} | Ads: ¥${b.ads.toLocaleString()} | Sponsor: ¥${b.sponsor.toLocaleString()}`,
+          );
         }
         console.log(`\n  チャンネル別詳細: node src/cli.js monetize <channel>\n`);
       }

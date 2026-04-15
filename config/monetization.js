@@ -97,10 +97,7 @@ export const monetization = {
 
 Some links are affiliate links — they help support this channel at no cost to you.
 `,
-    compliance: [
-      "FTC disclosure for affiliate links",
-      "No cultural stereotyping or oversimplification",
-    ],
+    compliance: ["FTC disclosure for affiliate links", "No cultural stereotyping or oversimplification"],
   },
 };
 

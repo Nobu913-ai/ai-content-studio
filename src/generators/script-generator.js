@@ -2,6 +2,8 @@ import { generate } from "../utils/claude-client.js";
 import { getChannel } from "../../config/channels.js";
 import { writeOutput, timestamp } from "../utils/file-helpers.js";
 import { validateChannelId, validateTopic } from "../utils/validators.js";
+import { extractSourceMetadata, formatSourceSummary } from "../utils/source-extractor.js";
+import { sourceMetadataSchema, validateOutput } from "../utils/schemas.js";
 
 /**
  * チャンネル設定に基づいた台本生成システムプロンプトを構築
@@ -95,11 +97,28 @@ Make the hook irresistible — the viewer should feel they MUST keep watching.`;
   });
 
   const ts = timestamp();
-  const slug = topic.toLowerCase().replace(/[^a-z0-9\u3040-\u9fff]+/g, "-").slice(0, 50);
+  const slug = topic
+    .toLowerCase()
+    .replace(/[^a-z0-9\u3040-\u9fff]+/g, "-")
+    .slice(0, 50);
   const outputPath = `content/${channelId}/scripts/${ts}_${slug}.md`;
   const fullPath = writeOutput(outputPath, formatScript(channel, topic, script, ts));
 
-  return { path: fullPath, outputPath, script };
+  // 金融系: ソースメタデータを抽出・構造化・保存
+  let sourceMetadata = null;
+  if (isFinance) {
+    sourceMetadata = extractSourceMetadata(script, channelId, topic, ts);
+    const validation = validateOutput(sourceMetadataSchema, sourceMetadata, "SourceMetadata");
+    if (validation.warnings.length > 0) {
+      sourceMetadata._schemaWarnings = validation.warnings;
+      console.warn(validation.warnings.join("\n"));
+    }
+    const metaPath = `content/${channelId}/metadata/${ts}_${slug}_sources.json`;
+    writeOutput(metaPath, JSON.stringify(sourceMetadata, null, 2));
+    console.log(formatSourceSummary(sourceMetadata));
+  }
+
+  return { path: fullPath, outputPath, script, sourceMetadata };
 }
 
 /**
@@ -109,10 +128,7 @@ function findTopicInChannel(channel, query) {
   const q = query.toLowerCase();
   for (const category of channel.categories) {
     for (const topic of category.topics) {
-      if (
-        topic.title.toLowerCase().includes(q) ||
-        q.includes(topic.title.toLowerCase().slice(0, 20))
-      ) {
+      if (topic.title.toLowerCase().includes(q) || q.includes(topic.title.toLowerCase().slice(0, 20))) {
         return topic;
       }
     }
