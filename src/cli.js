@@ -10,6 +10,7 @@ import { generateFull, generateFullPipeline } from "./generators/batch-generator
 import { generateShorts, generateShortsFromTopic } from "./generators/shorts-generator.js";
 import { generateRepurpose } from "./generators/repurpose-generator.js";
 import { checkCompliance, formatComplianceReport } from "./generators/compliance-checker.js";
+import { saveKPI, loadAllKPI, formatKPISummary } from "./generators/kpi-tracker.js";
 import { getChannel, getChannelIds } from "../config/channels.js";
 import { getMonetization, revenueTargets } from "../config/monetization.js";
 import { resolve } from "./utils/file-helpers.js";
@@ -30,8 +31,8 @@ program
     console.log("\n  Registered Channels:\n");
     for (const id of ids) {
       const ch = getChannel(id);
-      const lang = ch.language === "ja" ? "🇯🇵" : "🌍";
-      console.log(`  ${lang}  ${id}`);
+      const lang = ch.language === "ja" ? "[JA]" : "[EN]";
+      console.log(`  ${lang} ${id}`);
       console.log(`      ${ch.name} — ${ch.description}`);
       console.log(`      CPM: ${ch.estimatedCPM} | Frequency: ${ch.uploadFrequency}`);
       console.log();
@@ -65,10 +66,15 @@ program
   .command("script <channel> <topic>")
   .description("指定チャンネル・トピックの台本を生成")
   .option("-a, --angle <angle>", "特定の切り口を指定")
+  .option("-s, --sources <urls...>", "一次情報URL（金融系は強く推奨）")
   .action(async (channelId, topic, opts) => {
     console.log(`\n  Generating script for [${channelId}]: "${topic}" ...\n`);
+    if (channelId === "genz-money" && !opts.sources) {
+      console.log(`  [WARN] 金融系コンテンツ: --sources で公式情報URLを指定することを強く推奨します`);
+      console.log(`  例: --sources https://www.fsa.go.jp/... https://www.nta.go.jp/...\n`);
+    }
     try {
-      const result = await generateScript(channelId, topic, { angle: opts.angle });
+      const result = await generateScript(channelId, topic, { angle: opts.angle, sources: opts.sources });
       console.log(`  Script saved: ${result.path}`);
       console.log(`  ───────────────────────────────────`);
       console.log(result.script.slice(0, 500) + "\n  ...\n");
@@ -297,6 +303,69 @@ program
       const result = await checkCompliance(channelId, scriptPath, opts.titles || []);
       console.log(`  Report saved: ${result.path}`);
       console.log(formatComplianceReport(result.check));
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── KPI フィードバック入力 ──────────────────────────────
+program
+  .command("kpi <channel> <video-id>")
+  .description("投稿後のKPIデータを入力（再生数、CTR、維持率など）→ 次回生成に反映")
+  .option("--title <title>", "動画タイトル")
+  .option("--type <type>", "動画タイプ (shorts|longform)", "longform")
+  .option("--views <n>", "再生数")
+  .option("--ctr <n>", "クリック率 (%)")
+  .option("--watch <n>", "平均視聴時間 (秒)")
+  .option("--retention <n>", "視聴維持率 (%)")
+  .option("--likes <n>", "いいね数")
+  .option("--comments <n>", "コメント数")
+  .option("--shares <n>", "共有数")
+  .option("--subs <n>", "獲得登録者数")
+  .option("--hook <hook>", "フック文（最初の一言）")
+  .option("--angle <angle>", "切り口")
+  .option("--topic <topic>", "トピック名")
+  .option("--date <date>", "投稿日 (YYYY-MM-DD)")
+  .action((channelId, videoId, opts) => {
+    try {
+      const result = saveKPI(channelId, videoId, {
+        title: opts.title,
+        type: opts.type,
+        views: opts.views,
+        ctr: opts.ctr,
+        avgWatchTime: opts.watch,
+        retentionRate: opts.retention,
+        likes: opts.likes,
+        comments: opts.comments,
+        shares: opts.shares,
+        subscribersGained: opts.subs,
+        hook: opts.hook,
+        angle: opts.angle,
+        topic: opts.topic,
+        publishedAt: opts.date,
+      });
+
+      const icon = result.kpi.verdict === "win" ? "[W]" : result.kpi.verdict === "lose" ? "[L]" : "[-]";
+      console.log(`\n  KPI saved: ${result.path}`);
+      console.log(`  Verdict: ${icon} ${result.kpi.verdict}`);
+      console.log(`  Views: ${result.kpi.metrics.views} | CTR: ${result.kpi.metrics.ctr}% | Retention: ${result.kpi.metrics.retentionRate}%`);
+      console.log(`\n  このデータは次回の shorts-first 生成時に自動で参照されます。\n`);
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── KPI サマリー表示 ──────────────────────────────
+program
+  .command("kpi-summary <channel>")
+  .description("チャンネルのKPIサマリーを表示（勝ち/負けパターン分析）")
+  .action((channelId) => {
+    try {
+      const allKPI = loadAllKPI(channelId);
+      console.log(`\n  === KPI Summary: ${channelId} ===\n`);
+      console.log(formatKPISummary(allKPI));
     } catch (err) {
       console.error(`  Error: ${err.message}`);
       process.exit(1);

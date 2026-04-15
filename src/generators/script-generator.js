@@ -35,13 +35,29 @@ function buildSystemPrompt(channel) {
 }
 
 /**
+ * 金融系コンテンツ向けの追加ルールプロンプト
+ */
+function buildFinanceRules() {
+  return `
+## Finance Content Mandatory Rules
+- ALWAYS include a sources section at the end with [SOURCE: URL, accessed YYYY-MM-DD] for every factual claim
+- ALWAYS include a disclaimer: 「※ 本動画は情報提供を目的としており、特定の金融商品の勧誘ではありません。投資は自己責任でお願いします」
+- Clearly separate: 「制度の説明」(factual) / 「一般的な考え方」(general) / 「個人の感想」(opinion) using [INFO TYPE: fact|general|opinion] markers
+- NEVER use absolute claims: 「必ず儲かる」「絶対損しない」「誰でも勝てる」are FORBIDDEN
+- NEVER recommend specific stocks, funds, or financial products by name as investment advice
+- ALWAYS cite the official source (金融庁, 国税庁, 証券会社公式サイト etc.) for regulatory information
+- Include [INFO DATE: YYYY-MM-DD] marker for time-sensitive information (tax rates, policy details, limits)`;
+}
+
+/**
  * 台本を生成
  */
 export async function generateScript(channelId, topic, options = {}) {
   channelId = validateChannelId(channelId);
   topic = validateTopic(topic);
   const channel = getChannel(channelId);
-  const systemPrompt = buildSystemPrompt(channel);
+  const isFinance = channelId === "genz-money";
+  const systemPrompt = buildSystemPrompt(channel) + (isFinance ? buildFinanceRules() : "");
 
   const topicInfo = findTopicInChannel(channel, topic);
 
@@ -65,6 +81,12 @@ Make the hook irresistible — the viewer should feel they MUST keep watching.`;
 
   if (options.angle) {
     userPrompt += `\n\nSpecific angle/approach: ${options.angle}`;
+  }
+
+  if (isFinance && options.sources) {
+    userPrompt += `\n\n## Primary Sources (MUST reference these):\n${options.sources.map((s) => `- ${s}`).join("\n")}`;
+  } else if (isFinance) {
+    userPrompt += `\n\n## Note: No primary sources provided. Use official government/regulatory sources and clearly mark all factual claims with [SOURCE: URL] placeholders that the human editor must fill in.`;
   }
 
   const script = await generate(systemPrompt, userPrompt, {

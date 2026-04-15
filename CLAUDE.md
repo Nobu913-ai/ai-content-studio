@@ -31,25 +31,29 @@ Claude API を使い、Shorts先行テスト → 長尺化 → SEO最適化 → 
 - **AI**: Claude API (`@anthropic-ai/sdk`) — モデルは `claude-sonnet-4-20250514`
 - **CLI**: Commander.js
 - **環境変数**: `ANTHROPIC_API_KEY` が必要（`.env` に設定、dotenv で読み込み）
-- **エラー処理**: 指数バックオフリトライ（429/5xx対応）、入力バリデーション、パストラバーサル防止
+- **品質保証**: zod によるJSON出力スキーマ検証、入力バリデーション、パストラバーサル防止
+- **エラー処理**: 指数バックオフリトライ（429/5xx対応）
 
 ## ディレクトリ構成
 
 ```
 config/channels.js      — チャンネル設定・トピック定義
 config/monetization.js   — 収益化戦略（アフィリエイト・デジタル商品・コンプラ規則）
-src/cli.js              — メインCLI エントリポイント（14コマンド）
+src/cli.js              — メインCLI エントリポイント（15コマンド）
 src/generators/         — 各種生成エンジン
-  script-generator.js   — 長尺台本生成
-  seo-generator.js      — SEOメタデータ（タイトル10案・サムネ文言5案）
+  script-generator.js   — 長尺台本生成（金融系は一次情報ルール強制）
+  seo-generator.js      — SEOメタデータ（タイトル10案・サムネ文言5案）+ スキーマ検証
   calendar-generator.js — コンテンツカレンダー
-  shorts-generator.js   — Shorts生成（長尺切り出し + トピック直接生成）
-  repurpose-generator.js — マルチプラットフォーム展開
-  compliance-checker.js — コンプライアンス・品質チェック
+  shorts-generator.js   — Shorts生成（長尺切り出し + トピック直接生成）+ KPI学習反映
+  repurpose-generator.js — マルチプラットフォーム展開 + スキーマ検証
+  compliance-checker.js — コンプライアンス・品質チェック（金融系ソース検証強化）
   batch-generator.js    — パイプライン統合
+  kpi-tracker.js        — KPIデータ入力・蓄積・勝ちパターン抽出
 src/utils/              — Claude API クライアント、ファイルヘルパー、バリデーター
-content/<channel>/      — 生成コンテンツ（scripts/, metadata/, calendar/）
+  schemas.js            — zod によるJSON出力スキーマ検証
+content/<channel>/      — 生成コンテンツ（scripts/, metadata/, calendar/, kpi/）
 docs/90day-plan.md      — 90日実行計画
+docs/improvement-roadmap.md — 改善ロードマップ
 ```
 
 ## CLI コマンド
@@ -64,7 +68,7 @@ acs monetize [channel]              # 収益化ダッシュボード
 
 ### コンテンツ生成
 ```bash
-acs script <channel> <topic>        # 台本生成
+acs script <channel> <topic>        # 台本生成（金融系: --sources で公式URL指定推奨）
 acs seo <channel> <script-path>     # SEOメタデータ（タイトル10案+サムネ5案）
 acs calendar <channel>              # カレンダー生成
 acs shorts <channel> <script-path>  # 長尺台本からShorts切り出し
@@ -74,9 +78,15 @@ acs check <channel> <script-path>   # コンプライアンス・品質チェッ
 
 ### 統合パイプライン
 ```bash
-acs shorts-first <channel> <topic>  # Shorts先行テスト（3本・異なる切り口）
+acs shorts-first <channel> <topic>  # Shorts先行テスト（3本・異なる切り口・KPI学習反映）
 acs full <channel> <topic>          # 台本+SEO一括
 acs pipeline <channel> <topic>      # 全工程一括（台本+SEO+Shorts+SNS+コンプラ）
+```
+
+### KPIフィードバック（学習ループ）
+```bash
+acs kpi <channel> <video-id> --views 2500 --ctr 8.5 --retention 62  # KPI入力
+acs kpi-summary <channel>           # 勝ち/負けパターン分析
 ```
 
 ### 推奨ワークフロー（Shorts先行戦略）

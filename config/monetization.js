@@ -41,7 +41,7 @@ export const monetization = {
   },
 
   "chill-culture": {
-    priority: 2,
+    priority: 3,
     revenueTarget: 20000,
     affiliates: [
       { name: "Amazon アソシエイト", asp: "Amazon", commission: "2-8%", url: "", category: "シーシャ・カフェ用品" },
@@ -73,7 +73,7 @@ export const monetization = {
   },
 
   "japanese-mindset": {
-    priority: 3,
+    priority: 2,
     revenueTarget: 15000,
     affiliates: [
       { name: "Amazon Associates (US)", asp: "Amazon", commission: "1-4%", url: "", category: "Books" },

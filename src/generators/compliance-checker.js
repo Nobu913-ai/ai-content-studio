@@ -3,6 +3,7 @@ import { getChannel } from "../../config/channels.js";
 import { getMonetization } from "../../config/monetization.js";
 import { readInput, writeOutput, timestamp } from "../utils/file-helpers.js";
 import { validateChannelId, validateContentPath } from "../utils/validators.js";
+import { complianceSchema, validateOutput } from "../utils/schemas.js";
 
 /**
  * 台本のコンプライアンス・品質チェック
@@ -32,6 +33,11 @@ You check content for:
 3. Exaggerated or misleading claims
 4. Quality and originality
 5. Human editing opportunities — where a human voice would add the most value
+${isFinance ? `6. Primary source verification — every factual claim MUST have a [SOURCE: URL] marker
+7. Information date verification — time-sensitive data MUST have [INFO DATE: YYYY-MM-DD]
+8. Content type labeling — statements must be tagged [INFO TYPE: fact|general|opinion]
+9. Disclaimer presence — 投資は自己責任 disclaimer MUST exist
+10. Forbidden expressions — 「必ず儲かる」「絶対損しない」「誰でも勝てる」are BANNED` : ""}
 
 Be strict. Flag anything borderline. The goal is to make AI-assisted content indistinguishable from expert human content.
 
@@ -84,7 +90,14 @@ ${existingList}
       ]${isFinance ? `,
       "has_disclaimer": true,
       "has_source_citations": false,
-      "separates_info_from_advice": true` : ""}
+      "separates_info_from_advice": true,
+      "source_check": {
+        "total_claims": 10,
+        "sourced_claims": 5,
+        "unsourced_claims": ["list of factual claims without [SOURCE:] markers"],
+        "missing_info_dates": ["time-sensitive info without [INFO DATE:] markers"]
+      },
+      "forbidden_expressions": ["any instances of banned phrases like 必ず儲かる, 絶対損しない, etc."]` : ""}
     },
     "originality": {
       "score": 80,
@@ -117,6 +130,14 @@ ${existingList}
     checkData = JSON.parse(cleaned);
   } catch {
     checkData = { raw: result, parseError: true };
+  }
+
+  if (!checkData.parseError) {
+    const validation = validateOutput(complianceSchema, checkData, "Compliance");
+    if (validation.warnings.length > 0) {
+      checkData._schemaWarnings = validation.warnings;
+      console.warn(validation.warnings.join("\n"));
+    }
   }
 
   const ts = timestamp();
@@ -156,6 +177,32 @@ export function formatComplianceReport(checkData) {
     output += `\n  --- Human Edit Points (AI smell) ---\n`;
     for (const point of aiCheck.human_edit_points) {
       output += `  * ${point}\n`;
+    }
+  }
+
+  // 金融系ソースチェック
+  const complianceCheck = checkData.checks?.compliance;
+  if (complianceCheck?.source_check) {
+    const sc = complianceCheck.source_check;
+    output += `\n  --- Source Verification (Finance) ---\n`;
+    output += `  Sourced: ${sc.sourced_claims}/${sc.total_claims} claims\n`;
+    if (sc.unsourced_claims?.length > 0) {
+      output += `  [!!] Unsourced claims:\n`;
+      for (const c of sc.unsourced_claims) {
+        output += `    - ${c}\n`;
+      }
+    }
+    if (sc.missing_info_dates?.length > 0) {
+      output += `  [!!] Missing date markers:\n`;
+      for (const d of sc.missing_info_dates) {
+        output += `    - ${d}\n`;
+      }
+    }
+  }
+  if (complianceCheck?.forbidden_expressions?.length > 0) {
+    output += `  [NG] Forbidden expressions found:\n`;
+    for (const expr of complianceCheck.forbidden_expressions) {
+      output += `    - ${expr}\n`;
     }
   }
 

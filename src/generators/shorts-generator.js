@@ -3,6 +3,8 @@ import { getChannel } from "../../config/channels.js";
 import { platforms } from "../../config/monetization.js";
 import { writeOutput, readInput, timestamp } from "../utils/file-helpers.js";
 import { validateChannelId, validateContentPath, validateTopic } from "../utils/validators.js";
+import { shortsSchema, shortsTestSchema, validateOutput } from "../utils/schemas.js";
+import { getWinningPatterns } from "./kpi-tracker.js";
 
 /**
  * 長尺台本から Shorts/TikTok/Reels 用のショートスクリプトを3本生成
@@ -69,6 +71,14 @@ ${scriptContent.slice(0, 5000)}
     shortsData = { raw: result, parseError: true };
   }
 
+  if (!shortsData.parseError) {
+    const validation = validateOutput(shortsSchema, shortsData, "Shorts");
+    if (validation.warnings.length > 0) {
+      shortsData._schemaWarnings = validation.warnings;
+      console.warn(validation.warnings.join("\n"));
+    }
+  }
+
   const ts = timestamp();
   const slug = scriptPath.split("/").pop().replace(/\.md$/, "");
   const outputPath = `content/${channelId}/scripts/${ts}_${slug}_shorts.json`;
@@ -103,6 +113,9 @@ You create Shorts/TikTok/Reels scripts for hypothesis testing — these are stan
 - End with engagement bait: question, poll, or "Part 2?" tease
 - Respond in valid JSON only — no markdown fences.`;
 
+  // KPIデータから勝ちパターンを取得
+  const patterns = getWinningPatterns(channelId);
+
   const userPrompt = `Create 3 standalone Shorts scripts (60-90 seconds each) for hypothesis testing.
 
 ## Channel: ${channel.name}
@@ -111,6 +124,7 @@ You create Shorts/TikTok/Reels scripts for hypothesis testing — these are stan
 ## Target audience: ${channel.target}
 
 ## TikTok Hashtags: ${tiktokTags.map((t) => "#" + t).join(" ")}
+${patterns ? `\n${patterns}` : ""}
 
 Each Short should test a DIFFERENT angle on this topic to find the best-performing hook.
 
@@ -149,6 +163,14 @@ Each Short should test a DIFFERENT angle on this topic to find the best-performi
     shortsData = JSON.parse(cleaned);
   } catch {
     shortsData = { raw: result, parseError: true };
+  }
+
+  if (!shortsData.parseError) {
+    const validation = validateOutput(shortsTestSchema, shortsData, "Shorts-First");
+    if (validation.warnings.length > 0) {
+      shortsData._schemaWarnings = validation.warnings;
+      console.warn(validation.warnings.join("\n"));
+    }
   }
 
   const ts = timestamp();

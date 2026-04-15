@@ -3,6 +3,7 @@ import { getChannel } from "../../config/channels.js";
 import { getMonetization } from "../../config/monetization.js";
 import { writeOutput, readInput, timestamp } from "../utils/file-helpers.js";
 import { validateChannelId, validateContentPath } from "../utils/validators.js";
+import { repurposeSchema, validateOutput } from "../utils/schemas.js";
 
 /**
  * 長尺台本から全プラットフォーム用コンテンツを一括生成
@@ -17,12 +18,15 @@ export async function generateRepurpose(channelId, scriptPath) {
 
   const lang = channel.language === "ja" ? "日本語" : "English";
 
+  const formatPrice = (price, currency) =>
+    currency === "USD" ? `$${price}` : `¥${price.toLocaleString()}`;
+
   const affiliateList = monetConfig.affiliates
-    .map((a) => `- ${a.name} (${a.asp}, ${a.cpa ? "CPA: ¥" + a.cpa : a.commission})`)
+    .map((a) => `- ${a.name} (${a.asp}, ${a.cpa ? "CPA: " + formatPrice(a.cpa, a.currency) : a.commission})`)
     .join("\n");
 
   const productList = monetConfig.digitalProducts
-    .map((p) => `- ${p.name} (¥${p.price}, ${p.platform})`)
+    .map((p) => `- ${p.name} (${formatPrice(p.price, p.currency)}, ${p.platform})`)
     .join("\n");
 
   const systemPrompt = `You are a multi-platform content strategist. Write in ${lang}.
@@ -89,6 +93,14 @@ ${monetConfig.descriptionTemplate}
     repurposeData = JSON.parse(cleaned);
   } catch {
     repurposeData = { raw: result, parseError: true };
+  }
+
+  if (!repurposeData.parseError) {
+    const validation = validateOutput(repurposeSchema, repurposeData, "Repurpose");
+    if (validation.warnings.length > 0) {
+      repurposeData._schemaWarnings = validation.warnings;
+      console.warn(validation.warnings.join("\n"));
+    }
   }
 
   const ts = timestamp();

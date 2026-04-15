@@ -2,6 +2,7 @@ import { generate } from "../utils/claude-client.js";
 import { getChannel } from "../../config/channels.js";
 import { writeOutput, readInput, timestamp } from "../utils/file-helpers.js";
 import { validateChannelId, validateContentPath } from "../utils/validators.js";
+import { seoSchema, validateOutput } from "../utils/schemas.js";
 
 /**
  * 台本ファイルからSEOメタデータ（タイトル・説明文・タグ）を生成
@@ -77,10 +78,21 @@ ${scriptContent.slice(0, 4000)}
     seoData = { raw: result, parseError: true };
   }
 
+  // スキーマ検証
+  let schemaWarnings = [];
+  if (!seoData.parseError) {
+    const validation = validateOutput(seoSchema, seoData, "SEO");
+    schemaWarnings = validation.warnings;
+    if (schemaWarnings.length > 0) {
+      seoData._schemaWarnings = schemaWarnings;
+      console.warn(schemaWarnings.join("\n"));
+    }
+  }
+
   const ts = timestamp();
   const slug = scriptPath.split("/").pop().replace(/\.md$/, "");
   const outputPath = `content/${channelId}/metadata/${ts}_${slug}_seo.json`;
   const fullPath = writeOutput(outputPath, JSON.stringify(seoData, null, 2));
 
-  return { path: fullPath, outputPath, seo: seoData };
+  return { path: fullPath, outputPath, seo: seoData, schemaWarnings };
 }
