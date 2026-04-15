@@ -8,7 +8,8 @@ v3.0.1 時点で以下が揃っている:
 - 22 CLI コマンド（全て import エラーなしで起動確認済み）
 - 102 テスト（全パス）
 - 4ツール連携パイプライン（計画+生成+マニフェスト）
-- Graceful degradation（APIキーなしでも計画フェーズは完走）
+- **ハイブリッドモード**: 全APIキー任意。ANTHROPIC_API_KEY未設定時はプロンプト書き出し→Claude Code手動実行
+- Graceful degradation（全APIキーなしでもCLIが破綻しない）
 - manifest / handoff package / KPI接続
 
 **これ以上設計を磨くより、1本通して「どこで壊れるか」を可視化する方が前進する。**
@@ -38,21 +39,21 @@ v3.0.1 時点で以下が揃っている:
 
 ### 実行順序（11ステップ）
 
-| # | ステップ | コマンド | 自動/手動 | 必要APIキー |
-|---|---------|---------|----------|------------|
-| 1 | トピック生成 | `topic-gen` | 自動 | ANTHROPIC |
-| 2 | 台本生成 | `script` | 自動 | ANTHROPIC |
-| 3 | ソースメタデータ抽出 | script内で自動 | 自動 | ANTHROPIC |
-| 4 | コンプラチェック | `check` | 自動 | ANTHROPIC |
-| 5 | ショットプラン生成 | `shot-plan` | 自動 | ANTHROPIC |
-| 6 | ナレーション整形 | `narration` | 自動 | ANTHROPIC |
-| 7 | ElevenLabs TTS | 手動 or API | 手動* | ELEVENLABS |
-| 8 | Runway 動画生成 | 手動 or API | 手動* | RUNWAY |
-| 9 | Descript 取り込み | 手動 or API | 手動* | DESCRIPT |
-| 10 | DaVinci ハンドオフ | `handoff --package` | 自動 | ANTHROPIC |
-| 11 | マニフェスト出力 | `produce` 内で自動 | 自動 | ANTHROPIC |
+| # | ステップ | コマンド | API設定時 | API未設定時（ハイブリッド） |
+|---|---------|---------|----------|--------------------------|
+| 1 | トピック生成 | `topic-gen` | 自動生成 | プロンプト書き出し → Claude Code で実行 |
+| 2 | 台本生成 | `script` | 自動生成 | プロンプト書き出し → Claude Code で実行 |
+| 3 | ソースメタデータ抽出 | script内で自動 | 自動 | 台本生成後に自動（台本テキスト依存） |
+| 4 | コンプラチェック | `check` | 自動生成 | プロンプト書き出し → Claude Code で実行 |
+| 5 | ショットプラン生成 | `shot-plan` | 自動生成 | プロンプト書き出し → Claude Code で実行 |
+| 6 | ナレーション整形 | `narration` | AI整形 | ローカルフォールバック（マーカー除去のみ） |
+| 7 | ElevenLabs TTS | API自動 or 手動 | ELEVENLABS 依存 | ElevenLabs GUI で手動生成 |
+| 8 | Runway 動画生成 | API自動 or 手動 | RUNWAY 依存 | Runway GUI で手動生成 |
+| 9 | Descript 取り込み | API自動 or 手動 | DESCRIPT 依存 | Descript GUI で手動操作 |
+| 10 | DaVinci ハンドオフ | `handoff --package` | 自動生成 | プロンプト書き出し → Claude Code で実行 |
+| 11 | マニフェスト出力 | `produce` 内で自動 | 自動 | ステップ状態を manual で記録 |
 
-*手動: 外部APIキー未設定の場合。設定済みなら自動。
+**ハイブリッドモードの詳細手順:** `docs/hybrid-workflow.md` を参照。
 
 ### 期待成果物
 
@@ -75,20 +76,20 @@ content/genz-money/
 
 ## C. 実装差分レビュー
 
-### そのまま動く箇所（Claude APIのみで完走）
+### そのまま動く箇所
 
-| 機能 | 状態 | 確認方法 |
-|------|------|---------|
-| topic-gen | OK | CLI --help 確認済み |
-| script (金融系) | OK | source metadata 抽出含む |
-| compliance check | OK | 構造化ソースデータ連携済み |
-| shot-plan | OK | Runway用JSON出力 |
-| narration | OK | ElevenLabs用テキスト + セグメント |
-| handoff | OK | ノート + パッケージ |
-| handoff --package | OK | 固定フォルダ構造 + アセットコピー |
-| produce-plan | OK | 4ステップ一括 |
-| produce | OK | 7ステップ（APIなし分は manual） |
-| manifest | OK | zod 検証付き |
+| 機能 | API設定時 | ハイブリッドモード | 確認方法 |
+|------|----------|------------------|---------|
+| topic-gen | 自動生成 | プロンプト書き出し | CLI --help 確認済み |
+| script (金融系) | 自動生成 | プロンプト書き出し | source metadata 抽出含む |
+| compliance check | 自動生成 | プロンプト書き出し | 構造化ソースデータ連携済み |
+| shot-plan | 自動生成 | プロンプト書き出し | Runway用JSON出力 |
+| narration | AI整形 | ローカルフォールバック | ElevenLabs用テキスト |
+| handoff | 自動生成 | プロンプト書き出し | ノート + パッケージ |
+| handoff --package | 自動生成 | プロンプト書き出し | 固定フォルダ構造 + アセットコピー |
+| produce-plan | 4ステップ一括 | プロンプト書き出し + スキップ | 台本未生成時は後続スキップ |
+| produce | 7ステップ | 計画=manual, 生成=manual | マニフェストに全ステップ記録 |
+| manifest | zod 検証付き | zod 検証付き | manual ステップも記録 |
 
 ### 追加修正が必要な箇所
 
@@ -96,7 +97,7 @@ content/genz-money/
 
 | 項目 | 問題 | 対応 |
 |------|------|------|
-| `.env` 未作成 | `ANTHROPIC_API_KEY` が未設定。全生成コマンドが失敗する | `.env.example` → `.env` にコピーし、キーを設定 |
+| `.env` 未作成 | 環境変数ファイルがない | `.env.example` → `.env` にコピー（APIキーはすべて任意 — ハイブリッドモードで動作可） |
 
 #### Medium（MVP改善）
 
@@ -135,44 +136,85 @@ MVPでは手動フォールバックで問題ない。
 
 ```bash
 cp .env.example .env
-# .env を編集して ANTHROPIC_API_KEY を設定
+# .env を編集（すべてのAPIキーは任意）
+
+# パターン A: API自動生成モード
+# ANTHROPIC_API_KEY=sk-ant-... を設定
+
+# パターン B: ハイブリッドモード（推奨: 初回スモークテスト）
+# ANTHROPIC_API_KEY はコメントアウトのまま
+# → プロンプトが content/_prompts/ に書き出される
+# → Claude Code で手動実行し、結果を正しいパスに保存
 ```
 
 ### Step 1: トピック生成（確認用）
 
+**API設定時:**
 ```bash
 acs topic-gen genz-money -n 3
 ```
-
 出力: 3件のトピック候補（trend/comparison/contrarian等の角度付き）
+
+**ハイブリッドモード:**
+```bash
+acs topic-gen genz-money -n 3
+# → content/_prompts/<ts>_topic-gen.md が生成される
+# Claude Code で実行し、結果を content/genz-money/metadata/<ts>_topic_ideas.json に保存
+```
 
 ### Step 2: 台本生成
 
+**API設定時:**
 ```bash
 acs script genz-money "新NISAの始め方" \
   --sources https://www.fsa.go.jp/policy/nisa2/
 ```
 
+**ハイブリッドモード:**
+```bash
+acs script genz-money "新NISAの始め方" \
+  --sources https://www.fsa.go.jp/policy/nisa2/
+# → content/_prompts/<ts>_script.md が生成される
+# Claude Code で実行し、結果を content/genz-money/scripts/<ts>_新nisaの始め方.md に保存
+```
+
 出力:
 - `content/genz-money/scripts/<ts>_新nisaの始め方.md`
-- `content/genz-money/metadata/<ts>_新nisaの始め方_sources.json`
+- `content/genz-money/metadata/<ts>_新nisaの始め方_sources.json`（API設定時のみ自動生成）
 
 ### Step 3: コンプライアンスチェック
 
+**API設定時:**
 ```bash
 acs check genz-money content/genz-money/scripts/<ts>_新nisaの始め方.md
+```
+
+**ハイブリッドモード:**
+```bash
+acs check genz-money content/genz-money/scripts/<ts>_新nisaの始め方.md
+# → content/_prompts/<ts>_compliance.md が生成される
+# Claude Code で実行し、結果を content/genz-money/metadata/<ts>_新nisaの始め方_compliance.json に保存
 ```
 
 出力: スコア (0-100), verdict (pass/warn/fail), 要修正箇所
 
 ### Step 4: ショットプラン生成
 
+**API設定時:**
 ```bash
 acs shot-plan genz-money content/genz-money/scripts/<ts>_新nisaの始め方.md \
   --format shorts
 ```
 
-出力: `content/genz-money/metadata/<ts>_*_shots.json`
+**ハイブリッドモード:**
+```bash
+acs shot-plan genz-money content/genz-money/scripts/<ts>_新nisaの始め方.md \
+  --format shorts
+# → content/_prompts/<ts>_shot-plan.md が生成される
+# Claude Code で実行し、結果を content/genz-money/metadata/<ts>_*_shotplan.json に保存
+```
+
+出力: `content/genz-money/metadata/<ts>_*_shotplan.json`
 各ショットに prompt, duration, aspect_ratio が含まれる
 
 ### Step 5: ナレーション整形
@@ -181,9 +223,11 @@ acs shot-plan genz-money content/genz-money/scripts/<ts>_新nisaの始め方.md 
 acs narration genz-money content/genz-money/scripts/<ts>_新nisaの始め方.md
 ```
 
+**注:** ナレーション整形はAPI未設定時でもローカルフォールバック（マーカー除去）で自動処理されます。
+
 出力:
-- `content/genz-money/metadata/<ts>_*_narration.json`（セグメント付き）
-- `content/genz-money/metadata/<ts>_*_narration.txt`（プレーンテキスト）
+- `content/genz-money/metadata/<ts>_*_narration.json`（API時: セグメント付き / 未設定時: full_text のみ）
+- `content/genz-money/scripts/<ts>_*_narration.txt`（プレーンテキスト — ElevenLabs 投入用）
 
 ### Step 6: 手動 — ElevenLabs でナレーション生成
 
@@ -237,14 +281,29 @@ acs kpi genz-money vid-nisa-001 \
 
 ### 一括実行版（Step 2-5, 8, 10 を一括）
 
+**API設定時:**
 ```bash
-# 計画フェーズのみ（Claude APIのみ）
+# 計画フェーズのみ（Claude APIで自動生成）
 acs produce-plan genz-money "新NISAの始め方" --format shorts \
   --sources https://www.fsa.go.jp/policy/nisa2/
 
 # 全工程（外部API未設定分は手動フォールバック）
 acs produce genz-money "新NISAの始め方" --format shorts \
   --sources https://www.fsa.go.jp/policy/nisa2/
+```
+
+**ハイブリッドモード:**
+```bash
+# produce-plan / produce を実行すると:
+# → 台本プロンプトが content/_prompts/ に書き出される
+# → 台本未生成のため後続ステップ（shot-plan, narration, handoff）はスキップ
+# → マニフェストに全ステップが manual で記録される
+
+# 推奨: ハイブリッドモードでは一括コマンドより個別ステップ実行
+# 1. acs script → Claude Code で台本生成 → 保存
+# 2. acs shot-plan <台本パス> → Claude Code で実行 → 保存
+# 3. acs narration <台本パス> → ローカルフォールバックで自動
+# 4. acs handoff <台本パス> → Claude Code で実行 → 保存
 ```
 
 ---
@@ -324,10 +383,20 @@ acs produce genz-money "新NISAの始め方" --format shorts \
 - [ ] 詰まったポイントが記録されている
 - [ ] 次に直すべき箇所が優先順位付きで出ている
 
+### ハイブリッドモード追加チェック
+
+- [ ] `content/_prompts/` にプロンプトファイルが正しく書き出される
+- [ ] プロンプトファイルに System Prompt と User Prompt が含まれている
+- [ ] Claude Code でプロンプト実行 → 期待するフォーマットの出力が得られる
+- [ ] 出力を正しいパスに保存 → 後続コマンドが正常に認識する
+- [ ] `acs narration` がローカルフォールバックで動作する（API未設定時）
+- [ ] `acs produce-plan` で台本未生成時、後続ステップが安全にスキップされる
+- [ ] マニフェストに manual ステップが正しく記録される
+
 ### MVP成功基準
 
-**上記13項目のうち、10項目以上がチェックできれば MVP 成功。**
-残り3項目は「どこで壊れたか」の記録として十分な価値がある。
+**上記13項目（+ ハイブリッド7項目）のうち、合計15項目以上がチェックできれば MVP 成功。**
+残り項目は「どこで壊れたか」の記録として十分な価値がある。
 
 ### 次フェーズ提案
 

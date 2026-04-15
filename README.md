@@ -155,6 +155,8 @@ $ acs script genz-money "新NISAの始め方"
 # 4. 次のステップへ進む
 ```
 
+各コマンドの保存先パス・ファイル名ルール・依存関係の詳細は `docs/hybrid-workflow.md` を参照。
+
 ### ハンドオフパッケージ
 ```bash
 acs handoff genz-money content/genz-money/scripts/xxx.md --package \
@@ -238,6 +240,7 @@ ai-content-studio/
 │       ├── calendar/            # カレンダー
 │       └── kpi/                 # KPIデータ
 ├── docs/
+│   ├── hybrid-workflow.md       # ハイブリッドモード運用ガイド
 │   ├── mvp-smoke-test.md        # MVPスモークテスト計画
 │   ├── e2e-walkthrough.md       # E2Eウォークスルー（1本通し手順）
 │   ├── mvp-plan.md              # MVP実装計画
