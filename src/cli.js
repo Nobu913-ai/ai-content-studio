@@ -13,7 +13,8 @@ import { checkCompliance, formatComplianceReport } from "./generators/compliance
 import { saveKPI, loadAllKPI, formatKPISummary } from "./generators/kpi-tracker.js";
 import { generateShotPlan, formatShotPlan } from "./generators/shot-planner.js";
 import { formatNarration, formatNarrationSummary } from "./generators/narration-formatter.js";
-import { generateHandoff } from "./generators/handoff-generator.js";
+import { generateHandoff, generateHandoffPackage } from "./generators/handoff-generator.js";
+import { generateTopics, formatTopicIdeas } from "./generators/topic-generator.js";
 import { runPlanPhase, runFullProduction, formatProductionSummary } from "./generators/production-pipeline.js";
 import { getChannel, getChannelIds } from "../config/channels.js";
 import { getMonetization, revenueTargets } from "../config/monetization.js";
@@ -57,6 +58,24 @@ program
         }
         console.log();
       }
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── トピック生成（AI） ──────────────────────────────
+program
+  .command("topic-gen <channel>")
+  .description("AIで新しい動画トピック案を生成（5切り口 x 2案 = 10案）")
+  .option("-n, --count <number>", "各切り口の案数", "2")
+  .action(async (channelId, opts) => {
+    console.log(`\n  Generating topic ideas for [${channelId}] ...\n`);
+    try {
+      const result = await generateTopics(channelId, { count: parseInt(opts.count) });
+      console.log(`  Topic ideas saved: ${result.path}`);
+      console.log(formatTopicIdeas(result.topics));
+      console.log(`\n  気に入ったトピックがあれば: acs produce <channel> "<topic>"\n`);
     } catch (err) {
       console.error(`  Error: ${err.message}`);
       process.exit(1);
@@ -491,18 +510,42 @@ program
 // ─── DaVinci ハンドオフ ──────────────────────────────
 program
   .command("handoff <channel> <script-path>")
-  .description("DaVinci Resolve用の編集ハンドオフノートを生成")
+  .description("DaVinci Resolve用の編集ハンドオフノート（--package でアセットパッケージも生成）")
   .option("-f, --format <format>", "shorts or longform", "shorts")
   .option("-s, --shot-plan <path>", "ショットプランJSONパス")
+  .option("-n, --narration <path>", "ナレーションJSONパス")
+  .option("-t, --narration-text <path>", "ナレーションテキストパス")
+  .option("-r, --runway-shots <path>", "Runway生成結果JSONパス")
+  .option("-a, --audio <path>", "音声ファイルパス")
+  .option("--package", "アセットパッケージとして出力")
   .action(async (channelId, scriptPath, opts) => {
     console.log(`\n  Generating DaVinci handoff for [${channelId}] ...\n`);
     try {
-      const result = await generateHandoff(channelId, scriptPath, {
-        format: opts.format,
-        shotPlanPath: opts.shotPlan,
-      });
-      console.log(`  Handoff note saved: ${result.path}`);
-      console.log(`\n  ${result.handoff.slice(0, 500)}...\n`);
+      if (opts.package) {
+        const result = await generateHandoffPackage(channelId, scriptPath, {
+          format: opts.format,
+          shotPlanPath: opts.shotPlan,
+          narrationPath: opts.narration,
+          narrationTextPath: opts.narrationText,
+          runwayShotsPath: opts.runwayShots,
+          audioPath: opts.audio,
+        });
+        console.log(`  Handoff package: ${result.path}/`);
+        console.log(
+          `  Assets: ${result.package.assets.filter((a) => a.exists).length}/${result.package.assets.length}`,
+        );
+        console.log(`\n  Checklist:`);
+        for (const item of result.package.checklist) {
+          console.log(`    [ ] ${item.item}`);
+        }
+      } else {
+        const result = await generateHandoff(channelId, scriptPath, {
+          format: opts.format,
+          shotPlanPath: opts.shotPlan,
+        });
+        console.log(`  Handoff note saved: ${result.path}`);
+        console.log(`\n  ${result.handoff.slice(0, 500)}...\n`);
+      }
     } catch (err) {
       console.error(`  Error: ${err.message}`);
       process.exit(1);

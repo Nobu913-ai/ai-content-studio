@@ -9,6 +9,7 @@
  */
 
 import { writeOutput, timestamp } from "../utils/file-helpers.js";
+import { fetchWithRetry } from "../utils/api-retry.js";
 
 const API_BASE = "https://api.descript.com/v2";
 
@@ -34,14 +35,18 @@ async function apiRequest(path, options = {}) {
   const apiKey = getApiKey();
   const url = `${API_BASE}${path}`;
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      ...options.headers,
+  const response = await fetchWithRetry(
+    url,
+    {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     },
-  });
+    "Descript",
+  );
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");

@@ -10,6 +10,7 @@ import { writeFileSync, mkdirSync } from "fs";
 import { dirname } from "path";
 import { resolve, writeOutput, timestamp } from "../utils/file-helpers.js";
 import { getVoiceConfig } from "../../config/tools.js";
+import { fetchWithRetry } from "../utils/api-retry.js";
 
 const API_BASE = "https://api.elevenlabs.io/v1";
 
@@ -35,14 +36,18 @@ async function apiRequest(path, options = {}) {
   const apiKey = getApiKey();
   const url = `${API_BASE}${path}`;
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      "xi-api-key": apiKey,
-      "Content-Type": "application/json",
-      ...options.headers,
+  const response = await fetchWithRetry(
+    url,
+    {
+      ...options,
+      headers: {
+        "xi-api-key": apiKey,
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     },
-  });
+    "ElevenLabs",
+  );
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");

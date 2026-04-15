@@ -69,7 +69,7 @@ Claude API + 4ツール（Runway / ElevenLabs / Descript / DaVinci Resolve）を
 config/channels.js       -- チャンネル設定・トピック定義
 config/monetization.js   -- 収益化戦略
 config/tools.js          -- ツール設定・Voice routing・Shot style・書き出しプリセット
-src/cli.js               -- メインCLI エントリポイント（21コマンド）
+src/cli.js               -- メインCLI エントリポイント（22コマンド）
 src/clients/             -- 外部APIクライアント
   runway-client.js       -- Runway API（動画生成・ポーリング・ショットプラン実行）
   elevenlabs-client.js   -- ElevenLabs API（TTS・Voice一覧・使用量確認）
@@ -85,26 +85,30 @@ src/generators/          -- 各種生成エンジン
   batch-generator.js     -- パイプライン統合
   shot-planner.js        -- Runway用ショットプラン生成（Claude → JSON）
   narration-formatter.js -- ElevenLabs用ナレーション整形（マーカー除去・セグメント分割）
-  handoff-generator.js   -- DaVinci用ハンドオフノート生成
-  production-pipeline.js -- 4ツール統合制作パイプライン（計画+生成+ハンドオフ）
+  topic-generator.js    -- AIトピックアイデア生成（5角度）
+  handoff-generator.js   -- DaVinci用ハンドオフノート+パッケージ生成
+  production-pipeline.js -- 4ツール統合制作パイプライン（計画+生成+マニフェスト）
 src/utils/               -- ユーティリティ
   claude-client.js       -- Claude API クライアント（リトライ付き）
   file-helpers.js        -- ファイル操作
   validators.js          -- 入力バリデーション
   schemas.js             -- zod スキーマ定義（SEO/Shorts/Compliance/SourceMetadata）
   source-extractor.js    -- 金融ソースメタデータ抽出
+  api-retry.js           -- 外部API共通リトライ（指数バックオフ）
 src/tests/               -- ユニットテスト（77テスト）
-content/<channel>/       -- 生成コンテンツ（scripts/, metadata/, audio/, calendar/, kpi/）
+content/<channel>/       -- 生成コンテンツ（scripts/, metadata/, audio/, handoff/, calendar/, kpi/）
+docs/mvp-plan.md         -- MVP実装計画（優先順位・API設計・未解決論点）
 docs/90day-plan.md       -- 90日実行計画
 docs/improvement-roadmap.md -- 改善ロードマップ
 ```
 
-## CLI コマンド（21コマンド）
+## CLI コマンド（22コマンド）
 
 ### 基本操作
 ```bash
 acs channels                        # チャンネル一覧
 acs topics <channel>                # トピック一覧
+acs topic-gen <channel> [-n count]  # AIトピックアイデア生成（5角度）
 acs status                          # 制作状況
 acs monetize [channel]              # 収益化ダッシュボード
 acs tools                           # ツールスタック・API接続状況
@@ -124,9 +128,9 @@ acs check <channel> <script-path>   # コンプライアンスチェック
 ```bash
 acs shot-plan <channel> <script-path>   # Runway用ショットプラン
 acs narration <channel> <script-path>   # ElevenLabs用ナレーション整形
-acs handoff <channel> <script-path>     # DaVinci用ハンドオフノート
+acs handoff <channel> <script-path>     # DaVinci用ハンドオフノート（--package でパッケージ）
 acs produce-plan <channel> <topic>      # 計画フェーズ一括
-acs produce <channel> <topic>           # 全工程一括
+acs produce <channel> <topic>           # 全工程一括（→マニフェストJSON出力）
 ```
 
 ### 統合パイプライン

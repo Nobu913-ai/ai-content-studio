@@ -6,7 +6,7 @@
 import { generate } from "../utils/claude-client.js";
 import { getChannel } from "../../config/channels.js";
 import { getShotStyle, exportPresets } from "../../config/tools.js";
-import { readInput, writeOutput, timestamp } from "../utils/file-helpers.js";
+import { readInput, writeOutput, timestamp, fileExists } from "../utils/file-helpers.js";
 import { validateChannelId, validateContentPath } from "../utils/validators.js";
 
 /**
@@ -79,6 +79,87 @@ Write the handoff note as clean markdown.`;
   const fullPath = writeOutput(outputPath, formatHandoffHeader(channelId, format, preset, ts) + result);
 
   return { path: fullPath, outputPath, handoff: result };
+}
+
+/**
+ * ハンドオフパッケージを生成
+ * 編集ノート + アセットマニフェストを1つのディレクトリにまとめる
+ *
+ * @param {string} channelId
+ * @param {string} scriptPath
+ * @param {object} [options]
+ * @param {string} [options.format]
+ * @param {string} [options.shotPlanPath]
+ * @param {string} [options.narrationPath]
+ * @param {string} [options.narrationTextPath]
+ * @param {string} [options.runwayShotsPath]
+ * @param {string} [options.audioPath]
+ * @returns {Promise<object>}
+ */
+export async function generateHandoffPackage(channelId, scriptPath, options = {}) {
+  // まずハンドオフノートを生成
+  const handoffResult = await generateHandoff(channelId, scriptPath, options);
+
+  const ts = timestamp();
+  const slug = scriptPath.split("/").pop().replace(/\.md$/, "");
+  const pkgDir = `content/${channelId}/handoff/${ts}_${slug}`;
+
+  // アセット参照を収集
+  const assets = [];
+  const addAsset = (type, path) => {
+    if (path && fileExists(path)) {
+      assets.push({ type, path, exists: true });
+    } else if (path) {
+      assets.push({ type, path, exists: false, note: "ファイル未生成 — 手動で配置してください" });
+    }
+  };
+
+  addAsset("script", scriptPath);
+  addAsset("handoff_note", handoffResult.outputPath);
+  addAsset("shot_plan", options.shotPlanPath);
+  addAsset("narration_json", options.narrationPath);
+  addAsset("narration_text", options.narrationTextPath);
+  addAsset("runway_shots", options.runwayShotsPath);
+  addAsset("audio", options.audioPath);
+
+  const format = options.format || "shorts";
+  const preset = format === "shorts" ? exportPresets.shorts : exportPresets.longform_16_9;
+
+  const packageManifest = {
+    type: "davinci_handoff_package",
+    channel: channelId,
+    format,
+    generated: ts,
+    export_preset: preset,
+    handoff_note: handoffResult.outputPath,
+    assets,
+    checklist: [
+      { item: "全クリップをタイムラインに配置", done: false },
+      { item: "ナレーション音声を同期", done: false },
+      { item: "テキストオーバーレイを追加", done: false },
+      { item: "BGMを配置・音量調整", done: false },
+      { item: "色調整・LUT適用", done: false },
+      { item: "LUFS確認（speech-first）", done: false },
+      { item: "書き出し・プレビュー確認", done: false },
+    ],
+  };
+
+  const manifestPath = `${pkgDir}/package.json`;
+  writeOutput(manifestPath, JSON.stringify(packageManifest, null, 2));
+
+  // ハンドオフノートもパッケージ内にコピー
+  const notePath = `${pkgDir}/handoff.md`;
+  writeOutput(notePath, readInput(handoffResult.outputPath));
+
+  console.log(`  [Handoff] Package created: ${pkgDir}/`);
+  console.log(`  [Handoff] Assets: ${assets.filter((a) => a.exists).length}/${assets.length} available`);
+
+  return {
+    path: pkgDir,
+    manifestPath,
+    handoff: handoffResult,
+    package: packageManifest,
+  };
 }
 
 /**

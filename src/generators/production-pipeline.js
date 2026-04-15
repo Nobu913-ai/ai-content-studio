@@ -21,6 +21,7 @@ import { generateShotPlan as runwayGeneratePlan } from "../clients/runway-client
 import { generateNarration as elevenlabsGenerate } from "../clients/elevenlabs-client.js";
 import { runDescriptPipeline } from "../clients/descript-client.js";
 import { validateChannelId, validateTopic } from "../utils/validators.js";
+import { writeOutput, timestamp } from "../utils/file-helpers.js";
 
 /**
  * API キーの有無を確認（エラーを投げず true/false を返す）
@@ -205,12 +206,15 @@ export async function runFullProduction(channelId, topic, options = {}) {
   console.log(`\n  --- Phase 2: Generation (External APIs) ---`);
   const genResults = await runGeneratePhase(channelId, planResults, topic);
 
-  // 結果をまとめる
+  // 結果をまとめてマニフェストJSONとして保存
+  const ts = timestamp();
   const allSteps = [...planResults.steps, ...genResults.steps];
   const summary = {
+    version: "3.0.0",
     channel: channelId,
     topic,
     format: options.format || "shorts",
+    generated: ts,
     steps: allSteps,
     outputs: {
       script: planResults.scriptPath,
@@ -223,9 +227,27 @@ export async function runFullProduction(channelId, topic, options = {}) {
       descript: genResults.descript?.outputPath,
     },
     manualSteps: allSteps.filter((s) => s.status === "manual"),
+    stats: {
+      totalSteps: allSteps.length,
+      completed: allSteps.filter((s) => s.status === "done").length,
+      skipped: allSteps.filter((s) => s.status === "skipped").length,
+      manual: allSteps.filter((s) => s.status === "manual").length,
+      errors: allSteps.filter((s) => s.status === "error").length,
+    },
   };
 
-  return { plan: planResults, generation: genResults, summary };
+  // マニフェストJSONを保存
+  const slug = topic
+    .toLowerCase()
+    .replace(/[^a-z0-9\u3040-\u9fff]+/g, "-")
+    .slice(0, 50);
+  const manifestPath = `content/${channelId}/metadata/${ts}_${slug}_manifest.json`;
+  const manifestFullPath = writeOutput(manifestPath, JSON.stringify(summary, null, 2));
+  summary.manifestPath = manifestPath;
+
+  console.log(`\n  Manifest saved: ${manifestPath}`);
+
+  return { plan: planResults, generation: genResults, summary, manifestPath: manifestFullPath };
 }
 
 /**

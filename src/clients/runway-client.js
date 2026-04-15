@@ -7,6 +7,7 @@
  */
 
 import { writeOutput, timestamp } from "../utils/file-helpers.js";
+import { fetchWithRetry } from "../utils/api-retry.js";
 
 const API_BASE = "https://api.dev.runwayml.com/v1";
 const POLL_INTERVAL_MS = 10000;
@@ -34,15 +35,19 @@ async function apiRequest(path, options = {}) {
   const apiKey = getApiKey();
   const url = `${API_BASE}${path}`;
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "X-Runway-Version": "2024-11-06",
-      ...options.headers,
+  const response = await fetchWithRetry(
+    url,
+    {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "X-Runway-Version": "2024-11-06",
+        ...options.headers,
+      },
     },
-  });
+    "Runway",
+  );
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
