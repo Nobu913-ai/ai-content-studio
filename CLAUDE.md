@@ -61,7 +61,7 @@ Claude API + 4ツール（Runway / ElevenLabs / Descript / DaVinci Resolve）を
 - **環境変数**: `ANTHROPIC_API_KEY` が必須。`RUNWAY_API_KEY`, `ELEVENLABS_API_KEY`, `DESCRIPT_API_KEY` は任意。
 - **品質保証**: zod によるJSON出力スキーマ検証、ESLint、Prettier、入力バリデーション、パストラバーサル防止
 - **エラー処理**: 指数バックオフリトライ（429/5xx対応）
-- **テスト**: Node.js built-in test runner（77テスト）
+- **テスト**: Node.js built-in test runner（102テスト）
 
 ## ディレクトリ構成
 
@@ -95,7 +95,7 @@ src/utils/               -- ユーティリティ
   schemas.js             -- zod スキーマ定義（SEO/Shorts/Compliance/SourceMetadata）
   source-extractor.js    -- 金融ソースメタデータ抽出
   api-retry.js           -- 外部API共通リトライ（指数バックオフ）
-src/tests/               -- ユニットテスト（77テスト）
+src/tests/               -- ユニットテスト（102テスト）
 content/<channel>/       -- 生成コンテンツ（scripts/, metadata/, audio/, handoff/, calendar/, kpi/）
 docs/mvp-plan.md         -- MVP実装計画（優先順位・API設計・未解決論点）
 docs/90day-plan.md       -- 90日実行計画

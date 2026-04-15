@@ -1,5 +1,5 @@
-import { mkdirSync, writeFileSync, readFileSync, existsSync } from "fs";
-import { dirname, join, resolve as pathResolve } from "path";
+import { mkdirSync, writeFileSync, readFileSync, existsSync, copyFileSync } from "fs";
+import { dirname, join, basename, resolve as pathResolve } from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -39,6 +39,28 @@ export function readInput(relativePath) {
  */
 export function fileExists(relativePath) {
   return existsSync(resolve(relativePath));
+}
+
+/**
+ * ファイルをコピー（ディレクトリがなければ作成）
+ * @param {string} srcRelative - コピー元の相対パス
+ * @param {string} destRelative - コピー先の相対パス
+ * @returns {string|null} コピー先のフルパス（コピー元が存在しない場合は null）
+ */
+export function copyAsset(srcRelative, destRelative) {
+  const srcFull = resolve(srcRelative);
+  if (!existsSync(srcFull)) return null;
+  const destFull = resolve(destRelative);
+  mkdirSync(dirname(destFull), { recursive: true });
+  copyFileSync(srcFull, destFull);
+  return destFull;
+}
+
+/**
+ * パスからファイル名を取得
+ */
+export function getBasename(filePath) {
+  return basename(filePath);
 }
 
 /**

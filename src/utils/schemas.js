@@ -148,6 +148,81 @@ export const sourceMetadataSchema = z.object({
 });
 
 /**
+ * 制作パイプライン マニフェストのスキーマ
+ * produce コマンドの全出力を追跡
+ */
+const manifestStepSchema = z.object({
+  step: z.string().min(1),
+  status: z.enum(["done", "skipped", "manual", "error"]),
+  note: z.string().optional(),
+  error: z.string().optional(),
+  path: z.string().optional(),
+  shotPlanPath: z.string().optional(),
+  narrationTextPath: z.string().optional(),
+  succeeded: z.number().optional(),
+  projectId: z.string().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+  importedUrls: z.number().optional(),
+  manualImportNeeded: z.number().optional(),
+  localPaths: z.array(z.string()).optional(),
+});
+
+const manifestMediaEntrySchema = z.object({
+  type: z.string().min(1),
+  url: z.string().optional(),
+  path: z.string().optional(),
+  shotId: z.string().optional(),
+});
+
+export const manifestSchema = z.object({
+  version: z.string().min(1),
+  channel: z.string().min(1),
+  topic: z.string().min(1),
+  format: z.enum(["shorts", "longform"]),
+  generated: z.string().min(1),
+  steps: z.array(manifestStepSchema),
+  outputs: z.object({
+    script: z.string().nullable(),
+    shotPlan: z.string().nullable(),
+    narration: z.string().nullable(),
+    narrationText: z.string().nullable(),
+    handoff: z.string().nullable(),
+    runway: z.string().nullable(),
+    elevenlabs: z.string().nullable(),
+    descript: z.string().nullable(),
+  }),
+  media: z.object({
+    remoteUrls: z.array(manifestMediaEntrySchema),
+    localPaths: z.array(manifestMediaEntrySchema),
+  }),
+  audioMetadata: z
+    .object({
+      channel: z.string().optional(),
+      generated: z.string().optional(),
+      voice_id: z.string().optional(),
+      model: z.string().optional(),
+      text_length: z.number().optional(),
+      style: z.string().optional(),
+      outputPath: z.string().optional(),
+    })
+    .nullable(),
+  manualSteps: z.array(manifestStepSchema),
+  errors: z.array(
+    z.object({
+      step: z.string().min(1),
+      error: z.string().optional(),
+    }),
+  ),
+  stats: z.object({
+    totalSteps: z.number().min(0),
+    completed: z.number().min(0),
+    skipped: z.number().min(0),
+    manual: z.number().min(0),
+    errors: z.number().min(0),
+  }),
+});
+
+/**
  * スキーマ検証を実行し、結果を返す
  * パースエラーではなく検証警告として扱い、データは通す
  */

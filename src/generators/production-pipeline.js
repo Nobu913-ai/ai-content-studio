@@ -22,6 +22,7 @@ import { generateNarration as elevenlabsGenerate } from "../clients/elevenlabs-c
 import { runDescriptPipeline } from "../clients/descript-client.js";
 import { validateChannelId, validateTopic } from "../utils/validators.js";
 import { writeOutput, timestamp } from "../utils/file-helpers.js";
+import { manifestSchema, validateOutput } from "../utils/schemas.js";
 
 /**
  * API キーの有無を確認（エラーを投げず true/false を返す）
@@ -101,7 +102,8 @@ export async function runPlanPhase(channelId, topic, options = {}) {
  * @returns {Promise<object>} 生成フェーズの全出力
  */
 export async function runGeneratePhase(channelId, planResults, topic) {
-  const results = { steps: [], mediaUrls: [] };
+  // メディアをリモートURL（Descript渡し可）とローカルパス（手動）に分離
+  const results = { steps: [], remoteUrls: [], localPaths: [] };
 
   // Runway: 動画生成
   if (hasApiKey("RUNWAY_API_KEY")) {
@@ -112,9 +114,11 @@ export async function runGeneratePhase(channelId, planResults, topic) {
         const runwayResult = await runwayGeneratePlan(shotPlan.shots, channelId);
         results.runway = runwayResult;
         results.steps.push({ step: "runway", status: "done", succeeded: runwayResult.succeeded });
-        // 成功したクリップのURLを収集
+        // Runway は公開URLを返す → Descript に渡せる
         for (const shot of runwayResult.shots || []) {
-          if (shot.outputUrl) results.mediaUrls.push(shot.outputUrl);
+          if (shot.outputUrl) results.remoteUrls.push({ type: "video", url: shot.outputUrl, shotId: shot.shotId });
+          // ローカル保存済みならパスも記録
+          if (shot.localPath) results.localPaths.push({ type: "video", path: shot.localPath, shotId: shot.shotId });
         }
       } else {
         results.steps.push({ step: "runway", status: "skipped", note: "ショットプラン解析失敗" });
@@ -141,8 +145,16 @@ export async function runGeneratePhase(channelId, planResults, topic) {
       if (narrationText) {
         const audioResult = await elevenlabsGenerate(channelId, narrationText);
         results.elevenlabs = audioResult;
-        results.steps.push({ step: "elevenlabs", status: "done", path: audioResult.outputPath });
-        if (audioResult.outputPath) results.mediaUrls.push(audioResult.outputPath);
+        results.steps.push({
+          step: "elevenlabs",
+          status: "done",
+          path: audioResult.outputPath,
+          metadata: audioResult.metadata,
+        });
+        // ElevenLabs はローカルパスを返す（Descript にはURLとして渡せない）
+        if (audioResult.outputPath) {
+          results.localPaths.push({ type: "audio", path: audioResult.outputPath });
+        }
       } else {
         results.steps.push({ step: "elevenlabs", status: "skipped", note: "ナレーションテキストが空" });
       }
@@ -160,24 +172,44 @@ export async function runGeneratePhase(channelId, planResults, topic) {
     console.log(`  [6/7] ElevenLabs: スキップ (API キー未設定 → ナレーションテキストを手動で使用)`);
   }
 
-  // Descript: インポート + AI編集
-  if (hasApiKey("DESCRIPT_API_KEY") && results.mediaUrls.length > 0) {
+  // Descript: インポート + AI編集（リモートURLのみ渡す。ローカルパスは手動インポート）
+  const descriptableUrls = results.remoteUrls.map((m) => m.url);
+  if (hasApiKey("DESCRIPT_API_KEY") && descriptableUrls.length > 0) {
     console.log(`  [7/7] Descript インポート + AI編集中 ...`);
+    if (results.localPaths.length > 0) {
+      console.log(
+        `  [Descript] Note: ローカル音声ファイル ${results.localPaths.length}件は手動でインポートしてください`,
+      );
+    }
     try {
-      const descriptResult = await runDescriptPipeline(channelId, topic, results.mediaUrls, {
+      const descriptResult = await runDescriptPipeline(channelId, topic, descriptableUrls, {
         captions: true,
         studioSound: true,
         removeFiller: true,
       });
       results.descript = descriptResult;
-      results.steps.push({ step: "descript", status: "done", projectId: descriptResult.projectId });
+      results.steps.push({
+        step: "descript",
+        status: "done",
+        projectId: descriptResult.projectId,
+        importedUrls: descriptableUrls.length,
+        manualImportNeeded: results.localPaths.length,
+      });
     } catch (err) {
       results.steps.push({ step: "descript", status: "error", error: err.message });
       console.error(`  [Descript] Error: ${err.message}`);
     }
   } else {
-    const reason = !hasApiKey("DESCRIPT_API_KEY") ? "DESCRIPT_API_KEY 未設定" : "インポート可能なメディアがありません";
-    results.steps.push({ step: "descript", status: "manual", note: reason });
+    const reasons = [];
+    if (!hasApiKey("DESCRIPT_API_KEY")) reasons.push("DESCRIPT_API_KEY 未設定");
+    if (descriptableUrls.length === 0) reasons.push("インポート可能なリモートURLがありません");
+    const reason = reasons.join("、");
+    results.steps.push({
+      step: "descript",
+      status: "manual",
+      note: reason,
+      localPaths: results.localPaths.map((m) => m.path),
+    });
     console.log(`  [7/7] Descript: スキップ (${reason})`);
   }
 
@@ -209,24 +241,35 @@ export async function runFullProduction(channelId, topic, options = {}) {
   // 結果をまとめてマニフェストJSONとして保存
   const ts = timestamp();
   const allSteps = [...planResults.steps, ...genResults.steps];
+
+  // ElevenLabs メタデータを収集
+  const elevenlabsStep = genResults.steps.find((s) => s.step === "elevenlabs" && s.metadata);
+  const audioMetadata = elevenlabsStep?.metadata || null;
+
   const summary = {
-    version: "3.0.0",
+    version: "3.0.1",
     channel: channelId,
     topic,
     format: options.format || "shorts",
     generated: ts,
     steps: allSteps,
     outputs: {
-      script: planResults.scriptPath,
-      shotPlan: planResults.shotPlan?.outputPath,
-      narration: planResults.narration?.outputPath,
-      narrationText: planResults.narration?.textPath,
-      handoff: planResults.handoff?.outputPath,
-      runway: genResults.runway?.outputPath,
-      elevenlabs: genResults.elevenlabs?.outputPath,
-      descript: genResults.descript?.outputPath,
+      script: planResults.scriptPath || null,
+      shotPlan: planResults.shotPlan?.outputPath || null,
+      narration: planResults.narration?.outputPath || null,
+      narrationText: planResults.narration?.textPath || null,
+      handoff: planResults.handoff?.outputPath || null,
+      runway: genResults.runway?.outputPath || null,
+      elevenlabs: genResults.elevenlabs?.outputPath || null,
+      descript: genResults.descript?.outputPath || null,
     },
+    media: {
+      remoteUrls: genResults.remoteUrls || [],
+      localPaths: genResults.localPaths || [],
+    },
+    audioMetadata,
     manualSteps: allSteps.filter((s) => s.status === "manual"),
+    errors: allSteps.filter((s) => s.status === "error").map((s) => ({ step: s.step, error: s.error })),
     stats: {
       totalSteps: allSteps.length,
       completed: allSteps.filter((s) => s.status === "done").length,
@@ -235,6 +278,13 @@ export async function runFullProduction(channelId, topic, options = {}) {
       errors: allSteps.filter((s) => s.status === "error").length,
     },
   };
+
+  // スキーマ検証
+  const validation = validateOutput(manifestSchema, summary, "manifest");
+  if (!validation.valid) {
+    for (const w of validation.warnings) console.warn(w);
+    summary._schemaWarnings = validation.warnings;
+  }
 
   // マニフェストJSONを保存
   const slug = topic

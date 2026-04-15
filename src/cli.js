@@ -23,7 +23,7 @@ import { resolve } from "./utils/file-helpers.js";
 
 const program = new Command();
 
-program.name("acs").description("AI Content Studio — 3チャンネル統合コンテンツ制作CLI + 4ツール連携").version("3.0.0");
+program.name("acs").description("AI Content Studio — 3チャンネル統合コンテンツ制作CLI + 4ツール連携").version("3.0.1");
 
 // ─── チャンネル一覧 ──────────────────────────────
 program

@@ -6,7 +6,9 @@
  * 環境変数: RUNWAY_API_KEY
  */
 
-import { writeOutput, timestamp } from "../utils/file-helpers.js";
+import { writeFileSync, mkdirSync } from "fs";
+import { dirname } from "path";
+import { resolve, writeOutput, timestamp } from "../utils/file-helpers.js";
 import { fetchWithRetry } from "../utils/api-retry.js";
 
 const API_BASE = "https://api.dev.runwayml.com/v1";
@@ -111,11 +113,30 @@ export async function waitForCompletion(taskId) {
 }
 
 /**
- * ショットプランの1ショットを生成し、完了まで待つ
- * @param {object} shot - ショット定義 { shot_id, prompt, duration_sec, aspect_ratio }
- * @returns {Promise<object>} { shotId, taskId, outputUrl, status }
+ * 動画URLをローカルにダウンロード
+ * @param {string} url - 動画URL
+ * @param {string} outputRelPath - 保存先の相対パス
+ * @returns {Promise<string>} 保存先フルパス
  */
-export async function generateShot(shot) {
+async function downloadVideo(url, outputRelPath) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`ダウンロード失敗 (${response.status}): ${url}`);
+  }
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const fullPath = resolve(outputRelPath);
+  mkdirSync(dirname(fullPath), { recursive: true });
+  writeFileSync(fullPath, buffer);
+  return fullPath;
+}
+
+/**
+ * ショットプランの1ショットを生成し、完了まで待つ。ローカル保存付き。
+ * @param {object} shot - ショット定義 { shot_id, prompt, duration_sec, aspect_ratio }
+ * @param {string} [channelId] - チャンネルID（ローカル保存先に使用）
+ * @returns {Promise<object>} { shotId, taskId, outputUrl, localPath, status }
+ */
+export async function generateShot(shot, channelId) {
   console.log(`  [Runway] Generating shot: ${shot.shot_id} ...`);
 
   const task = await createGeneration({
@@ -126,10 +147,25 @@ export async function generateShot(shot) {
 
   const result = await waitForCompletion(task.id);
 
+  // ローカルにダウンロード
+  let localPath = null;
+  if (result.outputUrl && channelId) {
+    try {
+      const ts = timestamp();
+      const savePath = `content/${channelId}/assets/video/${ts}_${shot.shot_id}.mp4`;
+      await downloadVideo(result.outputUrl, savePath);
+      localPath = savePath;
+      console.log(`  [Runway] Downloaded: ${savePath}`);
+    } catch (err) {
+      console.error(`  [Runway] ダウンロード失敗 (${shot.shot_id}): ${err.message}`);
+    }
+  }
+
   return {
     shotId: shot.shot_id,
     taskId: task.id,
     outputUrl: result.outputUrl,
+    localPath,
     status: result.status,
   };
 }
@@ -146,9 +182,11 @@ export async function generateShotPlan(shotPlan, channelId) {
 
   for (const shot of shotPlan) {
     try {
-      const result = await generateShot(shot);
+      const result = await generateShot(shot, channelId);
       results.push(result);
-      console.log(`  [Runway] [OK] ${shot.shot_id} → ${result.outputUrl}`);
+      console.log(
+        `  [Runway] [OK] ${shot.shot_id} → ${result.outputUrl}${result.localPath ? ` (local: ${result.localPath})` : ""}`,
+      );
     } catch (err) {
       console.error(`  [Runway] [NG] ${shot.shot_id}: ${err.message}`);
       failures.push({ shotId: shot.shot_id, error: err.message });

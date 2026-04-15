@@ -114,6 +114,47 @@ acs kpi-summary <channel>             # 勝ち/負けパターン分析
 acs produce genz-money "新NISAの始め方"
 # -> 台本 -> ショットプラン -> ナレーション -> Runway -> ElevenLabs -> Descript -> ハンドオフ
 # API未設定のツールは自動スキップ、手動ステップとして表示
+# → マニフェストJSON（全工程の追跡・メディア・手動ステップ）を出力
+```
+
+### API未設定時のManual Fallbackフロー
+```
+$ acs produce genz-money "新NISAの始め方"
+
+  === Production Pipeline ===
+  --- Phase 1: Planning (Claude API) ---
+  [1/4] 台本生成中 ...
+  [2/4] ショットプラン生成中 ...
+  [3/4] ナレーション整形中 ...
+  [4/4] DaVinci ハンドオフノート生成中 ...
+
+  --- Phase 2: Generation (External APIs) ---
+  [5/7] Runway: スキップ (API キー未設定 → ショットプランを手動で使用)
+  [6/7] ElevenLabs: スキップ (API キー未設定 → ナレーションテキストを手動で使用)
+  [7/7] Descript: スキップ (DESCRIPT_API_KEY 未設定)
+
+  Manifest saved: content/genz-money/metadata/..._manifest.json
+
+# マニフェストに手動ステップが記録される:
+# - Runway: ショットプラン JSON を参照して手動で動画生成
+# - ElevenLabs: ナレーションテキストを手動で音声化
+# - Descript: 生成素材を手動でインポート・編集
+```
+
+### ハンドオフパッケージ
+```bash
+acs handoff genz-money content/genz-money/scripts/xxx.md --package \
+  --shot-plan content/genz-money/metadata/xxx_shots.json \
+  --audio content/genz-money/audio/xxx_narration.mp3
+
+# パッケージ構造:
+# content/genz-money/handoff/<ts>_xxx/
+# ├── package.json     <- アセットマニフェスト + チェックリスト
+# ├── handoff.md       <- 編集ハンドオフノート
+# ├── docs/            <- 台本・ショットプラン等
+# └── assets/
+#     ├── video/       <- Runway 生成動画
+#     └── audio/       <- ElevenLabs 音声
 ```
 
 ## 品質保証
@@ -129,10 +170,11 @@ acs produce genz-money "新NISAの始め方"
 - Shorts: 各30-180秒、必須フィールド完備
 - Compliance: スコア0-100、verdict(pass/warn/fail)
 - Source Metadata: claim-to-source mapping、disclaimer有無
+- Manifest: version、outputs、media、stats、errors の構造検証
 
 ### テスト・Lint
 ```bash
-npm test          # 77テスト（schema, KPI, validators, currency, source, tools, narration）
+npm test          # 102テスト（schema, manifest, pipeline, KPI, validators, source, tools, narration）
 npm run lint      # ESLint
 npm run format    # Prettier
 ```
@@ -172,7 +214,7 @@ ai-content-studio/
 │   │   ├── schemas.js           # zod スキーマ定義
 │   │   ├── source-extractor.js  # 金融ソースメタデータ抽出
 │   │   └── api-retry.js         # 外部API共通リトライ（指数バックオフ）
-│   └── tests/                   # ユニットテスト（77テスト）
+│   └── tests/                   # ユニットテスト（102テスト）
 ├── content/                     # 生成コンテンツ
 │   └── <channel>/
 │       ├── scripts/             # 台本・Shorts・ナレーション

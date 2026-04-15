@@ -6,7 +6,7 @@
 import { generate } from "../utils/claude-client.js";
 import { getChannel } from "../../config/channels.js";
 import { getShotStyle, exportPresets } from "../../config/tools.js";
-import { readInput, writeOutput, timestamp, fileExists } from "../utils/file-helpers.js";
+import { readInput, writeOutput, timestamp, fileExists, copyAsset } from "../utils/file-helpers.js";
 import { validateChannelId, validateContentPath } from "../utils/validators.js";
 
 /**
@@ -82,8 +82,33 @@ Write the handoff note as clean markdown.`;
 }
 
 /**
+ * アセットタイプ → パッケージ内サブディレクトリのマッピング
+ */
+const ASSET_DIRS = {
+  script: "docs",
+  handoff_note: "docs",
+  shot_plan: "docs",
+  narration_json: "docs",
+  narration_text: "docs",
+  runway_shots: "assets/video",
+  audio: "assets/audio",
+  video: "assets/video",
+  stills: "assets/stills",
+};
+
+/**
  * ハンドオフパッケージを生成
- * 編集ノート + アセットマニフェストを1つのディレクトリにまとめる
+ * 編集ノート + 実アセットを固定フォルダ構造にコピーしてまとめる
+ *
+ * パッケージ構造:
+ *   <pkgDir>/
+ *   ├── package.json    — アセットマニフェスト + チェックリスト
+ *   ├── handoff.md      — 編集ハンドオフノート
+ *   ├── docs/           — 台本・ショットプラン・ナレーション等
+ *   ├── assets/
+ *   │   ├── video/      — Runway 生成動画
+ *   │   ├── audio/      — ElevenLabs 音声
+ *   │   └── stills/     — 静止画素材
  *
  * @param {string} channelId
  * @param {string} scriptPath
@@ -104,13 +129,30 @@ export async function generateHandoffPackage(channelId, scriptPath, options = {}
   const slug = scriptPath.split("/").pop().replace(/\.md$/, "");
   const pkgDir = `content/${channelId}/handoff/${ts}_${slug}`;
 
-  // アセット参照を収集
+  // アセット収集 + 実体コピー
   const assets = [];
-  const addAsset = (type, path) => {
-    if (path && fileExists(path)) {
-      assets.push({ type, path, exists: true });
-    } else if (path) {
-      assets.push({ type, path, exists: false, note: "ファイル未生成 — 手動で配置してください" });
+  const copyStats = { copied: 0, missing: 0 };
+
+  const addAsset = (type, srcPath) => {
+    if (!srcPath) return;
+    const subDir = ASSET_DIRS[type] || "docs";
+    const fileName = srcPath.split("/").pop();
+    const destRelative = `${pkgDir}/${subDir}/${fileName}`;
+
+    if (fileExists(srcPath)) {
+      const fullDest = copyAsset(srcPath, destRelative);
+      assets.push({ type, originalPath: srcPath, packagePath: destRelative, exists: true, copied: !!fullDest });
+      if (fullDest) copyStats.copied++;
+    } else {
+      assets.push({
+        type,
+        originalPath: srcPath,
+        packagePath: destRelative,
+        exists: false,
+        copied: false,
+        note: "ファイル未生成 — 手動で配置してください",
+      });
+      copyStats.missing++;
     }
   };
 
@@ -127,12 +169,15 @@ export async function generateHandoffPackage(channelId, scriptPath, options = {}
 
   const packageManifest = {
     type: "davinci_handoff_package",
+    version: "3.0.1",
     channel: channelId,
     format,
     generated: ts,
     export_preset: preset,
-    handoff_note: handoffResult.outputPath,
+    handoff_note: `${pkgDir}/handoff.md`,
     assets,
+    missingAssets: assets.filter((a) => !a.exists).map((a) => ({ type: a.type, path: a.originalPath, note: a.note })),
+    copyStats,
     checklist: [
       { item: "全クリップをタイムラインに配置", done: false },
       { item: "ナレーション音声を同期", done: false },
@@ -152,7 +197,13 @@ export async function generateHandoffPackage(channelId, scriptPath, options = {}
   writeOutput(notePath, readInput(handoffResult.outputPath));
 
   console.log(`  [Handoff] Package created: ${pkgDir}/`);
-  console.log(`  [Handoff] Assets: ${assets.filter((a) => a.exists).length}/${assets.length} available`);
+  console.log(`  [Handoff] Assets: ${copyStats.copied} copied, ${copyStats.missing} missing`);
+  if (copyStats.missing > 0) {
+    console.log(`  [Handoff] Missing assets:`);
+    for (const a of packageManifest.missingAssets) {
+      console.log(`    - ${a.type}: ${a.path}`);
+    }
+  }
 
   return {
     path: pkgDir,
