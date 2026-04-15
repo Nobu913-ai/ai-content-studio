@@ -1,7 +1,10 @@
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "fs";
-import { dirname, join } from "path";
+import { dirname, join, resolve as pathResolve } from "path";
+import { fileURLToPath } from "url";
 
-const ROOT = new URL("../../", import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const ROOT = pathResolve(__dirname, "..", "..");
 
 /**
  * プロジェクトルートからの相対パスを解決
@@ -26,7 +29,7 @@ export function writeOutput(relativePath, content) {
 export function readInput(relativePath) {
   const fullPath = resolve(relativePath);
   if (!existsSync(fullPath)) {
-    throw new Error(`File not found: ${fullPath}`);
+    throw new Error(`ファイルが見つかりません: ${fullPath}`);
   }
   return readFileSync(fullPath, "utf-8");
 }

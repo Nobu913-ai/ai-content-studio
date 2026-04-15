@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 
+import "dotenv/config";
+import { readdirSync, existsSync, statSync } from "fs";
 import { Command } from "commander";
 import { generateScript } from "./generators/script-generator.js";
 import { generateSEO } from "./generators/seo-generator.js";
 import { generateCalendar, formatCalendarForDisplay } from "./generators/calendar-generator.js";
 import { generateFull } from "./generators/batch-generator.js";
 import { getChannel, getChannelIds } from "../config/channels.js";
+import { resolve } from "./utils/file-helpers.js";
 
 const program = new Command();
 
@@ -36,15 +39,20 @@ program
   .command("topics <channel>")
   .description("チャンネルの登録トピック一覧を表示")
   .action((channelId) => {
-    const ch = getChannel(channelId);
-    console.log(`\n  ${ch.name} — Topics\n`);
-    for (const cat of ch.categories) {
-      console.log(`  [${cat.name}]`);
-      for (const topic of cat.topics) {
-        console.log(`    - ${topic.title}`);
-        console.log(`      keywords: ${topic.keywords.join(", ")}`);
+    try {
+      const ch = getChannel(channelId);
+      console.log(`\n  ${ch.name} — Topics\n`);
+      for (const cat of ch.categories) {
+        console.log(`  [${cat.name}]`);
+        for (const topic of cat.topics) {
+          console.log(`    - ${topic.title}`);
+          console.log(`      keywords: ${topic.keywords.join(", ")}`);
+        }
+        console.log();
       }
-      console.log();
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
     }
   });
 
@@ -142,15 +150,12 @@ program
 program
   .command("status")
   .description("全チャンネルのコンテンツ制作状況を表示")
-  .action(async () => {
-    const { readdirSync, existsSync } = await import("fs");
-    const { resolve } = await import("./utils/file-helpers.js");
-
+  .action(() => {
     console.log("\n  Content Studio Status\n");
 
     for (const id of getChannelIds()) {
       const ch = getChannel(id);
-      const lang = ch.language === "ja" ? "🇯🇵" : "🌍";
+      const lang = ch.language === "ja" ? "JP" : "EN";
 
       const scriptsDir = resolve(`content/${id}/scripts`);
       const metaDir = resolve(`content/${id}/metadata`);
@@ -160,8 +165,15 @@ program
       const metaCount = existsSync(metaDir) ? readdirSync(metaDir).filter((f) => f.endsWith(".json")).length : 0;
       const calCount = existsSync(calDir) ? readdirSync(calDir).filter((f) => f.endsWith(".json")).length : 0;
 
-      console.log(`  ${lang}  ${ch.name} (${id})`);
-      console.log(`      Scripts: ${scriptCount} | SEO: ${metaCount} | Calendars: ${calCount}`);
+      let lastUpdated = "-";
+      if (scriptCount > 0) {
+        const files = readdirSync(scriptsDir).filter((f) => f.endsWith(".md"));
+        const latest = files.map((f) => statSync(`${scriptsDir}/${f}`).mtime).sort((a, b) => b - a)[0];
+        lastUpdated = latest.toISOString().slice(0, 10);
+      }
+
+      console.log(`  [${lang}] ${ch.name} (${id})`);
+      console.log(`      Scripts: ${scriptCount} | SEO: ${metaCount} | Calendars: ${calCount} | Last: ${lastUpdated}`);
       console.log();
     }
   });

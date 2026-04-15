@@ -1,11 +1,14 @@
 import { generate } from "../utils/claude-client.js";
 import { getChannel } from "../../config/channels.js";
 import { writeOutput, readInput, timestamp } from "../utils/file-helpers.js";
+import { validateChannelId, validateContentPath } from "../utils/validators.js";
 
 /**
  * 台本ファイルからSEOメタデータ（タイトル・説明文・タグ）を生成
  */
 export async function generateSEO(channelId, scriptPath) {
+  channelId = validateChannelId(channelId);
+  scriptPath = validateContentPath(scriptPath);
   const channel = getChannel(channelId);
   const scriptContent = readInput(scriptPath);
 

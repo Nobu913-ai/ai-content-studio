@@ -1,13 +1,15 @@
 import { generate } from "../utils/claude-client.js";
 import { getChannel } from "../../config/channels.js";
-import { writeOutput, readInput, fileExists, timestamp } from "../utils/file-helpers.js";
+import { writeOutput, timestamp } from "../utils/file-helpers.js";
+import { validateChannelId, validateWeeks } from "../utils/validators.js";
 
 /**
  * チャンネルのコンテンツカレンダーを生成（4週間分）
  */
 export async function generateCalendar(channelId, options = {}) {
+  channelId = validateChannelId(channelId);
   const channel = getChannel(channelId);
-  const weeks = options.weeks || 4;
+  const weeks = validateWeeks(options.weeks || 4);
   const startDate = options.startDate || new Date().toISOString().slice(0, 10);
 
   const allTopics = channel.categories.flatMap((cat) =>

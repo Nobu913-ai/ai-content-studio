@@ -1,6 +1,7 @@
 import { generate } from "../utils/claude-client.js";
 import { getChannel } from "../../config/channels.js";
 import { writeOutput, timestamp } from "../utils/file-helpers.js";
+import { validateChannelId, validateTopic } from "../utils/validators.js";
 
 /**
  * チャンネル設定に基づいた台本生成システムプロンプトを構築
@@ -37,6 +38,8 @@ function buildSystemPrompt(channel) {
  * 台本を生成
  */
 export async function generateScript(channelId, topic, options = {}) {
+  channelId = validateChannelId(channelId);
+  topic = validateTopic(topic);
   const channel = getChannel(channelId);
   const systemPrompt = buildSystemPrompt(channel);
 
