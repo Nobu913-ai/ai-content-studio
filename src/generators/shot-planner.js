@@ -75,7 +75,14 @@ ${scriptContent.slice(0, 5000)}
   const result = await generate(systemPrompt, userPrompt, {
     maxTokens: 4096,
     temperature: 0.5,
+    label: "shot-plan",
+    outputHint: `content/${channelId}/metadata/ 配下のショットプランJSON`,
   });
+
+  // ハイブリッドモード: API未設定時は手動ワークフロー
+  if (result === null) {
+    return { path: null, outputPath: null, shotPlan: null, manual: true };
+  }
 
   let shotPlan;
   try {

@@ -160,7 +160,14 @@ ${existingList}${sourceContext}
   const result = await generate(systemPrompt, userPrompt, {
     maxTokens: 4096,
     temperature: 0.3,
+    label: "compliance",
+    outputHint: `content/${channelId}/metadata/ 配下のコンプライアンスチェック結果`,
   });
+
+  // ハイブリッドモード: API未設定時は手動ワークフロー
+  if (result === null) {
+    return { path: null, outputPath: null, check: null, manual: true };
+  }
 
   let checkData;
   try {

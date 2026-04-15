@@ -68,7 +68,14 @@ ${scriptContent.slice(0, 4000)}
   const result = await generate(systemPrompt, userPrompt, {
     maxTokens: 2048,
     temperature: 0.5,
+    label: "seo",
+    outputHint: `content/${channelId}/metadata/ 配下のSEOメタデータJSON`,
   });
+
+  // ハイブリッドモード: API未設定時は手動ワークフロー
+  if (result === null) {
+    return { path: null, outputPath: null, seo: null, schemaWarnings: [], manual: true };
+  }
 
   let seoData;
   try {

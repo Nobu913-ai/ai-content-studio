@@ -70,7 +70,14 @@ You may also suggest NEW topics not in the bank if they fit the channel.
   const result = await generate(systemPrompt, userPrompt, {
     maxTokens: 4096,
     temperature: 0.6,
+    label: "calendar",
+    outputHint: `content/${channelId}/calendar/ 配下のカレンダーJSON`,
   });
+
+  // ハイブリッドモード: API未設定時は手動ワークフロー
+  if (result === null) {
+    return { path: null, outputPath: null, calendar: null, manual: true };
+  }
 
   let calendarData;
   try {

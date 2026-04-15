@@ -1,6 +1,15 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { writeOutput, timestamp } from "./file-helpers.js";
 
 let client = null;
+
+/**
+ * Anthropic API キーが設定されているか確認
+ * @returns {boolean}
+ */
+export function hasAnthropicKey() {
+  return !!process.env.ANTHROPIC_API_KEY;
+}
 
 /**
  * Claude API クライアントを取得（シングルトン）
@@ -19,6 +28,37 @@ export function getClient() {
     client = new Anthropic();
   }
   return client;
+}
+
+/**
+ * プロンプトをファイルに書き出す（手動 Claude Code ワークフロー用）
+ * API キー未設定時に、Claude Code で手動実行できるプロンプトを保存する
+ *
+ * @param {string} label - 用途ラベル（例: "script", "shot-plan"）
+ * @param {string} systemPrompt - システムプロンプト
+ * @param {string} userPrompt - ユーザープロンプト
+ * @param {string} [outputHint] - 出力先ヒント
+ * @returns {string} 保存先パス
+ */
+export function exportPrompt(label, systemPrompt, userPrompt, outputHint) {
+  const ts = timestamp();
+  const promptContent = `# Claude Code 手動実行プロンプト: ${label}
+# 生成日時: ${ts}
+# このファイルの使い方:
+#   1. Claude Code で以下のプロンプトを実行してください
+#   2. 出力を${outputHint || "適切なファイル"}に保存してください
+#   3. 保存後、パイプラインの次のステップに進めます
+
+## System Prompt
+${systemPrompt}
+
+## User Prompt
+${userPrompt}
+`;
+
+  const promptPath = `content/_prompts/${ts}_${label}.md`;
+  writeOutput(promptPath, promptContent);
+  return promptPath;
 }
 
 const DEFAULT_MODEL = "claude-sonnet-4-20250514";
@@ -69,15 +109,34 @@ function formatApiError(error) {
 /**
  * Claude API を呼び出してテキストを生成（リトライ付き）
  *
+ * ハイブリッドモード:
+ * - ANTHROPIC_API_KEY 設定済み → API で自動生成
+ * - ANTHROPIC_API_KEY 未設定 → プロンプトをファイルに書き出し、null を返す
+ *
  * @param {string} systemPrompt - システムプロンプト
  * @param {string} userPrompt - ユーザープロンプト
  * @param {object} options
  * @param {number} [options.maxTokens=4096] - 最大トークン数
  * @param {number} [options.temperature=0.7] - 温度パラメータ
  * @param {string} [options.model] - モデル名（省略時はデフォルト）
- * @returns {Promise<string>} 生成されたテキスト
+ * @param {string} [options.label] - 手動モード時のプロンプトラベル
+ * @param {string} [options.outputHint] - 手動モード時の出力先ヒント
+ * @returns {Promise<string|null>} 生成されたテキスト、手動モード時は null
  */
-export async function generate(systemPrompt, userPrompt, { maxTokens = 4096, temperature = 0.7, model } = {}) {
+export async function generate(
+  systemPrompt,
+  userPrompt,
+  { maxTokens = 4096, temperature = 0.7, model, label, outputHint } = {},
+) {
+  // ハイブリッドモード: API キー未設定時はプロンプト書き出し
+  if (!hasAnthropicKey()) {
+    const promptLabel = label || "claude-prompt";
+    const path = exportPrompt(promptLabel, systemPrompt, userPrompt, outputHint);
+    console.log(`  [Manual] ANTHROPIC_API_KEY 未設定 → プロンプトを書き出しました: ${path}`);
+    console.log(`  [Manual] Claude Code で上記プロンプトを実行し、結果を保存してください`);
+    return null;
+  }
+
   const anthropic = getClient();
 
   let lastError;

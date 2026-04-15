@@ -87,7 +87,14 @@ ${existingTopics.map((t) => `- ${t}`).join("\n")}
   const result = await generate(systemPrompt, userPrompt, {
     maxTokens: 4096,
     temperature: 0.8,
+    label: "topic-gen",
+    outputHint: `content/${channelId}/metadata/ 配下のトピック案ファイル`,
   });
+
+  // ハイブリッドモード: API未設定時は手動ワークフロー
+  if (result === null) {
+    return { path: null, outputPath: null, topics: null, manual: true };
+  }
 
   let topics;
   try {

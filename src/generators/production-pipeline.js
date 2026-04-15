@@ -23,6 +23,7 @@ import { runDescriptPipeline } from "../clients/descript-client.js";
 import { validateChannelId, validateTopic } from "../utils/validators.js";
 import { writeOutput, timestamp } from "../utils/file-helpers.js";
 import { manifestSchema, validateOutput } from "../utils/schemas.js";
+import { hasAnthropicKey } from "../utils/claude-client.js";
 
 /**
  * API キーの有無を確認（エラーを投げず true/false を返す）
@@ -61,31 +62,80 @@ export async function runPlanPhase(channelId, topic, options = {}) {
       angle: options.angle,
       sources: options.sources,
     });
-    results.script = scriptResult;
-    results.scriptPath = scriptResult.outputPath;
-    results.steps.push({ step: "script", status: "done", path: scriptResult.outputPath });
+    if (scriptResult.manual) {
+      results.script = scriptResult;
+      results.scriptPath = null;
+      results.steps.push({
+        step: "script",
+        status: "manual",
+        note: "ANTHROPIC_API_KEY 未設定 → プロンプトを書き出し済み。Claude Code で実行してください",
+      });
+    } else {
+      results.script = scriptResult;
+      results.scriptPath = scriptResult.outputPath;
+      results.steps.push({ step: "script", status: "done", path: scriptResult.outputPath });
+    }
+  }
+
+  // 台本がない場合（手動モードで新規生成時）、後続ステップはスキップ
+  if (!results.scriptPath) {
+    const manualNote = "台本が未生成のためスキップ — 台本生成後に再実行してください";
+    results.steps.push({ step: "shot_plan", status: "manual", note: manualNote });
+    results.steps.push({ step: "narration", status: "manual", note: manualNote });
+    results.steps.push({ step: "handoff", status: "manual", note: manualNote });
+    console.log(`  [2/4] ショットプラン: スキップ (台本未生成)`);
+    console.log(`  [3/4] ナレーション: スキップ (台本未生成)`);
+    console.log(`  [4/4] ハンドオフ: スキップ (台本未生成)`);
+    return results;
   }
 
   // Step 2: ショットプラン生成
   console.log(`  [2/4] ショットプラン生成中 ...`);
   const shotResult = await generateShotPlan(channelId, results.scriptPath, { format });
-  results.shotPlan = shotResult;
-  results.steps.push({ step: "shot_plan", status: "done", path: shotResult.outputPath });
+  if (shotResult.manual) {
+    results.shotPlan = shotResult;
+    results.steps.push({
+      step: "shot_plan",
+      status: "manual",
+      note: "ANTHROPIC_API_KEY 未設定 → プロンプトを書き出し済み",
+    });
+  } else {
+    results.shotPlan = shotResult;
+    results.steps.push({ step: "shot_plan", status: "done", path: shotResult.outputPath });
+  }
 
   // Step 3: ナレーション整形
   console.log(`  [3/4] ナレーション整形中 ...`);
   const narrationResult = await formatNarration(channelId, results.scriptPath);
   results.narration = narrationResult;
-  results.steps.push({ step: "narration", status: "done", path: narrationResult.outputPath });
+  if (narrationResult.narration?.localFallback) {
+    results.steps.push({
+      step: "narration",
+      status: "done",
+      path: narrationResult.outputPath,
+      note: "ローカルフォールバック（マーカー除去のみ）",
+    });
+  } else {
+    results.steps.push({ step: "narration", status: "done", path: narrationResult.outputPath });
+  }
 
   // Step 4: DaVinci ハンドオフノート
   console.log(`  [4/4] DaVinci ハンドオフノート生成中 ...`);
   const handoffResult = await generateHandoff(channelId, results.scriptPath, {
     format,
-    shotPlanPath: shotResult.outputPath,
+    shotPlanPath: shotResult.manual ? null : shotResult.outputPath,
   });
-  results.handoff = handoffResult;
-  results.steps.push({ step: "handoff", status: "done", path: handoffResult.outputPath });
+  if (handoffResult.manual) {
+    results.handoff = handoffResult;
+    results.steps.push({
+      step: "handoff",
+      status: "manual",
+      note: "ANTHROPIC_API_KEY 未設定 → プロンプトを書き出し済み",
+    });
+  } else {
+    results.handoff = handoffResult;
+    results.steps.push({ step: "handoff", status: "done", path: handoffResult.outputPath });
+  }
 
   return results;
 }
@@ -109,7 +159,7 @@ export async function runGeneratePhase(channelId, planResults, topic) {
   if (hasApiKey("RUNWAY_API_KEY")) {
     console.log(`  [5/7] Runway 動画生成中 ...`);
     try {
-      const shotPlan = planResults.shotPlan.shotPlan;
+      const shotPlan = planResults.shotPlan?.shotPlan;
       if (shotPlan && !shotPlan.parseError && shotPlan.shots) {
         const runwayResult = await runwayGeneratePlan(shotPlan.shots, channelId);
         results.runway = runwayResult;
@@ -132,7 +182,7 @@ export async function runGeneratePhase(channelId, planResults, topic) {
       step: "runway",
       status: "manual",
       note: "RUNWAY_API_KEY 未設定 — ショットプランを元に手動で生成してください",
-      shotPlanPath: planResults.shotPlan.outputPath,
+      shotPlanPath: planResults.shotPlan?.outputPath || null,
     });
     console.log(`  [5/7] Runway: スキップ (API キー未設定 → ショットプランを手動で使用)`);
   }
@@ -141,7 +191,7 @@ export async function runGeneratePhase(channelId, planResults, topic) {
   if (hasApiKey("ELEVENLABS_API_KEY")) {
     console.log(`  [6/7] ElevenLabs 音声生成中 ...`);
     try {
-      const narrationText = planResults.narration.narration.full_text;
+      const narrationText = planResults.narration?.narration?.full_text;
       if (narrationText) {
         const audioResult = await elevenlabsGenerate(channelId, narrationText);
         results.elevenlabs = audioResult;
@@ -167,7 +217,7 @@ export async function runGeneratePhase(channelId, planResults, topic) {
       step: "elevenlabs",
       status: "manual",
       note: "ELEVENLABS_API_KEY 未設定 — ナレーションテキストを手動で音声化してください",
-      narrationTextPath: planResults.narration.textPath,
+      narrationTextPath: planResults.narration?.textPath || null,
     });
     console.log(`  [6/7] ElevenLabs: スキップ (API キー未設定 → ナレーションテキストを手動で使用)`);
   }
@@ -230,8 +280,11 @@ export async function runFullProduction(channelId, topic, options = {}) {
   console.log(`  Channel: ${channelId} | Topic: "${topic}"`);
   console.log(`  Format: ${options.format || "shorts"}\n`);
 
-  // Phase 1: 計画（Claude APIのみ）
-  console.log(`  --- Phase 1: Planning (Claude API) ---`);
+  // Phase 1: 計画（Claude API — 未設定時はプロンプト書き出し）
+  if (!hasAnthropicKey()) {
+    console.log(`  [Hybrid] ANTHROPIC_API_KEY 未設定 — 計画フェーズはプロンプト書き出しモード`);
+  }
+  console.log(`  --- Phase 1: Planning ---`);
   const planResults = await runPlanPhase(channelId, topic, options);
 
   // Phase 2: 生成（外部API、利用可能な範囲で）

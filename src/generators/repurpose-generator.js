@@ -84,7 +84,14 @@ ${monetConfig.descriptionTemplate}
   const result = await generate(systemPrompt, userPrompt, {
     maxTokens: 4096,
     temperature: 0.6,
+    label: "repurpose",
+    outputHint: `content/${channelId}/metadata/ 配下のマルチプラットフォーム展開JSON`,
   });
+
+  // ハイブリッドモード: API未設定時は手動ワークフロー
+  if (result === null) {
+    return { path: null, outputPath: null, repurpose: null, manual: true };
+  }
 
   let repurposeData;
   try {

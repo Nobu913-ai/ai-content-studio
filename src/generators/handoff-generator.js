@@ -71,7 +71,14 @@ Write the handoff note as clean markdown.`;
   const result = await generate(systemPrompt, userPrompt, {
     maxTokens: 3072,
     temperature: 0.4,
+    label: "handoff",
+    outputHint: `content/${channelId}/metadata/ 配下のハンドオフノート`,
   });
+
+  // ハイブリッドモード: API未設定時は手動ワークフロー
+  if (result === null) {
+    return { path: null, outputPath: null, handoff: null, manual: true };
+  }
 
   const ts = timestamp();
   const slug = scriptPath.split("/").pop().replace(/\.md$/, "");

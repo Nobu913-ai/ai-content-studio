@@ -9,6 +9,12 @@ import { checkCompliance } from "./compliance-checker.js";
  */
 export async function generateFull(channelId, topic, options = {}) {
   const scriptResult = await generateScript(channelId, topic, options);
+
+  // 台本が手動モードの場合、SEOもスキップ
+  if (scriptResult.manual) {
+    return { script: scriptResult, seo: { manual: true }, manual: true };
+  }
+
   const seoResult = await generateSEO(channelId, scriptResult.outputPath);
   return { script: scriptResult, seo: seoResult };
 }
@@ -20,6 +26,19 @@ export async function generateFull(channelId, topic, options = {}) {
 export async function generateFullPipeline(channelId, topic, options = {}) {
   // Step 1: 台本
   const scriptResult = await generateScript(channelId, topic, options);
+
+  // 台本が手動モードの場合、後続ステップはスキップ
+  if (scriptResult.manual) {
+    console.log(`  [Hybrid] 台本が手動モード — 後続ステップをスキップ`);
+    return {
+      script: scriptResult,
+      seo: { manual: true },
+      shorts: { manual: true },
+      repurpose: { manual: true },
+      compliance: { manual: true },
+      manual: true,
+    };
+  }
 
   // Step 2: SEO（タイトル・説明文・タグ）
   const seoResult = await generateSEO(channelId, scriptResult.outputPath);

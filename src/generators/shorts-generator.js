@@ -61,7 +61,14 @@ ${scriptContent.slice(0, 5000)}
   const result = await generate(systemPrompt, userPrompt, {
     maxTokens: 4096,
     temperature: 0.8,
+    label: "shorts",
+    outputHint: `content/${channelId}/scripts/ 配下のShorts台本JSON`,
   });
+
+  // ハイブリッドモード: API未設定時は手動ワークフロー
+  if (result === null) {
+    return { path: null, outputPath: null, shorts: null, manual: true };
+  }
 
   let shortsData;
   try {
@@ -158,7 +165,14 @@ Each Short should test a DIFFERENT angle on this topic to find the best-performi
   const result = await generate(systemPrompt, userPrompt, {
     maxTokens: 4096,
     temperature: 0.8,
+    label: "shorts-first",
+    outputHint: `content/${channelId}/scripts/ 配下のShorts先行テスト台本JSON`,
   });
+
+  // ハイブリッドモード: API未設定時は手動ワークフロー
+  if (result === null) {
+    return { path: null, outputPath: null, shorts: null, manual: true };
+  }
 
   let shortsData;
   try {

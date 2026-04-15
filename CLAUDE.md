@@ -58,7 +58,7 @@ Claude API + 4ツール（Runway / ElevenLabs / Descript / DaVinci Resolve）を
 - **Runtime**: Node.js (ESM)
 - **AI**: Claude API (`@anthropic-ai/sdk`) -- モデルは `claude-sonnet-4-20250514`
 - **CLI**: Commander.js
-- **環境変数**: `ANTHROPIC_API_KEY` が必須。`RUNWAY_API_KEY`, `ELEVENLABS_API_KEY`, `DESCRIPT_API_KEY` は任意。
+- **環境変数**: 全APIキー任意。`ANTHROPIC_API_KEY` 設定時はCLI自動生成、未設定時はプロンプト書き出し→Claude Code手動実行のハイブリッドモード。`RUNWAY_API_KEY`, `ELEVENLABS_API_KEY`, `DESCRIPT_API_KEY` も任意。
 - **品質保証**: zod によるJSON出力スキーマ検証、ESLint、Prettier、入力バリデーション、パストラバーサル防止
 - **エラー処理**: 指数バックオフリトライ（429/5xx対応）
 - **テスト**: Node.js built-in test runner（102テスト）
@@ -172,9 +172,15 @@ acs produce genz-money "新NISAの始め方"       # 全工程（外部API連携
 - **ローカルパス**（ElevenLabs音声等）: Descriptには渡さない。手動インポート対象として manifest に記録
 - Descript には公開URL のみ渡す。ローカルパス混在は禁止
 
+### ハイブリッドモード（ANTHROPIC_API_KEY 任意化）
+- `ANTHROPIC_API_KEY` 設定済み → Claude API で自動生成
+- `ANTHROPIC_API_KEY` 未設定 → プロンプトを `content/_prompts/` に書き出し、Claude Code で手動実行
+- ナレーション整形のみローカルフォールバック（マーカー除去）で自動処理可
+- 手動モード時、台本未生成の場合は後続ステップ（ショットプラン・ハンドオフ等）もスキップ
+- 既存台本パス指定時（`--script-path`）はプロンプト書き出しのみで後続ステップも実行可
+
 ### Graceful Degradation
-- API キー未設定のツールはエラーではなくスキップ。`manual` ステータスで manifest に記録
-- 計画フェーズは `ANTHROPIC_API_KEY` のみで完走
+- 全APIキー未設定でもエラーにならない。`manual` ステータスで manifest に記録
 - 外部API障害時もパイプラインは計画フェーズまで完走
 
 ### ハンドオフパッケージ構造

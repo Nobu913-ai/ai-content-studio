@@ -68,17 +68,24 @@ ${scriptContent.slice(0, 6000)}
   const result = await generate(systemPrompt, userPrompt, {
     maxTokens: 4096,
     temperature: 0.3,
+    label: "narration",
+    outputHint: `content/${channelId}/scripts/ 配下のナレーションテキスト`,
   });
 
   let narration;
-  try {
-    const cleaned = result
-      .replace(/```json\n?/g, "")
-      .replace(/```\n?/g, "")
-      .trim();
-    narration = JSON.parse(cleaned);
-  } catch {
-    narration = { full_text: cleanScriptForNarration(scriptContent), parseError: true };
+  if (result === null) {
+    // ハイブリッドモード: API未設定時はローカルフォールバックでマーカー除去
+    narration = { full_text: cleanScriptForNarration(scriptContent), localFallback: true };
+  } else {
+    try {
+      const cleaned = result
+        .replace(/```json\n?/g, "")
+        .replace(/```\n?/g, "")
+        .trim();
+      narration = JSON.parse(cleaned);
+    } catch {
+      narration = { full_text: cleanScriptForNarration(scriptContent), parseError: true };
+    }
   }
 
   const ts = timestamp();

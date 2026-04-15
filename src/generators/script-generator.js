@@ -94,7 +94,14 @@ Make the hook irresistible — the viewer should feel they MUST keep watching.`;
   const script = await generate(systemPrompt, userPrompt, {
     maxTokens: 8192,
     temperature: 0.75,
+    label: "script",
+    outputHint: `content/${channelId}/scripts/ 配下の台本ファイル`,
   });
+
+  // ハイブリッドモード: API未設定時は手動ワークフロー
+  if (script === null) {
+    return { path: null, outputPath: null, script: null, sourceMetadata: null, manual: true };
+  }
 
   const ts = timestamp();
   const slug = topic
