@@ -225,6 +225,7 @@ ai-content-studio/
 │       ├── calendar/            # カレンダー
 │       └── kpi/                 # KPIデータ
 ├── docs/
+│   ├── mvp-smoke-test.md        # MVPスモークテスト計画
 │   ├── e2e-walkthrough.md       # E2Eウォークスルー（1本通し手順）
 │   ├── mvp-plan.md              # MVP実装計画
 │   ├── 90day-plan.md            # 90日実行計画

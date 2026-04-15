@@ -97,6 +97,7 @@ src/utils/               -- ユーティリティ
   api-retry.js           -- 外部API共通リトライ（指数バックオフ）
 src/tests/               -- ユニットテスト（102テスト）
 content/<channel>/       -- 生成コンテンツ（scripts/, metadata/, audio/, handoff/, calendar/, kpi/）
+docs/mvp-smoke-test.md   -- MVPスモークテスト計画（実行コマンド・手動介入・完了条件・次フェーズ）
 docs/e2e-walkthrough.md  -- E2Eウォークスルー（1本通しの制作手順・手動ステップ標準オペレーション）
 docs/mvp-plan.md         -- MVP実装計画（優先順位・API設計・未解決論点）
 docs/90day-plan.md       -- 90日実行計画
