@@ -6,8 +6,11 @@ import { Command } from "commander";
 import { generateScript } from "./generators/script-generator.js";
 import { generateSEO } from "./generators/seo-generator.js";
 import { generateCalendar, formatCalendarForDisplay } from "./generators/calendar-generator.js";
-import { generateFull } from "./generators/batch-generator.js";
+import { generateFull, generateFullPipeline } from "./generators/batch-generator.js";
+import { generateShorts } from "./generators/shorts-generator.js";
+import { generateRepurpose } from "./generators/repurpose-generator.js";
 import { getChannel, getChannelIds } from "../config/channels.js";
+import { getMonetization, revenueTargets } from "../config/monetization.js";
 import { resolve } from "./utils/file-helpers.js";
 
 const program = new Command();
@@ -15,7 +18,7 @@ const program = new Command();
 program
   .name("acs")
   .description("AI Content Studio — 3チャンネル統合コンテンツ制作CLI")
-  .version("1.0.0");
+  .version("2.0.0");
 
 // ─── チャンネル一覧 ──────────────────────────────
 program
@@ -139,6 +142,141 @@ program
         for (const t of result.seo.seo.titles) {
           console.log(`    -> ${t.text}`);
         }
+      }
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── 完全パイプライン（台本 + SEO + Shorts + 全SNS展開） ──────────────────────────────
+program
+  .command("pipeline <channel> <topic>")
+  .description("1本の動画から全SNS素材を一括生成（台本+SEO+Shorts3本+YouTube説明文+Twitter+Instagram）")
+  .option("-a, --angle <angle>", "特定の切り口を指定")
+  .action(async (channelId, topic, opts) => {
+    console.log(`\n  === Full Content Pipeline ===`);
+    console.log(`  Channel: ${channelId} | Topic: "${topic}"\n`);
+    try {
+      console.log(`  [1/4] Generating script ...`);
+      const result = await generateFullPipeline(channelId, topic, { angle: opts.angle });
+
+      console.log(`  [2/4] SEO metadata ... done`);
+      console.log(`  [3/4] Shorts (3 clips) ... done`);
+      console.log(`  [4/4] Multi-platform content ... done`);
+
+      console.log(`\n  === Output Files ===`);
+      console.log(`  Script:     ${result.script.path}`);
+      console.log(`  SEO:        ${result.seo.path}`);
+      console.log(`  Shorts:     ${result.shorts.path}`);
+      console.log(`  Repurpose:  ${result.repurpose.path}`);
+
+      if (!result.seo.seo.parseError && result.seo.seo.titles) {
+        console.log(`\n  Suggested titles:`);
+        for (const t of result.seo.seo.titles) {
+          console.log(`    -> ${t.text}`);
+        }
+      }
+
+      if (!result.shorts.shorts.parseError && result.shorts.shorts.shorts) {
+        console.log(`\n  Shorts generated:`);
+        for (const s of result.shorts.shorts.shorts) {
+          console.log(`    [${s.viral_score}] ${s.title}`);
+          console.log(`      Hook: "${s.hook}"`);
+        }
+      }
+
+      console.log(`\n  Total files generated: 4`);
+      console.log(`  Ready for: YouTube + TikTok + Instagram + Twitter/X\n`);
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── Shorts 生成 ──────────────────────────────
+program
+  .command("shorts <channel> <script-path>")
+  .description("長尺台本から Shorts/TikTok/Reels 用スクリプト3本を生成")
+  .action(async (channelId, scriptPath) => {
+    console.log(`\n  Generating 3 Shorts from script ...\n`);
+    try {
+      const result = await generateShorts(channelId, scriptPath);
+      console.log(`  Shorts saved: ${result.path}`);
+      if (!result.shorts.parseError && result.shorts.shorts) {
+        for (const s of result.shorts.shorts) {
+          console.log(`\n  [${s.viral_score}] ${s.title} (~${s.estimated_seconds}s)`);
+          console.log(`    Hook: "${s.hook}"`);
+          console.log(`    TikTok tags: ${(s.hashtags?.tiktok || []).join(" ")}`);
+        }
+      }
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── マルチプラットフォーム展開 ──────────────────────────────
+program
+  .command("repurpose <channel> <script-path>")
+  .description("台本からYouTube説明文(アフィリエイト入り)+Twitter+Instagramコンテンツを生成")
+  .action(async (channelId, scriptPath) => {
+    console.log(`\n  Generating multi-platform content ...\n`);
+    try {
+      const result = await generateRepurpose(channelId, scriptPath);
+      console.log(`  Repurpose data saved: ${result.path}`);
+      if (!result.repurpose.parseError) {
+        if (result.repurpose.twitter_thread) {
+          console.log(`\n  Twitter thread (${result.repurpose.twitter_thread.length} tweets)`);
+        }
+        if (result.repurpose.affiliate_recommendations) {
+          console.log(`  Affiliate placements: ${result.repurpose.affiliate_recommendations.length}`);
+        }
+        console.log(`  Instagram carousel: ${(result.repurpose.instagram_carousel_slides || []).length} slides`);
+      }
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── 収益化ダッシュボード ──────────────────────────────
+program
+  .command("monetize [channel]")
+  .description("収益化戦略・アフィリエイト・収益目標を表示")
+  .action((channelId) => {
+    try {
+      const targets = revenueTargets;
+      if (channelId) {
+        const config = getMonetization(channelId);
+        const ch = getChannel(channelId);
+        console.log(`\n  === ${ch.name} 収益化プラン ===\n`);
+        console.log(`  月額目標: ¥${config.revenueTarget.toLocaleString()}`);
+        console.log(`  優先度: ${config.priority}/3\n`);
+
+        console.log(`  --- アフィリエイト ---`);
+        for (const a of config.affiliates) {
+          const earning = a.cpa ? `CPA ¥${a.cpa}` : `Commission ${a.commission}`;
+          console.log(`    ${a.name} (${a.asp}) — ${earning}`);
+        }
+
+        console.log(`\n  --- デジタル商品 ---`);
+        for (const p of config.digitalProducts) {
+          console.log(`    ${p.name} — ¥${p.price} (${p.platform})${p.note ? ` [${p.note}]` : ""}`);
+        }
+
+        console.log(`\n  --- コンプライアンス ---`);
+        for (const c of config.compliance) {
+          console.log(`    ! ${c}`);
+        }
+      } else {
+        console.log(`\n  === 月次収益ロードマップ ===\n`);
+        for (const [month, data] of Object.entries(targets)) {
+          const b = data.breakdown;
+          console.log(`  ${month}: ¥${data.total.toLocaleString()}`);
+          console.log(`    Affiliate: ¥${b.affiliate.toLocaleString()} | Digital: ¥${b.digital.toLocaleString()} | Ads: ¥${b.ads.toLocaleString()} | Sponsor: ¥${b.sponsor.toLocaleString()}`);
+        }
+        console.log(`\n  チャンネル別詳細: node src/cli.js monetize <channel>\n`);
       }
     } catch (err) {
       console.error(`  Error: ${err.message}`);

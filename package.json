@@ -1,6 +1,6 @@
 {
   "name": "ai-content-studio",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "3チャンネル統合 YouTube コンテンツ制作パイプライン (Claude API)",
   "main": "src/cli.js",
   "scripts": {
