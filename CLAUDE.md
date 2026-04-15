@@ -92,11 +92,12 @@ src/utils/               -- ユーティリティ
   claude-client.js       -- Claude API クライアント（リトライ付き）
   file-helpers.js        -- ファイル操作
   validators.js          -- 入力バリデーション
-  schemas.js             -- zod スキーマ定義（SEO/Shorts/Compliance/SourceMetadata）
+  schemas.js             -- zod スキーマ定義（SEO/Shorts/Compliance/SourceMetadata/Manifest）
   source-extractor.js    -- 金融ソースメタデータ抽出
   api-retry.js           -- 外部API共通リトライ（指数バックオフ）
 src/tests/               -- ユニットテスト（102テスト）
 content/<channel>/       -- 生成コンテンツ（scripts/, metadata/, audio/, handoff/, calendar/, kpi/）
+docs/e2e-walkthrough.md  -- E2Eウォークスルー（1本通しの制作手順・手動ステップ標準オペレーション）
 docs/mvp-plan.md         -- MVP実装計画（優先順位・API設計・未解決論点）
 docs/90day-plan.md       -- 90日実行計画
 docs/improvement-roadmap.md -- 改善ロードマップ
@@ -142,7 +143,7 @@ acs pipeline <channel> <topic>      # コンテンツ全工程一括
 
 ### KPIフィードバック
 ```bash
-acs kpi <channel> <video-id> --views 2500 --ctr 8.5 --retention 62
+acs kpi <channel> <video-id> --views 2500 --ctr 8.5 --retention 62 [--manifest <path>]
 acs kpi-summary <channel>
 ```
 
@@ -156,6 +157,35 @@ acs pipeline genz-money "新NISAの始め方"      # 長尺化
 # 4ツール連携制作
 acs produce-plan genz-money "新NISAの始め方"  # 計画（Claude APIのみ）
 acs produce genz-money "新NISAの始め方"       # 全工程（外部API連携）
+```
+
+## 制作パイプライン設計
+
+### フェーズ構成
+1. **計画フェーズ**（Claude APIのみ）: 台本 → ショットプラン → ナレーション整形 → ハンドオフノート
+2. **生成フェーズ**（外部API）: Runway動画 → ElevenLabs音声 → Descriptインポート/AI編集
+3. **マニフェスト出力**: 全ステップの状態・出力ファイル・メディア・エラーをJSON追跡
+
+### メディア受け渡しルール
+- **リモートURL**（Runway出力等）: Descriptに自動投入可
+- **ローカルパス**（ElevenLabs音声等）: Descriptには渡さない。手動インポート対象として manifest に記録
+- Descript には公開URL のみ渡す。ローカルパス混在は禁止
+
+### Graceful Degradation
+- API キー未設定のツールはエラーではなくスキップ。`manual` ステータスで manifest に記録
+- 計画フェーズは `ANTHROPIC_API_KEY` のみで完走
+- 外部API障害時もパイプラインは計画フェーズまで完走
+
+### ハンドオフパッケージ構造
+```
+content/<channel>/handoff/<ts>_<slug>/
+├── package.json     -- アセットマニフェスト + チェックリスト + missingAssets
+├── handoff.md       -- 編集ハンドオフノート
+├── docs/            -- 台本・ショットプラン・ナレーション等
+└── assets/
+    ├── video/       -- Runway 生成動画
+    ├── audio/       -- ElevenLabs 音声
+    └── stills/      -- 静止画素材
 ```
 
 ## コーディング規約

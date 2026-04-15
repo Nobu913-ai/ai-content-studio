@@ -18,6 +18,7 @@ export function saveKPI(channelId, videoId, data) {
     title: data.title || "",
     type: data.type || "longform", // "shorts" | "longform"
     publishedAt: data.publishedAt || "",
+    manifestPath: data.manifestPath || null, // 制作マニフェストへの参照
     metrics: {
       views: Number(data.views) || 0,
       ctr: Number(data.ctr) || 0,
@@ -116,6 +117,29 @@ export function getWinningPatterns(channelId) {
   summary += `\n## Channel Stats: avg ${avgViews} views, avg ${avgRetention}% retention (${allKPI.length} videos total)\n`;
 
   return summary;
+}
+
+/**
+ * マニフェストパスからKPIエントリを検索
+ * @param {string} channelId
+ * @param {string} manifestPath - マニフェストJSONの相対パス
+ * @returns {object|null} 該当するKPIエントリ or null
+ */
+export function findKPIByManifest(channelId, manifestPath) {
+  const allKPI = loadAllKPI(channelId);
+  return allKPI.find((k) => k.manifestPath === manifestPath) || null;
+}
+
+/**
+ * トピック名からKPIエントリを検索
+ * @param {string} channelId
+ * @param {string} topic - トピック名（部分一致）
+ * @returns {Array<object>} 該当するKPIエントリ配列
+ */
+export function findKPIByTopic(channelId, topic) {
+  const allKPI = loadAllKPI(channelId);
+  const normalized = topic.toLowerCase();
+  return allKPI.filter((k) => k.content.topic && k.content.topic.toLowerCase().includes(normalized));
 }
 
 /**

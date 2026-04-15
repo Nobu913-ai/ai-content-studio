@@ -348,6 +348,7 @@ program
   .option("--angle <angle>", "切り口")
   .option("--topic <topic>", "トピック名")
   .option("--date <date>", "投稿日 (YYYY-MM-DD)")
+  .option("--manifest <path>", "制作マニフェストJSONパス（制作 → KPI紐づけ）")
   .action((channelId, videoId, opts) => {
     try {
       const result = saveKPI(channelId, videoId, {
@@ -365,6 +366,7 @@ program
         angle: opts.angle,
         topic: opts.topic,
         publishedAt: opts.date,
+        manifestPath: opts.manifest,
       });
 
       const icon = result.kpi.verdict === "win" ? "[W]" : result.kpi.verdict === "lose" ? "[L]" : "[-]";
@@ -373,6 +375,9 @@ program
       console.log(
         `  Views: ${result.kpi.metrics.views} | CTR: ${result.kpi.metrics.ctr}% | Retention: ${result.kpi.metrics.retentionRate}%`,
       );
+      if (result.kpi.manifestPath) {
+        console.log(`  Manifest: ${result.kpi.manifestPath}`);
+      }
       console.log(`\n  このデータは次回の shorts-first 生成時に自動で参照されます。\n`);
     } catch (err) {
       console.error(`  Error: ${err.message}`);

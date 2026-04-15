@@ -85,6 +85,7 @@ acs pipeline <channel> <topic>        # 全工程一括（5ステップ）
 ### KPIフィードバック
 ```bash
 acs kpi <channel> <video-id> --views 2500 --ctr 8.5 --retention 62  # KPI入力
+acs kpi <channel> <video-id> --manifest content/.../manifest.json  # マニフェスト紐づけ
 acs kpi-summary <channel>             # 勝ち/負けパターン分析
 ```
 
@@ -224,6 +225,7 @@ ai-content-studio/
 │       ├── calendar/            # カレンダー
 │       └── kpi/                 # KPIデータ
 ├── docs/
+│   ├── e2e-walkthrough.md       # E2Eウォークスルー（1本通し手順）
 │   ├── mvp-plan.md              # MVP実装計画
 │   ├── 90day-plan.md            # 90日実行計画
 │   └── improvement-roadmap.md   # 改善ロードマップ
