@@ -2,6 +2,7 @@ import { generateScript } from "./script-generator.js";
 import { generateSEO } from "./seo-generator.js";
 import { generateShorts } from "./shorts-generator.js";
 import { generateRepurpose } from "./repurpose-generator.js";
+import { checkCompliance } from "./compliance-checker.js";
 
 /**
  * 台本生成 → SEO最適化 を一気通貫で実行
@@ -29,10 +30,14 @@ export async function generateFullPipeline(channelId, topic, options = {}) {
   // Step 4: 全プラットフォーム展開（YouTube説明文、Twitter、Instagram）
   const repurposeResult = await generateRepurpose(channelId, scriptResult.outputPath);
 
+  // Step 5: コンプライアンス・品質チェック
+  const complianceResult = await checkCompliance(channelId, scriptResult.outputPath);
+
   return {
     script: scriptResult,
     seo: seoResult,
     shorts: shortsResult,
     repurpose: repurposeResult,
+    compliance: complianceResult,
   };
 }

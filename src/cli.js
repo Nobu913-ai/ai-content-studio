@@ -7,8 +7,9 @@ import { generateScript } from "./generators/script-generator.js";
 import { generateSEO } from "./generators/seo-generator.js";
 import { generateCalendar, formatCalendarForDisplay } from "./generators/calendar-generator.js";
 import { generateFull, generateFullPipeline } from "./generators/batch-generator.js";
-import { generateShorts } from "./generators/shorts-generator.js";
+import { generateShorts, generateShortsFromTopic } from "./generators/shorts-generator.js";
 import { generateRepurpose } from "./generators/repurpose-generator.js";
+import { checkCompliance, formatComplianceReport } from "./generators/compliance-checker.js";
 import { getChannel, getChannelIds } from "../config/channels.js";
 import { getMonetization, revenueTargets } from "../config/monetization.js";
 import { resolve } from "./utils/file-helpers.js";
@@ -152,24 +153,26 @@ program
 // ─── 完全パイプライン（台本 + SEO + Shorts + 全SNS展開） ──────────────────────────────
 program
   .command("pipeline <channel> <topic>")
-  .description("1本の動画から全SNS素材を一括生成（台本+SEO+Shorts3本+YouTube説明文+Twitter+Instagram）")
+  .description("1本の動画から全SNS素材を一括生成（台本+SEO+Shorts+SNS展開+コンプラチェック）")
   .option("-a, --angle <angle>", "特定の切り口を指定")
   .action(async (channelId, topic, opts) => {
     console.log(`\n  === Full Content Pipeline ===`);
     console.log(`  Channel: ${channelId} | Topic: "${topic}"\n`);
     try {
-      console.log(`  [1/4] Generating script ...`);
+      console.log(`  [1/5] Generating script ...`);
       const result = await generateFullPipeline(channelId, topic, { angle: opts.angle });
 
-      console.log(`  [2/4] SEO metadata ... done`);
-      console.log(`  [3/4] Shorts (3 clips) ... done`);
-      console.log(`  [4/4] Multi-platform content ... done`);
+      console.log(`  [2/5] SEO metadata ... done`);
+      console.log(`  [3/5] Shorts (3 clips) ... done`);
+      console.log(`  [4/5] Multi-platform content ... done`);
+      console.log(`  [5/5] Compliance check ... done`);
 
       console.log(`\n  === Output Files ===`);
       console.log(`  Script:     ${result.script.path}`);
       console.log(`  SEO:        ${result.seo.path}`);
       console.log(`  Shorts:     ${result.shorts.path}`);
       console.log(`  Repurpose:  ${result.repurpose.path}`);
+      console.log(`  Compliance: ${result.compliance.path}`);
 
       if (!result.seo.seo.parseError && result.seo.seo.titles) {
         console.log(`\n  Suggested titles:`);
@@ -186,8 +189,51 @@ program
         }
       }
 
-      console.log(`\n  Total files generated: 4`);
+      if (result.compliance && !result.compliance.check.parseError) {
+        const c = result.compliance.check;
+        const icon = (v) => v === "pass" ? "[OK]" : v === "warn" ? "[!!]" : "[NG]";
+        console.log(`\n  Compliance: ${icon(c.overall_verdict)} ${c.overall_score}/100`);
+        if (c.summary) console.log(`  ${c.summary}`);
+      }
+
+      console.log(`\n  Total files generated: 5`);
       console.log(`  Ready for: YouTube + TikTok + Instagram + Twitter/X\n`);
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── Shorts先行テスト（トピックから直接Shorts生成） ──────────────────────────────
+program
+  .command("shorts-first <channel> <topic>")
+  .description("Shorts先行戦略: トピックから直接Shorts3本を生成し仮説検証（長尺台本なし）")
+  .action(async (channelId, topic) => {
+    console.log(`\n  === Shorts-First Hypothesis Test ===`);
+    console.log(`  Channel: ${channelId} | Topic: "${topic}"\n`);
+    console.log(`  Generating 3 test Shorts with different angles ...\n`);
+    try {
+      const result = await generateShortsFromTopic(channelId, topic);
+      console.log(`  Shorts saved: ${result.path}`);
+
+      if (!result.shorts.parseError) {
+        if (result.shorts.strategy) {
+          console.log(`\n  Strategy: ${result.shorts.strategy}`);
+        }
+        if (result.shorts.shorts) {
+          for (const s of result.shorts.shorts) {
+            console.log(`\n  [${s.viral_score}] ${s.title}`);
+            console.log(`    Angle: ${s.angle}`);
+            console.log(`    Hook: "${s.hook}"`);
+            console.log(`    TikTok: ${(s.hashtags?.tiktok || []).join(" ")}`);
+            if (s.longform_potential) {
+              console.log(`    -> Long-form: ${s.longform_potential}`);
+            }
+          }
+        }
+        console.log(`\n  Next: Post these Shorts and track performance.`);
+        console.log(`  Winner → run 'acs pipeline <channel> <topic>' for full long-form production.\n`);
+      }
     } catch (err) {
       console.error(`  Error: ${err.message}`);
       process.exit(1);
@@ -234,6 +280,23 @@ program
         }
         console.log(`  Instagram carousel: ${(result.repurpose.instagram_carousel_slides || []).length} slides`);
       }
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── コンプライアンスチェック ──────────────────────────────
+program
+  .command("check <channel> <script-path>")
+  .description("台本のコンプライアンス・品質チェック（誇大表現、AI臭さ、金融コンプラ、独自性）")
+  .option("-t, --titles <titles...>", "過去の動画タイトル（重複チェック用）")
+  .action(async (channelId, scriptPath, opts) => {
+    console.log(`\n  Compliance check for [${channelId}] ...\n`);
+    try {
+      const result = await checkCompliance(channelId, scriptPath, opts.titles || []);
+      console.log(`  Report saved: ${result.path}`);
+      console.log(formatComplianceReport(result.check));
     } catch (err) {
       console.error(`  Error: ${err.message}`);
       process.exit(1);
