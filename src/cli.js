@@ -11,13 +11,18 @@ import { generateShorts, generateShortsFromTopic } from "./generators/shorts-gen
 import { generateRepurpose } from "./generators/repurpose-generator.js";
 import { checkCompliance, formatComplianceReport } from "./generators/compliance-checker.js";
 import { saveKPI, loadAllKPI, formatKPISummary } from "./generators/kpi-tracker.js";
+import { generateShotPlan, formatShotPlan } from "./generators/shot-planner.js";
+import { formatNarration, formatNarrationSummary } from "./generators/narration-formatter.js";
+import { generateHandoff } from "./generators/handoff-generator.js";
+import { runPlanPhase, runFullProduction, formatProductionSummary } from "./generators/production-pipeline.js";
 import { getChannel, getChannelIds } from "../config/channels.js";
 import { getMonetization, revenueTargets } from "../config/monetization.js";
+import { tools, voiceRouting, deferredTools } from "../config/tools.js";
 import { resolve } from "./utils/file-helpers.js";
 
 const program = new Command();
 
-program.name("acs").description("AI Content Studio — 3チャンネル統合コンテンツ制作CLI").version("2.2.0");
+program.name("acs").description("AI Content Studio — 3チャンネル統合コンテンツ制作CLI + 4ツール連携").version("3.0.0");
 
 // ─── チャンネル一覧 ──────────────────────────────
 program
@@ -447,6 +452,161 @@ program
       console.log(`      Scripts: ${scriptCount} | SEO: ${metaCount} | Calendars: ${calCount} | Last: ${lastUpdated}`);
       console.log();
     }
+  });
+
+// ─── ショットプラン生成 ──────────────────────────────
+program
+  .command("shot-plan <channel> <script-path>")
+  .description("台本からRunway用ショットプラン（映像プロンプト群）を生成")
+  .option("-f, --format <format>", "shorts or longform", "shorts")
+  .action(async (channelId, scriptPath, opts) => {
+    console.log(`\n  Generating shot plan for [${channelId}] (${opts.format}) ...\n`);
+    try {
+      const result = await generateShotPlan(channelId, scriptPath, { format: opts.format });
+      console.log(`  Shot plan saved: ${result.path}`);
+      console.log(formatShotPlan(result.shotPlan));
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── ナレーション整形 ──────────────────────────────
+program
+  .command("narration <channel> <script-path>")
+  .description("台本からElevenLabs用ナレーションテキストを整形")
+  .action(async (channelId, scriptPath) => {
+    console.log(`\n  Formatting narration for [${channelId}] ...\n`);
+    try {
+      const result = await formatNarration(channelId, scriptPath);
+      console.log(`  Narration JSON: ${result.path}`);
+      console.log(`  Narration text: ${result.textPath}`);
+      console.log(formatNarrationSummary(result.narration));
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── DaVinci ハンドオフ ──────────────────────────────
+program
+  .command("handoff <channel> <script-path>")
+  .description("DaVinci Resolve用の編集ハンドオフノートを生成")
+  .option("-f, --format <format>", "shorts or longform", "shorts")
+  .option("-s, --shot-plan <path>", "ショットプランJSONパス")
+  .action(async (channelId, scriptPath, opts) => {
+    console.log(`\n  Generating DaVinci handoff for [${channelId}] ...\n`);
+    try {
+      const result = await generateHandoff(channelId, scriptPath, {
+        format: opts.format,
+        shotPlanPath: opts.shotPlan,
+      });
+      console.log(`  Handoff note saved: ${result.path}`);
+      console.log(`\n  ${result.handoff.slice(0, 500)}...\n`);
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── 制作パイプライン（計画フェーズ） ──────────────────────────────
+program
+  .command("produce-plan <channel> <topic>")
+  .description("制作計画: 台本 → ショットプラン → ナレーション整形 → ハンドオフノート（Claude APIのみ）")
+  .option("-a, --angle <angle>", "特定の切り口を指定")
+  .option("-f, --format <format>", "shorts or longform", "shorts")
+  .option("-s, --sources <urls...>", "一次情報URL（金融系）")
+  .option("-p, --script-path <path>", "既存台本パス（新規生成をスキップ）")
+  .action(async (channelId, topic, opts) => {
+    console.log(`\n  === Production Plan Phase ===`);
+    console.log(`  Channel: ${channelId} | Topic: "${topic}" | Format: ${opts.format}\n`);
+    try {
+      const result = await runPlanPhase(channelId, topic, {
+        angle: opts.angle,
+        format: opts.format,
+        sources: opts.sources,
+        scriptPath: opts.scriptPath,
+      });
+
+      console.log(`\n  === Plan Phase Complete ===`);
+      for (const step of result.steps) {
+        const icon = step.status === "done" ? "[OK]" : "[--]";
+        console.log(`  ${icon} ${step.step}${step.path ? ` → ${step.path}` : ""}`);
+      }
+
+      if (result.shotPlan) {
+        console.log(formatShotPlan(result.shotPlan.shotPlan));
+      }
+      if (result.narration) {
+        console.log(formatNarrationSummary(result.narration.narration));
+      }
+
+      console.log(`\n  Next steps:`);
+      console.log(`  1. Runway: ショットプランを元に動画生成`);
+      console.log(`  2. ElevenLabs: ナレーションテキストで音声生成`);
+      console.log(`  3. Descript: 動画+音声をインポートして編集`);
+      console.log(`  4. DaVinci: ハンドオフノートを参照して最終仕上げ\n`);
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── 制作パイプライン（全工程） ──────────────────────────────
+program
+  .command("produce <channel> <topic>")
+  .description("全工程制作: 計画 → Runway/ElevenLabs/Descript（API未設定分は自動スキップ）→ ハンドオフ")
+  .option("-a, --angle <angle>", "特定の切り口を指定")
+  .option("-f, --format <format>", "shorts or longform", "shorts")
+  .option("-s, --sources <urls...>", "一次情報URL（金融系）")
+  .option("-p, --script-path <path>", "既存台本パス（新規生成をスキップ）")
+  .action(async (channelId, topic, opts) => {
+    try {
+      const result = await runFullProduction(channelId, topic, {
+        angle: opts.angle,
+        format: opts.format,
+        sources: opts.sources,
+        scriptPath: opts.scriptPath,
+      });
+      console.log(formatProductionSummary(result));
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── ツールスタック表示 ──────────────────────────────
+program
+  .command("tools")
+  .description("採用ツールスタック・Voice設定・API接続状況を表示")
+  .action(() => {
+    console.log(`\n  === Tool Stack ===\n`);
+
+    console.log(`  --- Active Tools ---`);
+    for (const tool of Object.values(tools)) {
+      const apiStatus = tool.envKey
+        ? process.env[tool.envKey]
+          ? "[OK] API connected"
+          : "[--] API key not set"
+        : "[>>] Manual tool";
+      console.log(`  ${tool.name} (${tool.monthlyCost})`);
+      console.log(`    Role: ${tool.role}`);
+      console.log(`    Status: ${apiStatus}`);
+      console.log();
+    }
+
+    console.log(`  --- Voice Routing ---`);
+    for (const [id, voice] of Object.entries(voiceRouting)) {
+      console.log(`  ${id}: ${voice.voice_id} (${voice.language})`);
+      console.log(`    Style: ${voice.style}`);
+    }
+
+    console.log(`\n  --- Deferred Tools ---`);
+    for (const tool of deferredTools) {
+      console.log(`  [${tool.priority}] ${tool.name} — ${tool.condition}`);
+    }
+
+    console.log();
   });
 
 program.parse();

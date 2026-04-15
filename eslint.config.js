@@ -11,6 +11,8 @@ export default [
         process: "readonly",
         URL: "readonly",
         setTimeout: "readonly",
+        fetch: "readonly",
+        Buffer: "readonly",
       },
     },
     rules: {

@@ -1,6 +1,13 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { seoSchema, shortsSchema, shortsTestSchema, repurposeSchema, complianceSchema, validateOutput } from "../utils/schemas.js";
+import {
+  seoSchema,
+  shortsSchema,
+  shortsTestSchema,
+  repurposeSchema,
+  complianceSchema,
+  validateOutput,
+} from "../utils/schemas.js";
 
 describe("seoSchema", () => {
   it("should pass with valid SEO data", () => {

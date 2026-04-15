@@ -1,15 +1,16 @@
-# AI Content Studio v2.0
+# AI Content Studio v3.0
 
 YouTube + TikTok + Instagram + Twitter/X 3チャンネル統合コンテンツ制作パイプライン。
 
 ## プロジェクト概要
 
-Claude API を使い、Shorts先行テスト → 長尺化 → SEO最適化 → 全SNS展開 → コンプライアンスチェックの全工程を CLI で行うツール。
+Claude API + 4ツール（Runway / ElevenLabs / Descript / DaVinci Resolve）を使い、台本生成 → ショットプラン → ナレーション → 動画/音声生成 → AI編集 → 最終仕上げの全工程を CLI で行うツール。
 
 ### 戦略方針
 - **Shorts先行テスト**: いきなり長尺を作らない。Shortsで仮説検証し、勝ちテーマのみ長尺化
 - **AIは"編集部"**: AI量産ではなく、AIドラフト → 人間の独自視点追加 → 品質チェックの流れ
 - **主力集中**: genz-moneyが主力、japanese-mindsetが並走、chill-cultureは後発
+- **4ツール固定**: ツールを増やしすぎない。Runway/ElevenLabs/Descript/DaVinciで制作フローを安定させる
 
 ### チャンネル構成
 
@@ -25,38 +26,80 @@ Claude API を使い、Shorts先行テスト → 長尺化 → SEO最適化 → 
 - **japanese-mindset**: 落ち着いた洞察的なナレーション。ステレオタイプを避け、深みを持たせる。英語で出力。
 - **chill-culture**: 落ち着いたカジュアル。「エモい」「チルい」「整う」を自然に使用。シーシャは「空間体験」にフォーカスし喫煙推奨にならないこと。
 
+## ツールスタック
+
+### 固定4ツール
+| ツール | 役割 | API | 環境変数 |
+|--------|------|-----|---------|
+| Runway Standard | 動画生成ハブ | REST | `RUNWAY_API_KEY` |
+| ElevenLabs Creator | 日英ナレーション | REST | `ELEVENLABS_API_KEY` |
+| Descript Creator | AI編集・字幕・整音 | REST (beta) | `DESCRIPT_API_KEY` |
+| DaVinci Resolve Free | 最終仕上げ | 手動 | - |
+
+### 運用原則
+- この4ツールを前提にワークフローを固定
+- 新ツール追加は明確なボトルネック発生時のみ
+- DaVinci は最終手動仕上げ前提
+- Descript の export は手動前提
+- API キー未設定のツールは自動スキップ
+
+### Voice Routing（チャンネル別音声設定）
+- `genz-money`: 信頼感のある落ち着いた日本語（voice_ja_trust_01）
+- `japanese-mindset`: ドキュメンタリー調英語（voice_en_docu_01）
+- `chill-culture`: リラックスした穏やかな日本語（voice_ja_soft_01）
+
+### Shot Style（チャンネル別映像スタイル）
+- `genz-money`: 図解・インフォグラフィック寄り（9:16）
+- `japanese-mindset`: シネマティック日本風景（16:9）
+- `chill-culture`: 温かいアンビエント・LoFi（9:16）
+
 ## 技術スタック
 
 - **Runtime**: Node.js (ESM)
-- **AI**: Claude API (`@anthropic-ai/sdk`) — モデルは `claude-sonnet-4-20250514`
+- **AI**: Claude API (`@anthropic-ai/sdk`) -- モデルは `claude-sonnet-4-20250514`
 - **CLI**: Commander.js
-- **環境変数**: `ANTHROPIC_API_KEY` が必要（`.env` に設定、dotenv で読み込み）
-- **品質保証**: zod によるJSON出力スキーマ検証、入力バリデーション、パストラバーサル防止
+- **環境変数**: `ANTHROPIC_API_KEY` が必須。`RUNWAY_API_KEY`, `ELEVENLABS_API_KEY`, `DESCRIPT_API_KEY` は任意。
+- **品質保証**: zod によるJSON出力スキーマ検証、ESLint、Prettier、入力バリデーション、パストラバーサル防止
 - **エラー処理**: 指数バックオフリトライ（429/5xx対応）
+- **テスト**: Node.js built-in test runner（77テスト）
 
 ## ディレクトリ構成
 
 ```
-config/channels.js      — チャンネル設定・トピック定義
-config/monetization.js   — 収益化戦略（アフィリエイト・デジタル商品・コンプラ規則）
-src/cli.js              — メインCLI エントリポイント（15コマンド）
-src/generators/         — 各種生成エンジン
-  script-generator.js   — 長尺台本生成（金融系は一次情報ルール強制）
-  seo-generator.js      — SEOメタデータ（タイトル10案・サムネ文言5案）+ スキーマ検証
-  calendar-generator.js — コンテンツカレンダー
-  shorts-generator.js   — Shorts生成（長尺切り出し + トピック直接生成）+ KPI学習反映
-  repurpose-generator.js — マルチプラットフォーム展開 + スキーマ検証
-  compliance-checker.js — コンプライアンス・品質チェック（金融系ソース検証強化）
-  batch-generator.js    — パイプライン統合
-  kpi-tracker.js        — KPIデータ入力・蓄積・勝ちパターン抽出
-src/utils/              — Claude API クライアント、ファイルヘルパー、バリデーター
-  schemas.js            — zod によるJSON出力スキーマ検証
-content/<channel>/      — 生成コンテンツ（scripts/, metadata/, calendar/, kpi/）
-docs/90day-plan.md      — 90日実行計画
-docs/improvement-roadmap.md — 改善ロードマップ
+config/channels.js       -- チャンネル設定・トピック定義
+config/monetization.js   -- 収益化戦略
+config/tools.js          -- ツール設定・Voice routing・Shot style・書き出しプリセット
+src/cli.js               -- メインCLI エントリポイント（21コマンド）
+src/clients/             -- 外部APIクライアント
+  runway-client.js       -- Runway API（動画生成・ポーリング・ショットプラン実行）
+  elevenlabs-client.js   -- ElevenLabs API（TTS・Voice一覧・使用量確認）
+  descript-client.js     -- Descript API（プロジェクト作成・インポート・AI編集）
+src/generators/          -- 各種生成エンジン
+  script-generator.js    -- 長尺台本生成（金融系は一次情報ルール強制+ソースメタデータ抽出）
+  seo-generator.js       -- SEOメタデータ（タイトル10案・サムネ文言5案）+ スキーマ検証
+  calendar-generator.js  -- コンテンツカレンダー
+  shorts-generator.js    -- Shorts生成（長尺切り出し + トピック直接生成）+ KPI学習反映
+  repurpose-generator.js -- マルチプラットフォーム展開 + スキーマ検証
+  compliance-checker.js  -- コンプライアンス・品質チェック（構造化ソースデータ連携）
+  kpi-tracker.js         -- KPIデータ入力・蓄積・勝ちパターン抽出
+  batch-generator.js     -- パイプライン統合
+  shot-planner.js        -- Runway用ショットプラン生成（Claude → JSON）
+  narration-formatter.js -- ElevenLabs用ナレーション整形（マーカー除去・セグメント分割）
+  handoff-generator.js   -- DaVinci用ハンドオフノート生成
+  production-pipeline.js -- 4ツール統合制作パイプライン（計画+生成+ハンドオフ）
+src/utils/               -- ユーティリティ
+  claude-client.js       -- Claude API クライアント（リトライ付き）
+  file-helpers.js        -- ファイル操作
+  validators.js          -- 入力バリデーション
+  schemas.js             -- zod スキーマ定義（SEO/Shorts/Compliance/SourceMetadata）
+  source-extractor.js    -- 金融ソースメタデータ抽出
+src/tests/               -- ユニットテスト（77テスト）
+content/<channel>/       -- 生成コンテンツ（scripts/, metadata/, audio/, calendar/, kpi/）
+docs/90day-plan.md       -- 90日実行計画
+docs/improvement-roadmap.md -- 改善ロードマップ
 ```
 
-## CLI コマンド
+## CLI コマンド（21コマンド）
 
 ### 基本操作
 ```bash
@@ -64,39 +107,51 @@ acs channels                        # チャンネル一覧
 acs topics <channel>                # トピック一覧
 acs status                          # 制作状況
 acs monetize [channel]              # 収益化ダッシュボード
+acs tools                           # ツールスタック・API接続状況
 ```
 
 ### コンテンツ生成
 ```bash
 acs script <channel> <topic>        # 台本生成（金融系: --sources で公式URL指定推奨）
-acs seo <channel> <script-path>     # SEOメタデータ（タイトル10案+サムネ5案）
+acs seo <channel> <script-path>     # SEOメタデータ
 acs calendar <channel>              # カレンダー生成
-acs shorts <channel> <script-path>  # 長尺台本からShorts切り出し
-acs repurpose <channel> <script-path> # YouTube説明文+Twitter+Instagram生成
-acs check <channel> <script-path>   # コンプライアンス・品質チェック
+acs shorts <channel> <script-path>  # Shorts切り出し
+acs repurpose <channel> <script-path> # マルチプラットフォーム展開
+acs check <channel> <script-path>   # コンプライアンスチェック
+```
+
+### 制作パイプライン（4ツール連携）
+```bash
+acs shot-plan <channel> <script-path>   # Runway用ショットプラン
+acs narration <channel> <script-path>   # ElevenLabs用ナレーション整形
+acs handoff <channel> <script-path>     # DaVinci用ハンドオフノート
+acs produce-plan <channel> <topic>      # 計画フェーズ一括
+acs produce <channel> <topic>           # 全工程一括
 ```
 
 ### 統合パイプライン
 ```bash
-acs shorts-first <channel> <topic>  # Shorts先行テスト（3本・異なる切り口・KPI学習反映）
+acs shorts-first <channel> <topic>  # Shorts先行テスト
 acs full <channel> <topic>          # 台本+SEO一括
-acs pipeline <channel> <topic>      # 全工程一括（台本+SEO+Shorts+SNS+コンプラ）
+acs pipeline <channel> <topic>      # コンテンツ全工程一括
 ```
 
-### KPIフィードバック（学習ループ）
+### KPIフィードバック
 ```bash
-acs kpi <channel> <video-id> --views 2500 --ctr 8.5 --retention 62  # KPI入力
-acs kpi-summary <channel>           # 勝ち/負けパターン分析
+acs kpi <channel> <video-id> --views 2500 --ctr 8.5 --retention 62
+acs kpi-summary <channel>
 ```
 
-### 推奨ワークフロー（Shorts先行戦略）
+### 制作ワークフロー
 ```bash
-# Step 1: Shortsでテスト
-acs shorts-first genz-money "新NISAの始め方"
-# Step 2: 投稿して反応を見る（1-2週間）
-# Step 3: 勝ちテーマを長尺化
-acs pipeline genz-money "新NISAの始め方"
-# Step 4: コンプラチェック確認 → 人間が独自視点を追加 → 投稿
+# Shorts先行 → 長尺化
+acs shorts-first genz-money "新NISAの始め方"  # テスト
+acs kpi genz-money vid01 --views 2500         # KPI記録
+acs pipeline genz-money "新NISAの始め方"      # 長尺化
+
+# 4ツール連携制作
+acs produce-plan genz-money "新NISAの始め方"  # 計画（Claude APIのみ）
+acs produce genz-money "新NISAの始め方"       # 全工程（外部API連携）
 ```
 
 ## コーディング規約
@@ -104,12 +159,16 @@ acs pipeline genz-money "新NISAの始め方"
 - ESM (`import`/`export`) を使用。`require` は使わない。
 - チャンネル設定の変更は `config/channels.js` のみで行う。
 - 収益化設定の変更は `config/monetization.js` のみで行う。
+- ツール設定の変更は `config/tools.js` のみで行う。
+- 外部APIクライアントは `src/clients/` に配置。各クライアントはAPI キー未設定時にわかりやすいエラーを投げる。
 - 生成コンテンツは `content/<channel-id>/` 配下に日時付きファイル名で保存。
 - エラーメッセージは日本語で表示。
 - 入力は必ず `src/utils/validators.js` でバリデーションする。
+- 現時点の固定ツールは Runway / ElevenLabs / Descript / DaVinci の4つ。新ツールを前提にした提案は明示的に依頼された場合のみ。
 
 ## 収益化
 
 - 目標: 3アカウント合計 月5万〜10万円（6〜12ヶ月目標）
 - 収益源: アフィリエイト > デジタル商品 > YouTube広告 > TikTok > スポンサー
+- ツール固定費: $58-$69/月
 - 詳細: `config/monetization.js` および `docs/90day-plan.md` を参照
