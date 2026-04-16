@@ -16,6 +16,7 @@ import { formatNarration, formatNarrationSummary } from "./generators/narration-
 import { generateHandoff, generateHandoffPackage } from "./generators/handoff-generator.js";
 import { generateTopics, formatTopicIdeas } from "./generators/topic-generator.js";
 import { runPlanPhase, runFullProduction, formatProductionSummary } from "./generators/production-pipeline.js";
+import { benchmarkVoices, benchmarkModels, listJapaneseVoices } from "./generators/tts-benchmark.js";
 import { getChannel, getChannelIds } from "../config/channels.js";
 import { getMonetization, revenueTargets } from "../config/monetization.js";
 import { tools, voiceRouting, deferredTools } from "../config/tools.js";
@@ -798,6 +799,89 @@ program
         }
       } else {
         console.log(`  (レンダーキューは空です)`);
+      }
+      console.log();
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// --- TTS Benchmark ---
+
+program
+  .command("tts-bench-voice <channel> <narration-txt>")
+  .description("Voice A/Bテスト: 同一テキストで複数Voiceを比較生成")
+  .option("--voices <ids>", "カンマ区切りの Voice ID 一覧")
+  .option("--model <model>", "モデル名", "eleven_multilingual_v2")
+  .option("--label <label>", "テスト名ラベル", "voice-benchmark")
+  .action(async (channel, narrationTxt, opts) => {
+    try {
+      if (!opts.voices) {
+        console.error("  Error: --voices オプションで Voice ID をカンマ区切りで指定してください");
+        process.exit(1);
+      }
+      const { readInput } = await import("./utils/file-helpers.js");
+      const { validateChannelId, validateContentPath } = await import("./utils/validators.js");
+      channel = validateChannelId(channel);
+      narrationTxt = validateContentPath(narrationTxt);
+      const sampleText = readInput(narrationTxt);
+      const voiceIds = opts.voices.split(",").map((v) => v.trim());
+
+      const result = await benchmarkVoices(channel, sampleText, {
+        voiceIds,
+        model: opts.model,
+        label: opts.label,
+      });
+      console.log(`\n  Voice benchmark complete. Report: ${result.reportPath}\n`);
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("tts-bench-model <channel> <narration-txt>")
+  .description("Model A/Bテスト: 同一テキスト・同一Voiceで複数Modelを比較生成")
+  .option("--models <ids>", "カンマ区切りの Model ID 一覧")
+  .option("--voice <id>", "Voice ID（省略時はチャンネル設定）")
+  .option("--label <label>", "テスト名ラベル", "model-benchmark")
+  .action(async (channel, narrationTxt, opts) => {
+    try {
+      if (!opts.models) {
+        console.error("  Error: --models オプションで Model ID をカンマ区切りで指定してください");
+        process.exit(1);
+      }
+      const { readInput } = await import("./utils/file-helpers.js");
+      const { validateChannelId, validateContentPath } = await import("./utils/validators.js");
+      channel = validateChannelId(channel);
+      narrationTxt = validateContentPath(narrationTxt);
+      const sampleText = readInput(narrationTxt);
+      const models = opts.models.split(",").map((m) => m.trim());
+
+      const result = await benchmarkModels(channel, sampleText, {
+        models,
+        voiceId: opts.voice,
+        label: opts.label,
+      });
+      console.log(`\n  Model benchmark complete. Report: ${result.reportPath}\n`);
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("tts-voices")
+  .description("ElevenLabs の日本語対応 Voice 一覧を表示")
+  .action(async () => {
+    try {
+      const { listVoices } = await import("./clients/elevenlabs-client.js");
+      const voices = await listVoices();
+      console.log(`\n  利用可能な Voice 一覧 (${voices.length} voices):\n`);
+      for (const v of voices) {
+        const labels = v.labels || {};
+        console.log(`  ${v.voice_id}  ${v.name}  [${labels.language || "?"}] ${labels.use_case || ""} ${labels.accent || ""}`);
       }
       console.log();
     } catch (err) {

@@ -1,13 +1,18 @@
 /**
  * Narration Formatter
  * 台本からナレーション用テキストを整形（ElevenLabs向け）
- * セクションマーカー・ビジュアル指示を除去し、読みやすい音声テキストに変換
+ *
+ * 整形パイプライン:
+ *   1. マーカー除去 (cleanScriptForNarration)
+ *   2. TTS向け短文化 (optimizeForTTS)
+ *   3. 読み辞書適用 (applyPronunciationDictionary)
  */
 
+import { readFileSync, existsSync } from "fs";
 import { generate } from "../utils/claude-client.js";
 import { getChannel } from "../../config/channels.js";
 import { getVoiceConfig } from "../../config/tools.js";
-import { readInput, writeOutput, timestamp } from "../utils/file-helpers.js";
+import { readInput, writeOutput, timestamp, resolve } from "../utils/file-helpers.js";
 import { validateChannelId, validateContentPath } from "../utils/validators.js";
 
 /**
@@ -25,33 +30,37 @@ export async function formatNarration(channelId, scriptPath) {
 
   const lang = channel.language === "ja" ? "日本語" : "English";
 
-  const systemPrompt = `You are a narration text formatter. You convert YouTube scripts into clean narration text optimized for AI text-to-speech (ElevenLabs).
+  const systemPrompt = `You are a narration text formatter for AI text-to-speech (ElevenLabs).
+You convert YouTube scripts into TTS-optimized narration text.
 
 ## Voice Profile
 - Language: ${lang}
 - Style: ${voiceConfig.style}
 - Description: ${voiceConfig.description}
 
-## Formatting Rules
+## TTS最適化ルール
 1. REMOVE all markers: [SECTION:], [B-ROLL:], [TEXT ON SCREEN:], [PAUSE], [SOURCE:], [INFO TYPE:], [INFO DATE:], [~Xs]
-2. REMOVE frontmatter (--- blocks)
+2. REMOVE frontmatter (--- blocks), headings, disclaimers (※行)
 3. KEEP only spoken narration text
-4. Add "..." for natural pauses (where [PAUSE] was)
-5. Add line breaks between sections for pacing control
-6. Ensure the text flows naturally when read aloud
-7. ${channel.language === "ja" ? "漢字の読みが曖昧な場合はひらがなを括弧で補足" : "Include pronunciation hints for Japanese words in parentheses"}
-8. Split into logical segments with clear section boundaries
+4. **1文を20〜35文字以内に短くする**（TTSの区切り・イントネーション安定のため）
+5. 長い文は「、」の位置で分割し、それぞれ独立した文にする
+6. 数字や制度名を含む文は特に短く区切る
+7. 強調したい箇所の前後に空行を入れる
+8. コロン（：）は使わず改行に置き換える
+9. カギ括弧の連続使用は簡略化する
+10. ${channel.language === "ja" ? "漢字はそのまま残す。ひらがな化はしない" : "Keep natural English phrasing"}
+11. Split into logical segments with clear section boundaries
 
 Respond with valid JSON only — no markdown fences.`;
 
-  const userPrompt = `Convert this YouTube script into narration-ready text.
+  const userPrompt = `Convert this YouTube script into TTS-optimized narration text.
 
 ## Script:
 ${scriptContent.slice(0, 6000)}
 
 ## Required JSON Output:
 {
-  "full_text": "complete narration text as one string, with ... for pauses and \\n for section breaks",
+  "full_text": "complete narration text. Each sentence should be 20-35 chars max. Use \\n for line breaks between sentences, \\n\\n for section breaks.",
   "segments": [
     {
       "section": "hook",
@@ -74,8 +83,11 @@ ${scriptContent.slice(0, 6000)}
 
   let narration;
   if (result === null) {
-    // ハイブリッドモード: API未設定時はローカルフォールバックでマーカー除去
-    narration = { full_text: cleanScriptForNarration(scriptContent), localFallback: true };
+    // ハイブリッドモード: API未設定時はローカルフォールバックで整形
+    const cleaned = cleanScriptForNarration(scriptContent);
+    const optimized = optimizeForTTS(cleaned);
+    const withDict = applyPronunciationDictionary(optimized);
+    narration = { full_text: withDict, localFallback: true };
   } else {
     try {
       const cleaned = result
@@ -83,8 +95,15 @@ ${scriptContent.slice(0, 6000)}
         .replace(/```\n?/g, "")
         .trim();
       narration = JSON.parse(cleaned);
+      // Claude API の出力にも読み辞書を適用
+      if (narration.full_text) {
+        narration.full_text = applyPronunciationDictionary(narration.full_text);
+      }
     } catch {
-      narration = { full_text: cleanScriptForNarration(scriptContent), parseError: true };
+      const cleaned = cleanScriptForNarration(scriptContent);
+      const optimized = optimizeForTTS(cleaned);
+      const withDict = applyPronunciationDictionary(optimized);
+      narration = { full_text: withDict, parseError: true };
     }
   }
 
@@ -100,92 +119,189 @@ ${scriptContent.slice(0, 6000)}
   return { path: fullPath, outputPath, textPath, narration };
 }
 
+// =========================================================================
+// Phase 1: マーカー除去
+// =========================================================================
+
 /**
- * マーカーを除去するフォールバック関数（Claude API なしで動作）
+ * 台本からマーカー・メタデータを除去（Claude API なしで動作）
  */
 function cleanScriptForNarration(scriptContent) {
-  const cleaned = scriptContent
+  return scriptContent
     .replace(/^---[\s\S]*?---\n*/m, "") // frontmatter
     .replace(/^#.*$/gm, "") // headings
-    .replace(/\[SECTION:\s*[^\]]+\](\s*\[~\d+s?\])?/g, "") // section markers (with or without time)
-    .replace(/\[B-ROLL:\s*[^\]]+\]/g, "") // b-roll markers
-    .replace(/\[TEXT ON SCREEN:\s*[^\]]+\]/g, "") // text overlay markers
-    .replace(/\[SOURCE:\s*[^\]]+\]/g, "") // source markers
-    .replace(/\[INFO TYPE:\s*[^\]]+\]/g, "") // info type markers
-    .replace(/\[INFO DATE:\s*[^\]]+\]/g, "") // info date markers
-    .replace(/\[~\d+s?\]/g, "") // time annotations
-    .replace(/\[PAUSE\]/g, "") // pause markers（TTS側で間を制御）
-    .replace(/\*\*([^*]+)\*\*/g, "$1") // **太字** → プレーンテキスト
-    .replace(/^---+$/gm, "") // 区切り線を除去
-    .replace(/^※.*$/gm, "") // 免責事項行を除去
-    .replace(/\.\.\./g, "") // ... 省略記号を除去
-    .replace(/^[Q][:：]\s*/gm, "") // Q: プレフィックスを除去（読み上げ不要）
-    .replace(/^金融庁「[^」]+」.*$/gm, "") // 金融庁出典行を除去（本文中の「金融庁」は残す）
-    .replace(/\n{3,}/g, "\n\n") // excessive newlines
+    .replace(/\[SECTION:\s*[^\]]+\](\s*\[~\d+s?\])?/g, "") // section markers
+    .replace(/\[B-ROLL:\s*[^\]]+\]/g, "")
+    .replace(/\[TEXT ON SCREEN:\s*[^\]]+\]/g, "")
+    .replace(/\[SOURCE:\s*[^\]]+\]/g, "")
+    .replace(/\[INFO TYPE:\s*[^\]]+\]/g, "")
+    .replace(/\[INFO DATE:\s*[^\]]+\]/g, "")
+    .replace(/\[~\d+s?\]/g, "")
+    .replace(/\[PAUSE\]/g, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1") // **太字** → プレーン
+    .replace(/^---+$/gm, "")
+    .replace(/^※.*$/gm, "") // 免責事項行
+    .replace(/\.\.\./g, "")
+    .replace(/^[Q][:：]\s*/gm, "") // Q: プレフィックス
+    .replace(/^金融庁「[^」]+」.*$/gm, "") // 出典行
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
 
-  return addReadingHints(cleaned);
+// =========================================================================
+// Phase 2: TTS向け短文化・句読点最適化
+// =========================================================================
+
+/**
+ * テキストをTTS向けに最適化
+ * - 長文を短文に分割（目安: 1文35字以内）
+ * - コロン・ステップ番号を改行に変換
+ * - 句読点を整理
+ */
+function optimizeForTTS(text) {
+  let result = text;
+
+  // コロン（：/:）→ 改行（TTSで不安定になるため）
+  result = result.replace(/[:：]\s*/g, "。\n");
+
+  // 「ステップX。」→ 独立行に
+  result = result.replace(/^(ステップ\d+)。\n/gm, "$1。\n");
+
+  // 長い文を「、」で分割（35字超の文を対象）
+  result = result
+    .split("\n")
+    .map((line) => splitLongSentence(line, 35))
+    .join("\n");
+
+  // %→パーセント（記号読み上げ対策）
+  result = result.replace(/%/g, "パーセント");
+
+  // 連続空行を整理
+  result = result.replace(/\n{3,}/g, "\n\n");
+
+  return result.trim();
 }
 
 /**
- * TTS向け読み仮名変換
- * ElevenLabs が誤読しやすい漢字「だけ」をひらがなに置換
- *
- * 方針:
- * - 一般的な漢字はTTSが正しく読めるので変換しない（投資、動画、設定 等）
- * - 変換しすぎるとひらがなの羅列になり、単語境界が不明瞭になって
- *   イントネーション・区切りが崩壊するため、最小限に留める
- * - 多読文字（月=つき/げつ）や金融専門用語など、本当に誤読される語のみ対象
+ * 1文が maxChars を超える場合、「、」の位置で分割して複数文にする
  */
-function addReadingHints(text) {
-  let result = text;
+function splitLongSentence(line, maxChars) {
+  line = line.trim();
+  if (!line || line.length <= maxChars) return line;
 
-  // --- Phase 1: パターンベース変換（文脈依存の多読文字） ---
+  // 「、」で分割候補を探す
+  const parts = [];
+  let remaining = line;
 
-  // 「月X円」「月X,XXX円」→「つきX円」（毎月の意味。「1月」のがつ読みと区別）
-  result = result.replace(/月([\d,]+円)/g, "つき$1");
-  // 「Xつ目」→「Xつめ」
-  result = result.replace(/(\d)つ目/g, "$1つめ");
-  // 「%」→「パーセント」（記号の読み上げ対策）
-  result = result.replace(/%/g, "パーセント");
+  while (remaining.length > maxChars) {
+    // maxChars 以内で最後の「、」を探す
+    let splitAt = -1;
+    for (let i = Math.min(maxChars, remaining.length) - 1; i >= 0; i--) {
+      if (remaining[i] === "、") {
+        splitAt = i;
+        break;
+      }
+    }
 
-  // --- Phase 2: 本当に誤読される語だけ変換 ---
-  // ※ 一般的な漢字（投資、動画、設定、商品、証券、口座 等）は変換しない
-  const readings = [
-    // 金融専門用語（TTSが知らない可能性が高い語）
-    ["非課税", "ひかぜい"],
-    ["元本割れ", "がんぽんわれ"],
-    ["個別株", "こべつかぶ"],
-    ["売却", "ばいきゃく"],
-    ["小額", "少額"],
+    if (splitAt === -1) {
+      // 「、」がない場合は「。」を探す
+      for (let i = Math.min(maxChars, remaining.length) - 1; i >= 0; i--) {
+        if (remaining[i] === "。") {
+          splitAt = i;
+          break;
+        }
+      }
+    }
 
-    // 多読文字・誤読頻度の高い語
-    ["見終わる", "み終わる"],
-    ["今日中", "きょうじゅう"],
-    ["翌営業日", "よくえいぎょうび"],
-    ["翌年", "よくねん"],
-    ["生涯", "しょうがい"],
-    ["保有限度額", "保有 限度額"],
-    ["儲かった", "もうかった"],
-    ["儲かって", "もうかって"],
-    ["拘束", "こうそく"],
-  ];
+    if (splitAt === -1) {
+      // 分割点がない場合はそのまま
+      break;
+    }
 
-  for (const [kanji, reading] of readings) {
-    result = result.replaceAll(kanji, reading);
+    const part = remaining.slice(0, splitAt + 1).trim();
+    // 「、」で終わる場合は「。」に変えて文を閉じる
+    if (part.endsWith("、")) {
+      parts.push(part.slice(0, -1) + "。");
+    } else {
+      parts.push(part);
+    }
+    remaining = remaining.slice(splitAt + 1).trim();
   }
 
+  if (remaining) {
+    parts.push(remaining);
+  }
+
+  return parts.join("\n");
+}
+
+// =========================================================================
+// Phase 3: 読み辞書適用
+// =========================================================================
+
+/** 辞書キャッシュ */
+let _dictionaryCache = null;
+
+/**
+ * pronunciation-dictionary.json を読み込む
+ * @returns {Array<[string, string]>} [元表記, 読み] のペア配列（長い語句順）
+ */
+function loadDictionary() {
+  if (_dictionaryCache) return _dictionaryCache;
+
+  const dictPath = resolve("config/pronunciation-dictionary.json");
+  if (!existsSync(dictPath)) {
+    _dictionaryCache = [];
+    return _dictionaryCache;
+  }
+
+  try {
+    const raw = JSON.parse(readFileSync(dictPath, "utf-8"));
+    // 長い語句から順にマッチさせるためソート
+    const entries = Object.entries(raw.entries || {});
+    entries.sort((a, b) => b[0].length - a[0].length);
+    _dictionaryCache = entries;
+  } catch (e) {
+    console.warn(`  [Warning] 読み辞書の読み込みに失敗: ${e.message}`);
+    _dictionaryCache = [];
+  }
+
+  return _dictionaryCache;
+}
+
+/**
+ * テキストに読み辞書を適用
+ * 辞書に登録された語句のみ置換する（ピンポイント方式）
+ */
+function applyPronunciationDictionary(text) {
+  const dict = loadDictionary();
+  if (dict.length === 0) return text;
+
+  let result = text;
+  for (const [original, reading] of dict) {
+    result = result.replaceAll(original, reading);
+  }
   return result;
 }
 
 /**
- * ナレーションテキストをセクション単位で分割
+ * 辞書キャッシュをクリア（テスト用）
+ */
+export function clearDictionaryCache() {
+  _dictionaryCache = null;
+}
+
+// =========================================================================
+// セグメント分割・表示
+// =========================================================================
+
+/**
+ * ナレーションテキストをセグメント単位で分割
  * ElevenLabs に個別送信してから結合するために使用
  *
  * 短い段落は前後と結合して、1セグメント200〜600文字程度にまとめる。
- * 短すぎるセグメントは音声の途切れ・不自然な間の原因になる。
  *
- * @param {string} text - クリーン済みナレーションテキスト
+ * @param {string} text - 整形済みナレーションテキスト
  * @param {number} [minChars=200] - セグメント最小文字数
  * @returns {string[]} セクション単位のテキスト配列
  */
@@ -197,7 +313,6 @@ export function splitNarrationSegments(text, minChars = 200) {
 
   if (paragraphs.length === 0) return [];
 
-  // 段落を結合してminChars以上のセグメントにまとめる
   const segments = [];
   let current = paragraphs[0];
 
@@ -218,8 +333,8 @@ export function splitNarrationSegments(text, minChars = 200) {
  * ナレーション結果を見やすく表示
  */
 export function formatNarrationSummary(narration) {
-  if (narration.parseError) {
-    return `\n  Narration text extracted (fallback mode, ${narration.full_text.length} chars)\n`;
+  if (narration.parseError || narration.localFallback) {
+    return `\n  Narration text extracted (${narration.parseError ? "parse error" : "local"} fallback, ${narration.full_text.length} chars)\n`;
   }
 
   let output = "";
