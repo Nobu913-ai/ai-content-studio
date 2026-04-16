@@ -20,6 +20,15 @@ import { getChannel, getChannelIds } from "../config/channels.js";
 import { getMonetization, revenueTargets } from "../config/monetization.js";
 import { tools, voiceRouting, deferredTools } from "../config/tools.js";
 import { resolve } from "./utils/file-helpers.js";
+import {
+  getStatus as getDaVinciStatus,
+  createProject as createDaVinciProject,
+  importMedia as daVinciImportMedia,
+  buildTimeline as daVinciBuildTimeline,
+  render as daVinciRender,
+  getRenderStatus as getDaVinciRenderStatus,
+  assembleFromPackage as daVinciAssemble,
+} from "./clients/davinci-client.js";
 
 const program = new Command();
 
@@ -711,6 +720,90 @@ program
     }
 
     console.log();
+  });
+
+// ─── DaVinci Resolve 自動化 ────────────────────────────────────
+program
+  .command("davinci-status")
+  .description("DaVinci Resolve の接続状態を確認")
+  .action(async () => {
+    try {
+      const result = await getDaVinciStatus();
+      console.log(`\n  DaVinci Resolve ${result.version} (${result.product})`);
+      console.log(`  Current project: ${result.currentProject || "(なし)"}`);
+      console.log(`  Current page: ${result.currentPage || "(なし)"}\n`);
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("davinci-assemble <package-dir>")
+  .description("ハンドオフパッケージから DaVinci Resolve プロジェクトを一括構築")
+  .option("--start-render", "構築後に即座にレンダリング開始")
+  .action(async (packageDir, opts) => {
+    console.log(`\n  === DaVinci Resolve Auto-Assembly ===`);
+    console.log(`  Package: ${packageDir}\n`);
+    try {
+      const result = await daVinciAssemble(packageDir, {
+        startRender: opts.startRender || false,
+      });
+
+      console.log(`\n  === Assembly Complete ===`);
+      for (const step of result.steps) {
+        const icon =
+          step.status === "done"
+            ? "[OK]"
+            : step.status === "skipped"
+              ? "[--]"
+              : step.status === "queued" || step.status === "rendering"
+                ? "[>>]"
+                : "[!!]";
+        console.log(
+          `  ${icon} ${step.step}${step.note ? ` — ${step.note}` : ""}${step.error ? ` — ${step.error}` : ""}`,
+        );
+      }
+
+      if (result.project) {
+        console.log(`\n  Project: ${result.project.project}`);
+        console.log(`  Timeline: ${result.project.timeline}`);
+        console.log(`  Resolution: ${result.project.resolution} @ ${result.project.fps}fps`);
+      }
+      if (result.import) {
+        console.log(`  Media imported: ${result.import.count} file(s)`);
+      }
+      if (result.timeline) {
+        console.log(
+          `  Shots: ${result.timeline.shots_added}/${result.timeline.shots_planned} added, ${result.timeline.shots_missing} missing`,
+        );
+      }
+      console.log();
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("davinci-render-status")
+  .description("DaVinci Resolve のレンダリング状況を確認")
+  .action(async () => {
+    try {
+      const result = await getDaVinciRenderStatus();
+      console.log(`\n  Rendering: ${result.isRendering ? "進行中" : "停止中"}`);
+      if (result.jobs.length > 0) {
+        for (const job of result.jobs) {
+          console.log(`  Job ${job.jobId}: ${JSON.stringify(job.status)}`);
+        }
+      } else {
+        console.log(`  (レンダーキューは空です)`);
+      }
+      console.log();
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
   });
 
 program.parse();

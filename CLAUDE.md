@@ -34,12 +34,12 @@ Claude API + 4ツール（Runway / ElevenLabs / Descript / DaVinci Resolve）を
 | Runway Standard | 動画生成ハブ | REST | `RUNWAY_API_KEY` |
 | ElevenLabs Creator | 日英ナレーション | REST | `ELEVENLABS_API_KEY` |
 | Descript Creator | AI編集・字幕・整音 | REST (beta) | `DESCRIPT_API_KEY` |
-| DaVinci Resolve Free | 最終仕上げ | 手動 | - |
+| DaVinci Resolve Free | 最終仕上げ | Python Scripting API | `DAVINCI_PYTHON_PATH` (任意) |
 
 ### 運用原則
 - この4ツールを前提にワークフローを固定
 - 新ツール追加は明確なボトルネック発生時のみ
-- DaVinci は最終手動仕上げ前提
+- DaVinci は Python Scripting API で自動化可（プロジェクト作成・メディアインポート・タイムライン構築・レンダー）。要 DaVinci Resolve 起動中 + Python 3.6+
 - Descript の export は手動前提
 - API キー未設定のツールは自動スキップ
 
@@ -69,11 +69,13 @@ Claude API + 4ツール（Runway / ElevenLabs / Descript / DaVinci Resolve）を
 config/channels.js       -- チャンネル設定・トピック定義
 config/monetization.js   -- 収益化戦略
 config/tools.js          -- ツール設定・Voice routing・Shot style・書き出しプリセット
-src/cli.js               -- メインCLI エントリポイント（22コマンド）
+src/cli.js               -- メインCLI エントリポイント（25コマンド）
 src/clients/             -- 外部APIクライアント
   runway-client.js       -- Runway API（動画生成・ポーリング・ショットプラン実行）
   elevenlabs-client.js   -- ElevenLabs API（TTS・Voice一覧・使用量確認）
   descript-client.js     -- Descript API（プロジェクト作成・インポート・AI編集）
+  davinci-client.js      -- DaVinci Resolve 自動化（Python Scripting APIブリッジ）
+  davinci/bridge.py      -- DaVinci Resolve Python ブリッジスクリプト
 src/generators/          -- 各種生成エンジン
   script-generator.js    -- 長尺台本生成（金融系は一次情報ルール強制+ソースメタデータ抽出）
   seo-generator.js       -- SEOメタデータ（タイトル10案・サムネ文言5案）+ スキーマ検証
@@ -149,6 +151,13 @@ acs kpi <channel> <video-id> --views 2500 --ctr 8.5 --retention 62 [--manifest <
 acs kpi-summary <channel>
 ```
 
+### DaVinci Resolve 自動化
+```bash
+acs davinci-status                                        # 接続確認
+acs davinci-assemble <package-dir> [--start-render]       # ハンドオフパッケージから一括構築
+acs davinci-render-status                                 # レンダリング状況確認
+```
+
 ### 制作ワークフロー
 ```bash
 # Shorts先行 → 長尺化
@@ -159,6 +168,9 @@ acs pipeline genz-money "新NISAの始め方"      # 長尺化
 # 4ツール連携制作
 acs produce-plan genz-money "新NISAの始め方"  # 計画（Claude APIのみ）
 acs produce genz-money "新NISAの始め方"       # 全工程（外部API連携）
+
+# DaVinci Resolve 一括構築
+acs davinci-assemble content/genz-money/handoff/<pkg-dir>  # パッケージから自動構築
 ```
 
 ## 制作パイプライン設計
