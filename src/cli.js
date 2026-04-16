@@ -73,6 +73,11 @@ program
     console.log(`\n  Generating topic ideas for [${channelId}] ...\n`);
     try {
       const result = await generateTopics(channelId, { count: parseInt(opts.count) });
+      if (result.manual) {
+        console.log(`\n  [Hybrid] プロンプトを書き出しました。Claude Code で実行し、結果を保存してください。`);
+        console.log(`  詳細: docs/hybrid-workflow.md\n`);
+        return;
+      }
       console.log(`  Topic ideas saved: ${result.path}`);
       console.log(formatTopicIdeas(result.topics));
       console.log(`\n  気に入ったトピックがあれば: acs produce <channel> "<topic>"\n`);
@@ -96,6 +101,12 @@ program
     }
     try {
       const result = await generateScript(channelId, topic, { angle: opts.angle, sources: opts.sources });
+      if (result.manual) {
+        console.log(`\n  [Hybrid] プロンプトを書き出しました。Claude Code で実行し、結果を保存してください。`);
+        console.log(`  保存先: content/${channelId}/scripts/<ts>_<slug>.md`);
+        console.log(`  詳細: docs/hybrid-workflow.md\n`);
+        return;
+      }
       console.log(`  Script saved: ${result.path}`);
       console.log(`  ───────────────────────────────────`);
       console.log(result.script.slice(0, 500) + "\n  ...\n");
@@ -113,6 +124,10 @@ program
     console.log(`\n  Generating SEO metadata for [${channelId}] ...\n`);
     try {
       const result = await generateSEO(channelId, scriptPath);
+      if (result.manual) {
+        console.log(`\n  [Hybrid] プロンプトを書き出しました。Claude Code で実行してください。\n`);
+        return;
+      }
       console.log(`  SEO metadata saved: ${result.path}`);
       if (!result.seo.parseError) {
         console.log(`\n  Title options:`);
@@ -141,6 +156,10 @@ program
         weeks: parseInt(opts.weeks),
         startDate: opts.start,
       });
+      if (result.manual) {
+        console.log(`\n  [Hybrid] プロンプトを書き出しました。Claude Code で実行してください。\n`);
+        return;
+      }
       console.log(`  Calendar saved: ${result.path}`);
       console.log(formatCalendarForDisplay(result.calendar));
     } catch (err) {
@@ -159,6 +178,10 @@ program
     console.log(`  Step 1/2: Generating script ...`);
     try {
       const result = await generateFull(channelId, topic, { angle: opts.angle });
+      if (result.manual) {
+        console.log(`\n  [Hybrid] プロンプトを書き出しました。Claude Code で実行してください。\n`);
+        return;
+      }
 
       console.log(`  Step 2/2: Generating SEO metadata ...`);
       console.log(`\n  Done!`);
@@ -188,6 +211,10 @@ program
     try {
       console.log(`  [1/5] Generating script ...`);
       const result = await generateFullPipeline(channelId, topic, { angle: opts.angle });
+      if (result.manual) {
+        console.log(`\n  [Hybrid] プロンプトを書き出しました。Claude Code で実行してください。\n`);
+        return;
+      }
 
       console.log(`  [2/5] SEO metadata ... done`);
       console.log(`  [3/5] Shorts (3 clips) ... done`);
@@ -241,6 +268,10 @@ program
     console.log(`  Generating 3 test Shorts with different angles ...\n`);
     try {
       const result = await generateShortsFromTopic(channelId, topic);
+      if (result.manual) {
+        console.log(`\n  [Hybrid] プロンプトを書き出しました。Claude Code で実行してください。\n`);
+        return;
+      }
       console.log(`  Shorts saved: ${result.path}`);
 
       if (!result.shorts.parseError) {
@@ -275,6 +306,10 @@ program
     console.log(`\n  Generating 3 Shorts from script ...\n`);
     try {
       const result = await generateShorts(channelId, scriptPath);
+      if (result.manual) {
+        console.log(`\n  [Hybrid] プロンプトを書き出しました。Claude Code で実行してください。\n`);
+        return;
+      }
       console.log(`  Shorts saved: ${result.path}`);
       if (!result.shorts.parseError && result.shorts.shorts) {
         for (const s of result.shorts.shorts) {
@@ -297,6 +332,10 @@ program
     console.log(`\n  Generating multi-platform content ...\n`);
     try {
       const result = await generateRepurpose(channelId, scriptPath);
+      if (result.manual) {
+        console.log(`\n  [Hybrid] プロンプトを書き出しました。Claude Code で実行してください。\n`);
+        return;
+      }
       console.log(`  Repurpose data saved: ${result.path}`);
       if (!result.repurpose.parseError) {
         if (result.repurpose.twitter_thread) {
@@ -322,6 +361,10 @@ program
     console.log(`\n  Compliance check for [${channelId}] ...\n`);
     try {
       const result = await checkCompliance(channelId, scriptPath, opts.titles || []);
+      if (result.manual) {
+        console.log(`\n  [Hybrid] プロンプトを書き出しました。Claude Code で実行してください。\n`);
+        return;
+      }
       console.log(`  Report saved: ${result.path}`);
       console.log(formatComplianceReport(result.check));
     } catch (err) {
@@ -487,6 +530,10 @@ program
     console.log(`\n  Generating shot plan for [${channelId}] (${opts.format}) ...\n`);
     try {
       const result = await generateShotPlan(channelId, scriptPath, { format: opts.format });
+      if (result.manual) {
+        console.log(`\n  [Hybrid] プロンプトを書き出しました。Claude Code で実行してください。\n`);
+        return;
+      }
       console.log(`  Shot plan saved: ${result.path}`);
       console.log(formatShotPlan(result.shotPlan));
     } catch (err) {
@@ -535,6 +582,10 @@ program
           runwayShotsPath: opts.runwayShots,
           audioPath: opts.audio,
         });
+        if (result.handoff?.manual) {
+          console.log(`\n  [Hybrid] プロンプトを書き出しました。Claude Code で実行してください。\n`);
+          return;
+        }
         console.log(`  Handoff package: ${result.path}/`);
         console.log(
           `  Assets: ${result.package.assets.filter((a) => a.exists).length}/${result.package.assets.length}`,
@@ -548,6 +599,10 @@ program
           format: opts.format,
           shotPlanPath: opts.shotPlan,
         });
+        if (result.manual) {
+          console.log(`\n  [Hybrid] プロンプトを書き出しました。Claude Code で実行してください。\n`);
+          return;
+        }
         console.log(`  Handoff note saved: ${result.path}`);
         console.log(`\n  ${result.handoff.slice(0, 500)}...\n`);
       }
@@ -578,14 +633,15 @@ program
 
       console.log(`\n  === Plan Phase Complete ===`);
       for (const step of result.steps) {
-        const icon = step.status === "done" ? "[OK]" : "[--]";
-        console.log(`  ${icon} ${step.step}${step.path ? ` → ${step.path}` : ""}`);
+        const icon =
+          step.status === "done" ? "[OK]" : step.status === "manual" ? "[>>]" : "[--]";
+        console.log(`  ${icon} ${step.step}${step.path ? ` → ${step.path}` : ""}${step.note ? ` — ${step.note}` : ""}`);
       }
 
-      if (result.shotPlan) {
+      if (result.shotPlan && !result.shotPlan.manual) {
         console.log(formatShotPlan(result.shotPlan.shotPlan));
       }
-      if (result.narration) {
+      if (result.narration && result.narration.narration) {
         console.log(formatNarrationSummary(result.narration.narration));
       }
 

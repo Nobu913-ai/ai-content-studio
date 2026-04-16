@@ -132,6 +132,11 @@ export async function generateHandoffPackage(channelId, scriptPath, options = {}
   // まずハンドオフノートを生成
   const handoffResult = await generateHandoff(channelId, scriptPath, options);
 
+  // ハイブリッドモード: ハンドオフノートが手動モードならパッケージもスキップ
+  if (handoffResult.manual) {
+    return { path: null, package: null, handoff: handoffResult };
+  }
+
   const ts = timestamp();
   const slug = scriptPath.split("/").pop().replace(/\.md$/, "");
   const pkgDir = `content/${channelId}/handoff/${ts}_${slug}`;

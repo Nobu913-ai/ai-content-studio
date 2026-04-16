@@ -45,7 +45,7 @@ export const tools = {
 export const voiceRouting = {
   "genz-money": {
     language: "ja",
-    voice_id: "voice_ja_trust_01",
+    voice_id: "JTlYtJrcTzPC71hMLOxo",
     style: "clear, calm, credible",
     stability: 0.6,
     similarity_boost: 0.8,
