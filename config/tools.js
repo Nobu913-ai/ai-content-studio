@@ -36,6 +36,14 @@ export const tools = {
     envKey: null,
     monthlyCost: "$0",
   },
+  voicevox: {
+    name: "VOICEVOX ENGINE",
+    role: "日本語音声合成（比較検証用）",
+    apiEndpoint: "http://127.0.0.1:50021",
+    envKey: "VOICEVOX_ENGINE_URL",
+    monthlyCost: "$0",
+    note: "ローカル実行。商用利用可（クレジット表記必要・speaker別規約確認）",
+  },
 };
 
 /**

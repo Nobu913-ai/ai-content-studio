@@ -12,12 +12,13 @@ import {
 } from "../../config/tools.js";
 
 describe("tools config", () => {
-  it("should have 4 active tools", () => {
-    assert.equal(Object.keys(tools).length, 4);
+  it("should have 5 active tools", () => {
+    assert.equal(Object.keys(tools).length, 5);
     assert.ok(tools.runway);
     assert.ok(tools.elevenlabs);
     assert.ok(tools.descript);
     assert.ok(tools.davinci);
+    assert.ok(tools.voicevox);
   });
 
   it("should have API keys defined for API-based tools", () => {

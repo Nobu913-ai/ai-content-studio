@@ -1,8 +1,8 @@
 /**
  * TTS Benchmark
- * Voice / Model の A/B テスト用ベンチマーク
+ * Voice / Model / Script / Provider の A/B テスト用ベンチマーク
  *
- * 同一サンプルテキストで複数の voice / model 組み合わせを生成し、
+ * 同一サンプルテキストで複数の voice / model / provider 組み合わせを生成し、
  * 比較結果を markdown レポートとして出力する
  */
 
@@ -11,6 +11,7 @@ import { dirname } from "path";
 import { resolve, writeOutput, timestamp } from "../utils/file-helpers.js";
 import { getVoiceConfig } from "../../config/tools.js";
 import { generateNarration, listVoices, getUsage } from "../clients/elevenlabs-client.js";
+import * as voicevoxClient from "../clients/voicevox-client.js";
 import { splitNarrationSegments } from "./narration-formatter.js";
 
 /**
@@ -325,6 +326,200 @@ function generateScriptBenchmarkReport(data) {
   lines.push("");
   lines.push("- 採用 Script: ");
   lines.push("- 理由: ");
+  lines.push("");
+  return lines.join("\n");
+}
+
+/**
+ * Provider 比較ベンチマーク
+ * 同一テキストで ElevenLabs と VOICEVOX を比較生成
+ *
+ * @param {string} channelId - チャンネルID
+ * @param {string} sampleText - サンプルテキスト
+ * @param {object} options
+ * @param {Array<object>} options.entries - 比較エントリの配列
+ *   各エントリ: { provider, voiceId?, speakerId?, model?, label }
+ * @param {string} [options.label] - テスト名ラベル
+ * @returns {Promise<object>} ベンチマーク結果
+ */
+export async function benchmarkProviders(channelId, sampleText, options = {}) {
+  const { entries, label = "provider-benchmark" } = options;
+
+  if (!entries || entries.length === 0) {
+    throw new Error("entries を1つ以上指定してください");
+  }
+
+  console.log(`\n  [Benchmark] Provider比較: ${entries.length} entries`);
+  console.log(`  [Benchmark] サンプル: ${sampleText.length} chars`);
+
+  const segments = splitNarrationSegments(sampleText);
+  const ts = timestamp();
+  const results = [];
+
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
+    const entryLabel = entry.label || `${entry.provider}#${i + 1}`;
+    console.log(`\n  [Benchmark] Entry ${i + 1}/${entries.length}: ${entryLabel} (${entry.provider})`);
+
+    try {
+      const startTime = Date.now();
+      let audio;
+
+      if (entry.provider === "voicevox") {
+        audio = await voicevoxClient.generateNarration(channelId, sampleText, {
+          speakerId: entry.speakerId,
+          speedScale: entry.speedScale,
+          segments,
+        });
+      } else {
+        audio = await generateNarration(channelId, sampleText, {
+          voiceId: entry.voiceId,
+          model: entry.model,
+          segments,
+        });
+      }
+
+      const elapsed = Date.now() - startTime;
+
+      results.push({
+        label: entryLabel,
+        provider: entry.provider,
+        voiceId: entry.voiceId || entry.speakerId,
+        model: entry.model || "voicevox_engine",
+        status: "ok",
+        outputPath: audio.outputPath,
+        textLength: sampleText.length,
+        segments: audio.metadata.segments,
+        elapsedMs: elapsed,
+      });
+    } catch (e) {
+      results.push({
+        label: entryLabel,
+        provider: entry.provider,
+        voiceId: entry.voiceId || entry.speakerId,
+        model: entry.model || "voicevox_engine",
+        status: "error",
+        error: e.message,
+      });
+    }
+  }
+
+  // レポート生成
+  const report = generateProviderBenchmarkReport({
+    label,
+    channelId,
+    timestamp: ts,
+    sampleLength: sampleText.length,
+    segmentCount: segments.length,
+    results,
+  });
+
+  const reportPath = `content/${channelId}/metadata/${ts}_${label}.md`;
+  writeOutput(reportPath, report);
+
+  // Comparison manifest 保存
+  const manifest = {
+    type: "provider-comparison",
+    label,
+    channelId,
+    timestamp: ts,
+    sampleLength: sampleText.length,
+    entries: results.map((r) => ({
+      label: r.label,
+      provider: r.provider,
+      voiceId: r.voiceId,
+      model: r.model,
+      status: r.status,
+      outputPath: r.outputPath,
+      elapsedMs: r.elapsedMs,
+    })),
+    evaluation: {
+      misread_score: {},
+      clarity_score: {},
+      natural_pause_score: {},
+      trustworthiness_score: {},
+      overall_score: {},
+      memo: {},
+      adopted: null,
+      reason: null,
+    },
+  };
+
+  const manifestPath = `content/${channelId}/metadata/${ts}_${label}_manifest.json`;
+  writeOutput(manifestPath, JSON.stringify(manifest, null, 2));
+
+  console.log(`\n  [Benchmark] レポート: ${reportPath}`);
+  console.log(`  [Benchmark] Manifest: ${manifestPath}`);
+  return { reportPath, manifestPath, results };
+}
+
+/**
+ * Provider ベンチマークレポート生成
+ */
+function generateProviderBenchmarkReport(data) {
+  const lines = [];
+  lines.push("# TTS Provider Benchmark");
+  lines.push("");
+  lines.push(`- Label: ${data.label}`);
+  lines.push(`- Channel: ${data.channelId}`);
+  lines.push(`- Date: ${data.timestamp}`);
+  lines.push(`- Sample: ${data.sampleLength} chars / ${data.segmentCount} segments`);
+  lines.push("");
+  lines.push("## Results");
+  lines.push("");
+  lines.push("| # | Label | Provider | Voice/Speaker | Model | Status | File | Time |");
+  lines.push("|---|-------|----------|---------------|-------|--------|------|------|");
+
+  for (let i = 0; i < data.results.length; i++) {
+    const r = data.results[i];
+    const time = r.elapsedMs ? `${(r.elapsedMs / 1000).toFixed(1)}s` : "-";
+    const file = r.outputPath || r.error || "-";
+    lines.push(`| ${i + 1} | ${r.label} | ${r.provider} | ${r.voiceId} | ${r.model} | ${r.status} | ${file} | ${time} |`);
+  }
+
+  lines.push("");
+  lines.push("## 評価スコアシート（各項目 1〜5）");
+  lines.push("");
+  lines.push("各音声ファイルを聴いて、1（悪い）〜 5（優秀）で評価してください。");
+  lines.push("");
+
+  const colHeaders = data.results.map((r) => r.label);
+  const colSep = colHeaders.map(() => "---");
+  lines.push(`| 評価項目 | ${colHeaders.join(" | ")} |`);
+  lines.push(`|----------|${colSep.join("|")}|`);
+
+  const criteria = [
+    "誤読率（少ないほど高得点）",
+    "明瞭さ・聞き取りやすさ",
+    "間・ポーズの自然さ",
+    "数字・制度語の安定性",
+    "信頼感・説明向きか",
+    "Shorts向けの抜け感",
+    "総合評価",
+  ];
+
+  for (const c of criteria) {
+    const cells = colHeaders.map(() => "  ");
+    lines.push(`| ${c} | ${cells.join(" | ")} |`);
+  }
+
+  lines.push("");
+  lines.push("### メモ");
+  lines.push("");
+  for (const r of data.results) {
+    lines.push(`- **${r.label}** (${r.provider}): `);
+  }
+
+  lines.push("");
+  lines.push("## 採用判定");
+  lines.push("");
+  lines.push("- 採用 Provider/Voice: ");
+  lines.push("- 理由: ");
+  lines.push("");
+  lines.push("### 判定ルール");
+  lines.push("- 日本語の説明品質が明確にVOICEVOX優位 → genz-moneyで採用");
+  lines.push("- 大差なし → 運用統一性のためElevenLabs継続");
+  lines.push("- ElevenLabsが自然さで勝ち、誤読だけ辞書で潰せる → ElevenLabs継続");
   lines.push("");
   return lines.join("\n");
 }

@@ -110,15 +110,37 @@ Phase 2 の既存 Voice で満足できない場合のみ実行。
 
 ---
 
-## Phase 6: 別TTS比較（最終手段）
+## Phase 6: VOICEVOX Provider 比較
 
-Phase 1〜5 を経てもなお品質が不十分な場合のみ検討。
+Phase 1〜3 の最良構成（原稿 + Voice + Model）で ElevenLabs と VOICEVOX を比較する。
 
-### 比較候補に追加する条件
-- 原稿最適化済み
-- 辞書調整済み
-- Voice 3本以上比較済み
-- Model 2種類以上比較済み
+**前提**: VOICEVOX ENGINE がローカルで起動していること
+
+### 実行コマンド
+
+```bash
+# VOICEVOX speaker 確認
+acs voicevox-speakers
+
+# Provider 比較ベンチ
+acs tts-bench-provider genz-money <採用原稿パス> \
+  --elevenlabs-voices <採用voice_id> \
+  --voicevox-speakers 1,3 \
+  --label provider-comparison-30s
+```
+
+### 判定ルール
+- 日本語の説明品質が明確にVOICEVOX優位 → genz-moneyで採用
+- 大差なし → 運用統一性のためElevenLabs継続
+- ElevenLabsが自然さで勝ち、誤読だけ辞書で潰せる → ElevenLabs継続
+
+詳細: `docs/tts-provider-evaluation.md`
+
+---
+
+## Phase 7: 別TTS比較（最終手段）
+
+Phase 1〜6 を経てもなお品質が不十分な場合のみ検討。
 
 ### 候補エンジン
 - Azure Cognitive Services Speech（SSML制御が強い）

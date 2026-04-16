@@ -16,7 +16,7 @@ import { formatNarration, formatNarrationSummary, rewriteForTTS } from "./genera
 import { generateHandoff, generateHandoffPackage } from "./generators/handoff-generator.js";
 import { generateTopics, formatTopicIdeas } from "./generators/topic-generator.js";
 import { runPlanPhase, runFullProduction, formatProductionSummary } from "./generators/production-pipeline.js";
-import { benchmarkVoices, benchmarkModels, benchmarkScripts, listJapaneseVoices } from "./generators/tts-benchmark.js";
+import { benchmarkVoices, benchmarkModels, benchmarkScripts, benchmarkProviders, listJapaneseVoices } from "./generators/tts-benchmark.js";
 import { getChannel, getChannelIds } from "../config/channels.js";
 import { getMonetization, revenueTargets } from "../config/monetization.js";
 import { tools, voiceRouting, deferredTools } from "../config/tools.js";
@@ -555,9 +555,10 @@ program
 // ─── ナレーション整形 ──────────────────────────────
 program
   .command("narration <channel> <script-path>")
-  .description("台本からElevenLabs用ナレーションテキストを整形")
-  .action(async (channelId, scriptPath) => {
-    console.log(`\n  Formatting narration for [${channelId}] ...\n`);
+  .description("台本からナレーションテキストを整形（--provider で TTS エンジン切替可）")
+  .option("--provider <provider>", "TTS provider (elevenlabs / voicevox)", "elevenlabs")
+  .action(async (channelId, scriptPath, opts) => {
+    console.log(`\n  Formatting narration for [${channelId}] (provider: ${opts.provider}) ...\n`);
     try {
       const result = await formatNarration(channelId, scriptPath);
       console.log(`  Narration JSON: ${result.path}`);
@@ -949,6 +950,116 @@ program
         label: opts.label,
       });
       console.log(`\n  Script benchmark complete. Report: ${result.reportPath}\n`);
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// --- VOICEVOX ---
+
+program
+  .command("voicevox-speakers")
+  .description("VOICEVOX ENGINE の利用可能な Speaker 一覧を表示")
+  .action(async () => {
+    try {
+      const { listSpeakers, getStatus } = await import("./clients/voicevox-client.js");
+      const status = await getStatus();
+      if (!status.connected) {
+        console.error(`\n  VOICEVOX ENGINE に接続できません (${status.url})`);
+        console.error("  VOICEVOX アプリを起動してください。\n");
+        process.exit(1);
+      }
+      console.log(`\n  VOICEVOX ENGINE v${status.version} (${status.url})\n`);
+
+      const speakers = await listSpeakers();
+      for (const sp of speakers) {
+        console.log(`  ${sp.name}`);
+        for (const style of sp.styles || []) {
+          console.log(`    [${style.id}] ${style.name}`);
+        }
+      }
+      console.log(`\n  合計: ${speakers.length} speakers\n`);
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("voicevox-status")
+  .description("VOICEVOX ENGINE の接続状態を確認")
+  .action(async () => {
+    try {
+      const { getStatus } = await import("./clients/voicevox-client.js");
+      const status = await getStatus();
+      if (status.connected) {
+        console.log(`\n  VOICEVOX ENGINE: 接続OK (v${status.version})`);
+        console.log(`  URL: ${status.url}\n`);
+      } else {
+        console.log(`\n  VOICEVOX ENGINE: 未接続`);
+        console.log(`  URL: ${status.url}`);
+        console.log("  VOICEVOX アプリを起動してください。\n");
+      }
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// --- TTS Provider Benchmark ---
+
+program
+  .command("tts-bench-provider <channel> <narration-txt>")
+  .description("Provider A/Bテスト: ElevenLabs vs VOICEVOX を同一テキストで比較")
+  .option("--elevenlabs-voices <ids>", "ElevenLabs Voice ID（カンマ区切り）")
+  .option("--voicevox-speakers <ids>", "VOICEVOX Speaker ID（カンマ区切り）")
+  .option("--model <model>", "ElevenLabs モデル名", "eleven_multilingual_v2")
+  .option("--label <label>", "テスト名ラベル", "provider-benchmark")
+  .action(async (channel, narrationTxt, opts) => {
+    try {
+      const { readInput } = await import("./utils/file-helpers.js");
+      const { validateChannelId, validateContentPath } = await import("./utils/validators.js");
+      channel = validateChannelId(channel);
+      narrationTxt = validateContentPath(narrationTxt);
+      const sampleText = readInput(narrationTxt);
+
+      // エントリを構成
+      const entries = [];
+
+      if (opts.elevenlabsVoices) {
+        for (const vid of opts.elevenlabsVoices.split(",").map((v) => v.trim())) {
+          entries.push({
+            provider: "elevenlabs",
+            voiceId: vid,
+            model: opts.model,
+            label: `EL:${vid.slice(-6)}`,
+          });
+        }
+      }
+
+      if (opts.voicevoxSpeakers) {
+        for (const sid of opts.voicevoxSpeakers.split(",").map((s) => s.trim())) {
+          entries.push({
+            provider: "voicevox",
+            speakerId: parseInt(sid, 10),
+            label: `VV:${sid}`,
+          });
+        }
+      }
+
+      if (entries.length === 0) {
+        console.error("  Error: --elevenlabs-voices または --voicevox-speakers を指定してください");
+        process.exit(1);
+      }
+
+      const result = await benchmarkProviders(channel, sampleText, {
+        entries,
+        label: opts.label,
+      });
+      console.log(`\n  Provider benchmark complete.`);
+      console.log(`  Report: ${result.reportPath}`);
+      console.log(`  Manifest: ${result.manifestPath}\n`);
     } catch (err) {
       console.error(`  Error: ${err.message}`);
       process.exit(1);
