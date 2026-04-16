@@ -86,7 +86,7 @@ ${scriptContent.slice(0, 6000)}
     // ハイブリッドモード: API未設定時はローカルフォールバックで整形
     const cleaned = cleanScriptForNarration(scriptContent);
     const optimized = optimizeForTTS(cleaned);
-    const withDict = applyPronunciationDictionary(optimized);
+    const withDict = applyPronunciationDictionary(optimized, channelId);
     narration = { full_text: withDict, localFallback: true };
   } else {
     try {
@@ -97,12 +97,12 @@ ${scriptContent.slice(0, 6000)}
       narration = JSON.parse(cleaned);
       // Claude API の出力にも読み辞書を適用
       if (narration.full_text) {
-        narration.full_text = applyPronunciationDictionary(narration.full_text);
+        narration.full_text = applyPronunciationDictionary(narration.full_text, channelId);
       }
     } catch {
       const cleaned = cleanScriptForNarration(scriptContent);
       const optimized = optimizeForTTS(cleaned);
-      const withDict = applyPronunciationDictionary(optimized);
+      const withDict = applyPronunciationDictionary(optimized, channelId);
       narration = { full_text: withDict, parseError: true };
     }
   }
@@ -239,42 +239,66 @@ function splitLongSentence(line, maxChars) {
 // Phase 3: 読み辞書適用
 // =========================================================================
 
-/** 辞書キャッシュ */
-let _dictionaryCache = null;
+/** 辞書キャッシュ（channelId → entries） */
+const _dictionaryCache = new Map();
 
 /**
  * pronunciation-dictionary.json を読み込む
+ * entries + categories（全カテゴリ） + channel_overrides を統合して返す
+ *
+ * @param {string} [channelId] - チャンネルID（channel_overrides 適用用）
  * @returns {Array<[string, string]>} [元表記, 読み] のペア配列（長い語句順）
  */
-function loadDictionary() {
-  if (_dictionaryCache) return _dictionaryCache;
+function loadDictionary(channelId) {
+  const cacheKey = channelId || "__default__";
+  if (_dictionaryCache.has(cacheKey)) return _dictionaryCache.get(cacheKey);
 
   const dictPath = resolve("config/pronunciation-dictionary.json");
   if (!existsSync(dictPath)) {
-    _dictionaryCache = [];
-    return _dictionaryCache;
+    _dictionaryCache.set(cacheKey, []);
+    return [];
   }
 
   try {
     const raw = JSON.parse(readFileSync(dictPath, "utf-8"));
+
+    // 1. ベース entries
+    const merged = { ...(raw.entries || {}) };
+
+    // 2. カテゴリ辞書を統合（全カテゴリ）
+    if (raw.categories) {
+      for (const cat of Object.values(raw.categories)) {
+        if (cat.entries) {
+          Object.assign(merged, cat.entries);
+        }
+      }
+    }
+
+    // 3. チャンネル別オーバーライド（最優先）
+    if (channelId && raw.channel_overrides && raw.channel_overrides[channelId]) {
+      Object.assign(merged, raw.channel_overrides[channelId]);
+    }
+
     // 長い語句から順にマッチさせるためソート
-    const entries = Object.entries(raw.entries || {});
+    const entries = Object.entries(merged);
     entries.sort((a, b) => b[0].length - a[0].length);
-    _dictionaryCache = entries;
+    _dictionaryCache.set(cacheKey, entries);
+    return entries;
   } catch (e) {
     console.warn(`  [Warning] 読み辞書の読み込みに失敗: ${e.message}`);
-    _dictionaryCache = [];
+    _dictionaryCache.set(cacheKey, []);
+    return [];
   }
-
-  return _dictionaryCache;
 }
 
 /**
  * テキストに読み辞書を適用
  * 辞書に登録された語句のみ置換する（ピンポイント方式）
+ * @param {string} text
+ * @param {string} [channelId] - チャンネルID（channel_overrides 適用用）
  */
-function applyPronunciationDictionary(text) {
-  const dict = loadDictionary();
+function applyPronunciationDictionary(text, channelId) {
+  const dict = loadDictionary(channelId);
   if (dict.length === 0) return text;
 
   let result = text;
@@ -288,7 +312,48 @@ function applyPronunciationDictionary(text) {
  * 辞書キャッシュをクリア（テスト用）
  */
 export function clearDictionaryCache() {
-  _dictionaryCache = null;
+  _dictionaryCache.clear();
+}
+
+// =========================================================================
+// TTS向けリライト（台本→TTS短文版への一括変換）
+// =========================================================================
+
+/**
+ * 台本テキストをTTS向け短文版に変換する
+ * cleanScriptForNarration → optimizeForTTS → applyPronunciationDictionary の全パイプライン
+ *
+ * @param {string} scriptContent - 台本テキスト（マーカー付きでもOK）
+ * @param {object} [options]
+ * @param {number} [options.maxChars=25] - 1文の最大文字数目安
+ * @returns {string} TTS用に最適化されたテキスト
+ */
+export function rewriteForTTS(scriptContent, options = {}) {
+  const { maxChars = 25 } = options;
+
+  // Phase 1: マーカー除去
+  let text = cleanScriptForNarration(scriptContent);
+
+  // Phase 2: TTS向け短文化（カスタム maxChars 対応）
+  // コロン→改行
+  text = text.replace(/[:：]\s*/g, "。\n");
+  text = text.replace(/^(ステップ\d+)。\n/gm, "$1。\n");
+
+  // 短文分割（指定 maxChars で分割）
+  text = text
+    .split("\n")
+    .map((line) => splitLongSentence(line, maxChars))
+    .join("\n");
+
+  // %→パーセント
+  text = text.replace(/%/g, "パーセント");
+  text = text.replace(/\n{3,}/g, "\n\n");
+  text = text.trim();
+
+  // Phase 3: 読み辞書適用
+  text = applyPronunciationDictionary(text);
+
+  return text;
 }
 
 // =========================================================================

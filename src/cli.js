@@ -12,11 +12,11 @@ import { generateRepurpose } from "./generators/repurpose-generator.js";
 import { checkCompliance, formatComplianceReport } from "./generators/compliance-checker.js";
 import { saveKPI, loadAllKPI, formatKPISummary } from "./generators/kpi-tracker.js";
 import { generateShotPlan, formatShotPlan } from "./generators/shot-planner.js";
-import { formatNarration, formatNarrationSummary } from "./generators/narration-formatter.js";
+import { formatNarration, formatNarrationSummary, rewriteForTTS } from "./generators/narration-formatter.js";
 import { generateHandoff, generateHandoffPackage } from "./generators/handoff-generator.js";
 import { generateTopics, formatTopicIdeas } from "./generators/topic-generator.js";
 import { runPlanPhase, runFullProduction, formatProductionSummary } from "./generators/production-pipeline.js";
-import { benchmarkVoices, benchmarkModels, listJapaneseVoices } from "./generators/tts-benchmark.js";
+import { benchmarkVoices, benchmarkModels, benchmarkScripts, listJapaneseVoices } from "./generators/tts-benchmark.js";
 import { getChannel, getChannelIds } from "../config/channels.js";
 import { getMonetization, revenueTargets } from "../config/monetization.js";
 import { tools, voiceRouting, deferredTools } from "../config/tools.js";
@@ -884,6 +884,71 @@ program
         console.log(`  ${v.voice_id}  ${v.name}  [${labels.language || "?"}] ${labels.use_case || ""} ${labels.accent || ""}`);
       }
       console.log();
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// --- TTS Rewrite ---
+
+program
+  .command("tts-rewrite <channel> <script-path>")
+  .description("台本をTTS向け短文版にリライトして保存")
+  .option("--max-chars <n>", "1文の最大文字数", "25")
+  .action(async (channel, scriptPath, opts) => {
+    try {
+      const { readInput, writeOutput, timestamp: ts } = await import("./utils/file-helpers.js");
+      const { validateChannelId, validateContentPath } = await import("./utils/validators.js");
+      channel = validateChannelId(channel);
+      scriptPath = validateContentPath(scriptPath);
+      const scriptContent = readInput(scriptPath);
+      const maxChars = parseInt(opts.maxChars, 10) || 25;
+
+      const rewritten = rewriteForTTS(scriptContent, { maxChars });
+
+      const slug = scriptPath.split("/").pop().split("\\").pop().replace(/\.md$/, "");
+      const outputPath = `content/${channel}/scripts/${ts()}_${slug}_tts-rewrite.txt`;
+      const fullPath = writeOutput(outputPath, rewritten);
+
+      const lines = rewritten.split("\n").filter((l) => l.trim());
+      const avgLen = Math.round(lines.reduce((s, l) => s + l.length, 0) / lines.length);
+
+      console.log(`\n  TTS Rewrite 完了`);
+      console.log(`  出力: ${fullPath}`);
+      console.log(`  行数: ${lines.length} / 平均文字数: ${avgLen} / maxChars: ${maxChars}`);
+      console.log();
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// --- TTS Script Benchmark ---
+
+program
+  .command("tts-bench-script <channel>")
+  .description("Script A/Bテスト: 同一Voice/Modelで複数原稿を比較生成")
+  .option("--scripts <paths>", "カンマ区切りの原稿ファイルパス一覧")
+  .option("--voice <id>", "Voice ID（省略時はチャンネル設定）")
+  .option("--model <model>", "モデル名", "eleven_multilingual_v2")
+  .option("--label <label>", "テスト名ラベル", "script-benchmark")
+  .action(async (channel, opts) => {
+    try {
+      if (!opts.scripts) {
+        console.error("  Error: --scripts オプションで原稿ファイルパスをカンマ区切りで指定してください");
+        process.exit(1);
+      }
+      const { validateChannelId } = await import("./utils/validators.js");
+      channel = validateChannelId(channel);
+      const scriptPaths = opts.scripts.split(",").map((s) => s.trim());
+
+      const result = await benchmarkScripts(channel, scriptPaths, {
+        voiceId: opts.voice,
+        model: opts.model,
+        label: opts.label,
+      });
+      console.log(`\n  Script benchmark complete. Report: ${result.reportPath}\n`);
     } catch (err) {
       console.error(`  Error: ${err.message}`);
       process.exit(1);

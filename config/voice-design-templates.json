@@ -1,0 +1,46 @@
+{
+  "_comment": "ElevenLabs Voice Design 用プロンプトテンプレート。Voice Design API でカスタム Voice を生成する際に使用する",
+  "_usage": "acs tts-voice-design <channel> でテンプレートからプロンプトを生成し、Voice Design API に送信する",
+  "templates": {
+    "ja-explainer-trust": {
+      "name": "日本語 解説・信頼系",
+      "description": "金融教育・制度説明向けの落ち着いた日本語ナレーション",
+      "target_channels": ["genz-money"],
+      "prompt": "A calm and clear Japanese male voice in his late 20s. Speaks with authority but remains approachable. The tone is warm and trustworthy, suitable for explaining financial concepts to young adults. Not too formal, not too casual. Moderate pace with natural pauses. Clear enunciation of technical terms.",
+      "gender": "male",
+      "age": "young_adult",
+      "accent": "japanese",
+      "notes": "金融教育向け。若年層に信頼感を与えつつ、堅すぎないトーン"
+    },
+    "ja-explainer-friendly": {
+      "name": "日本語 解説・フレンドリー系",
+      "description": "カジュアルだが明瞭な解説ナレーション",
+      "target_channels": ["genz-money", "chill-culture"],
+      "prompt": "A friendly and energetic Japanese female voice in her early 20s. Speaks naturally like talking to a friend, but with clear pronunciation. Slightly upbeat tone that keeps the listener engaged. Good at making complex topics feel approachable. Natural rhythm with occasional emphasis for important points.",
+      "gender": "female",
+      "age": "young_adult",
+      "accent": "japanese",
+      "notes": "Z世代向け。友達に話すようなトーンだが、説明は明瞭"
+    },
+    "ja-calm-ambient": {
+      "name": "日本語 穏やか・アンビエント系",
+      "description": "リラックスした雰囲気のナレーション",
+      "target_channels": ["chill-culture"],
+      "prompt": "A soft and soothing Japanese voice, gender-neutral. Speaks slowly with a relaxed, meditative quality. The tone is warm and inviting, like a guide leading you through a peaceful space. Minimal energy but deeply engaging. Perfect for ambient and lifestyle content.",
+      "gender": "neutral",
+      "age": "young_adult",
+      "accent": "japanese",
+      "notes": "チル系コンテンツ向け。空間体験を語るような穏やかさ"
+    },
+    "en-documentary-insight": {
+      "name": "English Documentary・洞察系",
+      "description": "ドキュメンタリー調の英語ナレーション",
+      "target_channels": ["japanese-mindset"],
+      "prompt": "A thoughtful and articulate English male voice in his 30s. Speaks with a documentary narrator's cadence — measured, reflective, and rich in tone. Conveys depth and cultural sensitivity. The kind of voice that makes you stop and think. Slight warmth underneath an intellectual delivery.",
+      "gender": "male",
+      "age": "adult",
+      "accent": "american",
+      "notes": "日本文化紹介向け。知的だが温かみのあるドキュメンタリートーン"
+    }
+  }
+}

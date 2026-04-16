@@ -183,6 +183,153 @@ export async function benchmarkModels(channelId, sampleText, options = {}) {
 }
 
 /**
+ * Script 比較ベンチマーク
+ * 同一 Voice・同一 Model で複数の原稿ファイルを比較生成
+ *
+ * @param {string} channelId - チャンネルID
+ * @param {string[]} scriptPaths - 比較する原稿ファイルパスの配列
+ * @param {object} options
+ * @param {string} [options.voiceId] - Voice ID（省略時はチャンネル設定）
+ * @param {string} [options.model] - モデル名
+ * @param {string} [options.label] - テスト名ラベル
+ * @returns {Promise<object>} ベンチマーク結果
+ */
+export async function benchmarkScripts(channelId, scriptPaths, options = {}) {
+  const { voiceId, model, label = "script-benchmark" } = options;
+  const voiceConfig = getVoiceConfig(channelId);
+  const useVoiceId = voiceId || voiceConfig.voice_id;
+  const useModel = model || "eleven_multilingual_v2";
+
+  if (!scriptPaths || scriptPaths.length === 0) {
+    throw new Error("scriptPaths を1つ以上指定してください");
+  }
+
+  console.log(`\n  [Benchmark] Script比較: ${scriptPaths.length} scripts`);
+  console.log(`  [Benchmark] Voice: ${useVoiceId} / Model: ${useModel}`);
+
+  const { readFileSync } = await import("fs");
+  const ts = timestamp();
+  const results = [];
+
+  for (let i = 0; i < scriptPaths.length; i++) {
+    const scriptPath = scriptPaths[i];
+    const scriptName = scriptPath.split("/").pop().split("\\").pop();
+    console.log(`\n  [Benchmark] Script ${i + 1}/${scriptPaths.length}: ${scriptName}`);
+
+    try {
+      const text = readFileSync(resolve(scriptPath), "utf-8").trim();
+      const segments = splitNarrationSegments(text);
+      const startTime = Date.now();
+      const audio = await generateNarration(channelId, text, {
+        voiceId: useVoiceId,
+        model: useModel,
+        segments,
+      });
+      const elapsed = Date.now() - startTime;
+
+      results.push({
+        scriptPath: scriptName,
+        voiceId: useVoiceId,
+        model: useModel,
+        status: "ok",
+        outputPath: audio.outputPath,
+        textLength: text.length,
+        segments: audio.metadata.segments,
+        elapsedMs: elapsed,
+      });
+    } catch (e) {
+      results.push({
+        scriptPath: scriptName,
+        voiceId: useVoiceId,
+        model: useModel,
+        status: "error",
+        error: e.message,
+      });
+    }
+  }
+
+  const report = generateScriptBenchmarkReport({
+    label,
+    channelId,
+    timestamp: ts,
+    voiceId: useVoiceId,
+    model: useModel,
+    results,
+  });
+
+  const reportPath = `content/${channelId}/metadata/${ts}_${label}.md`;
+  writeOutput(reportPath, report);
+
+  console.log(`\n  [Benchmark] レポート: ${reportPath}`);
+  return { reportPath, results };
+}
+
+/**
+ * Script ベンチマークレポート生成
+ */
+function generateScriptBenchmarkReport(data) {
+  const lines = [];
+  lines.push("# TTS Script Benchmark");
+  lines.push("");
+  lines.push(`- Label: ${data.label}`);
+  lines.push(`- Channel: ${data.channelId}`);
+  lines.push(`- Date: ${data.timestamp}`);
+  lines.push(`- Voice: ${data.voiceId}`);
+  lines.push(`- Model: ${data.model}`);
+  lines.push("");
+  lines.push("## Results");
+  lines.push("");
+  lines.push("| # | Script | Status | Chars | Segments | File | Time |");
+  lines.push("|---|--------|--------|-------|----------|------|------|");
+
+  for (let i = 0; i < data.results.length; i++) {
+    const r = data.results[i];
+    const time = r.elapsedMs ? `${(r.elapsedMs / 1000).toFixed(1)}s` : "-";
+    const file = r.outputPath || r.error || "-";
+    const chars = r.textLength || "-";
+    const segs = r.segments || "-";
+    lines.push(`| ${i + 1} | ${r.scriptPath} | ${r.status} | ${chars} | ${segs} | ${file} | ${time} |`);
+  }
+
+  lines.push("");
+  lines.push("## 評価スコアシート（各項目 1〜5）");
+  lines.push("");
+
+  const colHeaders = data.results.map((_, i) => `#${i + 1}`);
+  const colSep = colHeaders.map(() => "---");
+  lines.push(`| 評価項目 | ${colHeaders.join(" | ")} |`);
+  lines.push(`|----------|${colSep.join("|")}|`);
+
+  const criteria = [
+    "誤読率（少ないほど高得点）",
+    "明瞭さ・聞き取りやすさ",
+    "間・ポーズの自然さ",
+    "信頼感・説明向きか",
+    "総合評価",
+  ];
+
+  for (const label of criteria) {
+    const cells = colHeaders.map(() => "  ");
+    lines.push(`| ${label} | ${cells.join(" | ")} |`);
+  }
+
+  lines.push("");
+  lines.push("### メモ");
+  lines.push("");
+  for (let i = 0; i < data.results.length; i++) {
+    lines.push(`- **#${i + 1}** (${data.results[i].scriptPath}): `);
+  }
+
+  lines.push("");
+  lines.push("## 採用判定");
+  lines.push("");
+  lines.push("- 採用 Script: ");
+  lines.push("- 理由: ");
+  lines.push("");
+  return lines.join("\n");
+}
+
+/**
  * 日本語向け Voice 候補を取得
  * ElevenLabs API から Voice 一覧を取得し、日本語対応のものをフィルタ
  *
@@ -230,18 +377,39 @@ function generateBenchmarkReport(data) {
   }
 
   lines.push("");
-  lines.push("## 評価チェックリスト");
+  lines.push("## 評価スコアシート（各項目 1〜5）");
   lines.push("");
-  lines.push("各音声ファイルを聴いて以下を評価してください:");
+  lines.push("各音声ファイルを聴いて、1（悪い）〜 5（優秀）で評価してください。");
   lines.push("");
-  lines.push("| 観点 | Voice/Model 1 | Voice/Model 2 | Voice/Model 3 |");
-  lines.push("|------|---------------|---------------|---------------|");
-  lines.push("| 誤読率 | | | |");
-  lines.push("| イントネーション | | | |");
-  lines.push("| 文末の自然さ | | | |");
-  lines.push("| 数字・制度語の安定性 | | | |");
-  lines.push("| Shorts向けの抜け感 | | | |");
-  lines.push("| 総合評価 | | | |");
+
+  // 動的にカラム生成
+  const colHeaders = data.results.map((_, i) => `#${i + 1}`);
+  const colSep = colHeaders.map(() => "---");
+  lines.push(`| 評価項目 | ${colHeaders.join(" | ")} |`);
+  lines.push(`|----------|${colSep.join("|")}|`);
+
+  const criteria = [
+    ["misread_score", "誤読率（少ないほど高得点）"],
+    ["clarity_score", "明瞭さ・聞き取りやすさ"],
+    ["natural_pause_score", "間・ポーズの自然さ"],
+    ["trustworthiness_score", "信頼感・説明向きか"],
+    ["overall_score", "総合評価"],
+  ];
+
+  for (const [, label] of criteria) {
+    const cells = colHeaders.map(() => "  ");
+    lines.push(`| ${label} | ${cells.join(" | ")} |`);
+  }
+
+  lines.push("");
+  lines.push("### メモ");
+  lines.push("");
+  for (let i = 0; i < data.results.length; i++) {
+    const r = data.results[i];
+    const id = data.type === "voice" ? r.voiceId : r.model;
+    lines.push(`- **#${i + 1}** (${id}): `);
+  }
+
   lines.push("");
   lines.push("## 採用判定");
   lines.push("");
