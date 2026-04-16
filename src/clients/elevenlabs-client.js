@@ -58,21 +58,9 @@ async function apiRequest(path, options = {}) {
 }
 
 /**
- * テキストから音声を生成
- * @param {string} channelId - チャンネルID（voice routing に使用）
- * @param {string} text - ナレーションテキスト
- * @param {object} [options]
- * @param {string} [options.voiceId] - voice_id を直接指定（省略時はチャンネル設定を使用）
- * @param {string} [options.model] - モデル名
- * @returns {Promise<object>} { path, outputPath, duration }
+ * 単一テキストから音声を生成（内部用）
  */
-export async function generateNarration(channelId, text, options = {}) {
-  const voiceConfig = getVoiceConfig(channelId);
-  const voiceId = options.voiceId || voiceConfig.voice_id;
-  const model = options.model || "eleven_multilingual_v2";
-
-  console.log(`  [ElevenLabs] Generating narration (voice: ${voiceId}, model: ${model}) ...`);
-
+async function generateSingleAudio(voiceId, text, model, voiceConfig) {
   const response = await apiRequest(`/text-to-speech/${voiceId}`, {
     method: "POST",
     body: JSON.stringify({
@@ -84,8 +72,47 @@ export async function generateNarration(channelId, text, options = {}) {
       },
     }),
   });
+  return Buffer.from(await response.arrayBuffer());
+}
 
-  const audioBuffer = Buffer.from(await response.arrayBuffer());
+/**
+ * テキストから音声を生成
+ * テキストが長い場合はセグメント分割して生成・結合する
+ *
+ * @param {string} channelId - チャンネルID（voice routing に使用）
+ * @param {string} text - ナレーションテキスト
+ * @param {object} [options]
+ * @param {string} [options.voiceId] - voice_id を直接指定（省略時はチャンネル設定を使用）
+ * @param {string} [options.model] - モデル名
+ * @param {string[]} [options.segments] - セグメント分割済みテキスト配列（指定時は分割送信）
+ * @returns {Promise<object>} { path, outputPath, metadata }
+ */
+export async function generateNarration(channelId, text, options = {}) {
+  const voiceConfig = getVoiceConfig(channelId);
+  const voiceId = options.voiceId || voiceConfig.voice_id;
+  const model = options.model || "eleven_multilingual_v2";
+
+  const segments = options.segments || [text];
+  const segmentCount = segments.length;
+
+  console.log(
+    `  [ElevenLabs] Generating narration (voice: ${voiceId}, model: ${model}, segments: ${segmentCount}, stability: ${voiceConfig.stability}) ...`,
+  );
+
+  // セグメントごとに音声を生成
+  const audioBuffers = [];
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i].trim();
+    if (!seg) continue;
+    if (segmentCount > 1) {
+      console.log(`  [ElevenLabs] Segment ${i + 1}/${segmentCount} (${seg.length} chars) ...`);
+    }
+    const buf = await generateSingleAudio(voiceId, seg, model, voiceConfig);
+    audioBuffers.push(buf);
+  }
+
+  // バッファを結合
+  const audioBuffer = Buffer.concat(audioBuffers);
 
   const ts = timestamp();
   const outputPath = `content/${channelId}/audio/${ts}_narration.mp3`;
@@ -101,12 +128,15 @@ export async function generateNarration(channelId, text, options = {}) {
     voice_id: voiceId,
     model,
     text_length: text.length,
+    segments: segmentCount,
+    stability: voiceConfig.stability,
+    similarity_boost: voiceConfig.similarity_boost,
     style: voiceConfig.style,
     outputPath,
   };
   writeOutput(metaPath, JSON.stringify(metadata, null, 2));
 
-  console.log(`  [ElevenLabs] [OK] Audio saved: ${outputPath}`);
+  console.log(`  [ElevenLabs] [OK] Audio saved: ${outputPath} (${segmentCount} segment(s), ${audioBuffer.length} bytes)`);
   return { path: fullPath, outputPath, metadata };
 }
 

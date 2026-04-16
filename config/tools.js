@@ -47,8 +47,8 @@ export const voiceRouting = {
     language: "ja",
     voice_id: "JTlYtJrcTzPC71hMLOxo",
     style: "clear, calm, credible",
-    stability: 0.6,
-    similarity_boost: 0.8,
+    stability: 0.75,
+    similarity_boost: 0.75,
     description: "信頼感のある落ち着いた日本語ナレーション",
   },
   "japanese-mindset": {
