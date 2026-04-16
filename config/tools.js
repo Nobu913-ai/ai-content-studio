@@ -47,6 +47,65 @@ export const tools = {
 };
 
 /**
+ * VOICEVOX Speaker プリセット（春日部つむぎ ノーマル基準）
+ * 調整順: 話速 → 句読点の間 → 抑揚 → 音高
+ */
+export const voicevoxPresets = {
+  "genz-money-tsumugi-shorts": {
+    name: "春日部つむぎ ショート用",
+    speakerId: 8,
+    speedScale: 1.08,
+    pitchScale: 0.00,
+    intonationScale: 1.10,
+    volumeScale: 1.00,
+    prePhonemeLength: 0.08,
+    postPhonemeLength: 0.12,
+    pauseLengthScale: 0.90,
+    segmentGapMs: 300,
+    enableInterrogativeUpspeak: true,
+  },
+  "genz-money-metan-shorts": {
+    name: "四国めたん ショート用",
+    speakerId: 2,
+    speedScale: 1.02,
+    pitchScale: -0.02,
+    intonationScale: 1.00,
+    volumeScale: 1.00,
+    prePhonemeLength: 0.08,
+    postPhonemeLength: 0.12,
+    pauseLengthScale: 1.00,
+    segmentGapMs: 300,
+    enableInterrogativeUpspeak: true,
+  },
+  "genz-money-mochiko-shorts": {
+    name: "もち子さん ショート用",
+    speakerId: 20,
+    speedScale: 1.08,
+    pitchScale: 0.00,
+    intonationScale: 1.10,
+    volumeScale: 1.02,
+    prePhonemeLength: 0.07,
+    postPhonemeLength: 0.11,
+    pauseLengthScale: 0.95,
+    segmentGapMs: 300,
+    enableInterrogativeUpspeak: true,
+  },
+  "genz-money-tsumugi-longform": {
+    name: "春日部つむぎ 長尺用",
+    speakerId: 8,
+    speedScale: 1.03,
+    pitchScale: 0.00,
+    intonationScale: 1.05,
+    volumeScale: 1.00,
+    prePhonemeLength: 0.08,
+    postPhonemeLength: 0.12,
+    pauseLengthScale: 0.95,
+    segmentGapMs: 400,
+    enableInterrogativeUpspeak: true,
+  },
+};
+
+/**
  * チャンネル別 Voice Routing 設定
  * voice_id はElevenLabsで作成/選択した音声のID
  */

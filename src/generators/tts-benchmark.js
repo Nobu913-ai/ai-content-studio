@@ -12,7 +12,7 @@ import { resolve, writeOutput, timestamp } from "../utils/file-helpers.js";
 import { getVoiceConfig } from "../../config/tools.js";
 import { generateNarration, listVoices, getUsage } from "../clients/elevenlabs-client.js";
 import * as voicevoxClient from "../clients/voicevox-client.js";
-import { splitNarrationSegments } from "./narration-formatter.js";
+import { splitNarrationSegments, rewriteForTTS } from "./narration-formatter.js";
 
 /**
  * Voice 比較ベンチマーク
@@ -342,6 +342,15 @@ function generateScriptBenchmarkReport(data) {
  * @param {string} [options.label] - テスト名ラベル
  * @returns {Promise<object>} ベンチマーク結果
  */
+/**
+ * VOICEVOX 向けテキスト前処理
+ * - 読み辞書を適用（NISA→ニーサ等）
+ * - 疑問文はそのまま維持（enable_interrogative_upspeak で制御）
+ */
+function preprocessForVoicevox(text) {
+  return rewriteForTTS(text, { maxChars: 100 });
+}
+
 export async function benchmarkProviders(channelId, sampleText, options = {}) {
   const { entries, label = "provider-benchmark" } = options;
 
@@ -366,10 +375,18 @@ export async function benchmarkProviders(channelId, sampleText, options = {}) {
       let audio;
 
       if (entry.provider === "voicevox") {
-        audio = await voicevoxClient.generateNarration(channelId, sampleText, {
+        // VOICEVOX向け前処理（辞書適用）
+        const vvText = preprocessForVoicevox(sampleText);
+        const vvSegments = splitNarrationSegments(vvText);
+        audio = await voicevoxClient.generateNarration(channelId, vvText, {
           speakerId: entry.speakerId,
           speedScale: entry.speedScale,
-          segments,
+          intonationScale: entry.intonationScale,
+          pauseLengthScale: entry.pauseLengthScale,
+          prePhonemeLength: entry.prePhonemeLength,
+          postPhonemeLength: entry.postPhonemeLength,
+          enableInterrogativeUpspeak: entry.enableInterrogativeUpspeak,
+          segments: vvSegments,
         });
       } else {
         audio = await generateNarration(channelId, sampleText, {

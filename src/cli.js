@@ -1015,6 +1015,7 @@ program
   .option("--elevenlabs-voices <ids>", "ElevenLabs Voice ID（カンマ区切り）")
   .option("--voicevox-speakers <ids>", "VOICEVOX Speaker ID（カンマ区切り）")
   .option("--model <model>", "ElevenLabs モデル名", "eleven_multilingual_v2")
+  .option("--no-upspeak", "VOICEVOX の疑問文語尾自動持ち上げを無効化")
   .option("--label <label>", "テスト名ラベル", "provider-benchmark")
   .action(async (channel, narrationTxt, opts) => {
     try {
@@ -1023,6 +1024,9 @@ program
       channel = validateChannelId(channel);
       narrationTxt = validateContentPath(narrationTxt);
       const sampleText = readInput(narrationTxt);
+
+      // VOICEVOX upspeak 設定（--no-upspeak で false）
+      const enableUpspeak = opts.upspeak !== false;
 
       // エントリを構成
       const entries = [];
@@ -1043,6 +1047,7 @@ program
           entries.push({
             provider: "voicevox",
             speakerId: parseInt(sid, 10),
+            enableInterrogativeUpspeak: enableUpspeak,
             label: `VV:${sid}`,
           });
         }
