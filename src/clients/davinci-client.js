@@ -31,11 +31,11 @@ function getPythonPath() {
   // Windows: winget でインストールされた Python の一般的なパス
   const localAppData = process.env.LOCALAPPDATA || `${process.env.USERPROFILE}/AppData/Local`;
   const candidates = [
+    `${localAppData}\\Programs\\Python\\Python314\\python.exe`,
+    `${localAppData}\\Programs\\Python\\Python313\\python.exe`,
     `${localAppData}\\Programs\\Python\\Python312\\python.exe`,
-    `${localAppData}\\Programs\\Python\\Python311\\python.exe`,
-    `${localAppData}\\Programs\\Python\\Python310\\python.exe`,
-    "C:\\Python312\\python.exe",
-    "C:\\Python311\\python.exe",
+    "C:\\Python314\\python.exe",
+    "C:\\Python313\\python.exe",
     "python",
     "python3",
   ];
@@ -82,8 +82,8 @@ function runBridge(command, args = []) {
         if (error.code === "ENOENT") {
           return reject(
             new Error(
-              "Python が見つかりません。DaVinci Resolve 自動化には Python 3.6+ が必要です。\n" +
-                "  インストール: winget install Python.Python.3.12\n" +
+              "Python が見つかりません。DaVinci Resolve 自動化には Python 3.10+ が必要です。\n" +
+                "  インストール: winget install Python.Python.3.14\n" +
                 "  または DAVINCI_PYTHON_PATH 環境変数で Python パスを指定してください。",
             ),
           );

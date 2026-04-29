@@ -51,21 +51,8 @@ export const tools = {
  * 調整順: 話速 → 句読点の間 → 抑揚 → 音高
  */
 export const voicevoxPresets = {
-  "genz-money-tsumugi-shorts": {
-    name: "春日部つむぎ ショート用",
-    speakerId: 8,
-    speedScale: 1.08,
-    pitchScale: 0.00,
-    intonationScale: 1.10,
-    volumeScale: 1.00,
-    prePhonemeLength: 0.08,
-    postPhonemeLength: 0.12,
-    pauseLengthScale: 0.90,
-    segmentGapMs: 300,
-    enableInterrogativeUpspeak: true,
-  },
-  "genz-money-metan-shorts": {
-    name: "四国めたん ショート用",
+  "genz-money-shorts": {
+    name: "四国めたん ショート用（メイン）",
     speakerId: 2,
     speedScale: 1.02,
     pitchScale: -0.02,
@@ -77,8 +64,34 @@ export const voicevoxPresets = {
     segmentGapMs: 300,
     enableInterrogativeUpspeak: true,
   },
+  "genz-money-longform": {
+    name: "四国めたん 長尺用",
+    speakerId: 2,
+    speedScale: 0.98,
+    pitchScale: -0.02,
+    intonationScale: 1.00,
+    volumeScale: 1.00,
+    prePhonemeLength: 0.08,
+    postPhonemeLength: 0.12,
+    pauseLengthScale: 1.05,
+    segmentGapMs: 400,
+    enableInterrogativeUpspeak: true,
+  },
+  "genz-money-tsumugi-shorts": {
+    name: "春日部つむぎ ショート用（サブ）",
+    speakerId: 8,
+    speedScale: 1.08,
+    pitchScale: 0.00,
+    intonationScale: 1.10,
+    volumeScale: 1.00,
+    prePhonemeLength: 0.08,
+    postPhonemeLength: 0.12,
+    pauseLengthScale: 0.90,
+    segmentGapMs: 300,
+    enableInterrogativeUpspeak: true,
+  },
   "genz-money-mochiko-shorts": {
-    name: "もち子さん ショート用",
+    name: "もち子さん ショート用（サブ）",
     speakerId: 20,
     speedScale: 1.08,
     pitchScale: 0.00,
@@ -90,19 +103,6 @@ export const voicevoxPresets = {
     segmentGapMs: 300,
     enableInterrogativeUpspeak: true,
   },
-  "genz-money-tsumugi-longform": {
-    name: "春日部つむぎ 長尺用",
-    speakerId: 8,
-    speedScale: 1.03,
-    pitchScale: 0.00,
-    intonationScale: 1.05,
-    volumeScale: 1.00,
-    prePhonemeLength: 0.08,
-    postPhonemeLength: 0.12,
-    pauseLengthScale: 0.95,
-    segmentGapMs: 400,
-    enableInterrogativeUpspeak: true,
-  },
 };
 
 /**
@@ -112,11 +112,10 @@ export const voicevoxPresets = {
 export const voiceRouting = {
   "genz-money": {
     language: "ja",
-    voice_id: "JTlYtJrcTzPC71hMLOxo",
+    provider: "voicevox",
+    preset: "genz-money-shorts",
     style: "clear, calm, credible",
-    stability: 0.75,
-    similarity_boost: 0.75,
-    description: "信頼感のある落ち着いた日本語ナレーション",
+    description: "四国めたん ノーマル — 芯のある落ち着いた日本語ナレーション",
   },
   "japanese-mindset": {
     language: "en",
