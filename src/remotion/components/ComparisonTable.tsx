@@ -7,7 +7,7 @@ import {
 } from "remotion";
 import { genzMoneyTheme as t } from "../theme/genzMoneyTheme";
 import { AnimatedBackground, BackgroundVariant } from "./AnimatedBackground";
-import { autoFontSize } from "../utils/responsive-text";
+import { autoFontSize, autoFontSizeJa } from "../utils/responsive-text";
 
 interface ColumnDef {
   key: string;
@@ -63,9 +63,30 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({
 
   const titleSize = autoFontSize(title, Math.round(width * 0.055), width * 0.9);
   const captionSize = caption ? autoFontSize(caption, Math.round(width * 0.038), width * 0.85) : 0;
-  const headerSize = Math.round(width * 0.034);
-  const labelSize = Math.round(width * 0.034);
-  const valueSize = Math.round(width * 0.04);
+
+  // セル内のテキストが折り返さないよう、各列・行の最長文字列に基づいて fontSize を auto-shrink。
+  // セル内 content 幅 = valueColWidth - padding(xs) * 2 - 安全マージン。
+  const valueCellContentWidth = valueColWidth - t.spacing.xs * 2 - 4;
+  const labelCellContentWidth = labelColWidth - t.spacing.md * 2 - 4;
+  const baseHeaderSize = Math.round(width * 0.034);
+  const baseLabelSize = Math.round(width * 0.034);
+  const baseValueSize = Math.round(width * 0.04);
+
+  const allValueTexts = rows.flatMap((r) =>
+    columns.map((c) => (r.values[c.key] !== undefined && r.values[c.key] !== null ? String(r.values[c.key]) : "—")),
+  );
+  const allHeaderLabels = columns.map((c) => c.label);
+  const allRowLabels = rows.map((r) => r.label);
+
+  const headerSize = allHeaderLabels.length > 0
+    ? Math.min(...allHeaderLabels.map((s) => autoFontSizeJa(s, baseHeaderSize, valueCellContentWidth)))
+    : baseHeaderSize;
+  const labelSize = allRowLabels.length > 0
+    ? Math.min(...allRowLabels.map((s) => autoFontSizeJa(s, baseLabelSize, labelCellContentWidth)))
+    : baseLabelSize;
+  const valueSize = allValueTexts.length > 0
+    ? Math.min(...allValueTexts.map((s) => autoFontSizeJa(s, baseValueSize, valueCellContentWidth)))
+    : baseValueSize;
 
   return (
     <AnimatedBackground accent={t.colors.positive} variant={bgVariant}>
@@ -153,6 +174,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({
                   color: col.emphasis ? t.colors.positive : t.colors.textPrimary,
                   textAlign: "center",
                   textShadow: col.emphasis ? `0 0 12px ${t.colors.positive}80` : "none",
+                  whiteSpace: "nowrap",
                 }}
               >
                 {col.label}
@@ -198,6 +220,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {isHighlight && <span style={{ fontSize: labelSize }}>◎</span>}
@@ -221,6 +244,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({
                           : t.colors.textPrimary,
                         textAlign: "center",
                         textShadow: col.emphasis && isHighlight ? `0 0 16px ${t.colors.positive}80` : "none",
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {v !== undefined && v !== null ? String(v) : "—"}

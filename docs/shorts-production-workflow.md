@@ -480,6 +480,25 @@ const sharedSize = autoFontSizeJa(longerText, maxFont, maxWidth);
 2. **アニメーションの translate range は settle 位置と整合** — settle (top 等) を変えたら translate range も比例変更しないと「古い位置から落ちる」見え方になる (RecommendationFocus バッジで遭遇)
 3. **autoFontSize の長さ逆転** — 長い文字列ほど自動縮小が大きい。並列描画は `sharedValueSize` (longer 基準) を計算して両方に適用
 
+### 新コンポーネント追加時の必須テキストチェック (5項目)
+
+新しい Remotion コンポーネントを書くたびに、**すべての描画テキストに対して以下を確認**。Shorts #01-#02 の制作で繰り返し wrap バグが発生しており、コンポーネント間で同じ罠を踏み続けないため必須。
+
+| # | チェック項目 | 理由 |
+|---|---|---|
+| 1 | `autoFontSize` ではなく `autoFontSizeJa` を使う | 半角想定の `autoFontSize` は日本語幅を 0.55em で誤計算する |
+| 2 | maxWidth は実 content 幅で計算 | parent幅 - padding - margin - 隣接要素 (badge/icon等) |
+| 3 | 単行テキストは `whiteSpace: "nowrap"` を明示 | default `normal` は CJK を任意位置で auto-wrap する |
+| 4 | 長文テキストは smartLineBreak + `whiteSpace: "pre-wrap"` | 2パスサイジング (CTAEndCard / NumberHero subtext のパターン) |
+| 5 | 並列描画する複数文字列は **共有 fontSize** を計算 | longest 基準で計算 (TaxFlowDemo の sharedValueSize / ComparisonTable の Math.min(...autoFontSizeJa)) |
+
+**実例 (Shorts #02 で発覚した3バグ):**
+- ComparisonTable: 全セル fontSize 固定 → 値テキスト wrap (#5 違反)
+- NumberHero subtext: `autoFontSize` 使用 + smartLineBreak 未適用 (#1, #4 違反)
+- ProgressSteps: maxWidth が実 content 幅と乖離 (#2 違反)
+
+詳細は memory `feedback_remotion_text_pitfalls.md` の罠 13-15 + 必須チェックを参照。
+
 ---
 
 ## 8. v1〜v8 の振り返り（参考）
@@ -497,5 +516,6 @@ const sharedSize = autoFontSizeJa(longerText, maxFont, maxWidth);
 | v8.1 | 冒頭 taxFlowDemo / 選択誘導 recommendationFocus 導入、1カット1メッセージ原則確立 |
 | v8.2 | TaxFlowDemo 中央モーフ (100→80 countdown) + prefix 利益→手元切替 + sharedValueSize、両カード4スロット並列、NISAカード主役化 (cardScale 1.10 + ✓ + 強グロー)、普通口座 「税引後」accent red ラベル + 増幅バウンド + value text hue-rotate filter、フローティングバッジ削除 (下部 diff と重複)、SE softImpact 5.0→5.8s で diff バッジに同期、「慣れたら」→「慣れてきたら」フレーズ変更でイントネーション解決 |
 | v8.3 | レイアウト調整: 08-01 比較カード中心 -130px / diff バッジ bottom 520 / 中央モーフ top 42% で縦位置を統一、08-06/07 PhoneStepsDemo paddingTop +180 + phone コンテナ flex-start (要 flexDirection: column 明示)、08-05 「まずはこっち」バッジ top -15 + drop range -20px、08-11 CTA paddingBottom +128 で 64px 上シフト、SubtitleLayer paddingBottom 110→240 でプラットフォーム safe zone 確保 |
+| #02 v1 | 新規 Shorts: クレカ積立 (NISA × クレカ × ポイ活)。10 shots / 74.9s / 7 SE events。3社対応 iconGrid → 3社還元率 comparisonTable に集約 (左右並列カード3連の代替)、ライフスタイル別誘導 iconGrid 2列、年120万カバー numberHero。テキスト wrap 修正 3点: ComparisonTable (全セル sharedSize + nowrap)、NumberHero subtext (smartLineBreak)、ProgressSteps (maxWidth を実 content 幅に補正 + nowrap) |
 
 各 review ファイル: `Downloads/remotion-video-review_nisa-hook_*-feedback_*.md`

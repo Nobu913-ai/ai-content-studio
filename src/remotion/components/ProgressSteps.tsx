@@ -52,6 +52,10 @@ export const ProgressSteps: React.FC<ProgressStepsProps> = ({
 
   const labelMaxFont = Math.round(width * 0.05);
   const detailMaxFont = Math.round(width * 0.034);
+  // 各 step item の label/detail の利用可能幅:
+  //   container 85% (918) - padding lg×2 (80) - badge max 72 - gap md (24) - margin 8 = ~734px
+  //   width * 0.66 (≈ 712) を maxWidth とすることで実 content 幅にほぼ即した auto-shrink になる。
+  const labelMaxWidth = width * 0.66;
 
   return (
     <AnimatedBackground accent={t.colors.positive} variant={bgVariant}>
@@ -171,10 +175,11 @@ export const ProgressSteps: React.FC<ProgressStepsProps> = ({
                       style={{
                         fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
                         fontWeight: t.fontWeights.bold,
-                        fontSize: autoFontSizeJa(step.label, labelMaxFont, width * 0.6),
+                        fontSize: autoFontSizeJa(step.label, labelMaxFont, labelMaxWidth),
                         color: isFinal ? accent : t.colors.textPrimary,
                         lineHeight: 1.3,
                         textShadow: isFinal ? `0 0 16px ${accent}80` : "none",
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {step.label}
@@ -184,9 +189,10 @@ export const ProgressSteps: React.FC<ProgressStepsProps> = ({
                         style={{
                           fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
                           fontWeight: t.fontWeights.regular,
-                          fontSize: autoFontSizeJa(step.detail, detailMaxFont, width * 0.6),
+                          fontSize: autoFontSizeJa(step.detail, detailMaxFont, labelMaxWidth),
                           color: t.colors.textSecondary,
                           lineHeight: 1.4,
+                          whiteSpace: "nowrap",
                         }}
                       >
                         {step.detail}

@@ -9,7 +9,7 @@ import {
 } from "remotion";
 import { genzMoneyTheme as t } from "../theme/genzMoneyTheme";
 import { AnimatedBackground, BackgroundVariant } from "./AnimatedBackground";
-import { autoFontSize } from "../utils/responsive-text";
+import { autoFontSize, autoFontSizeJa, smartLineBreak } from "../utils/responsive-text";
 
 export interface NumberHeroProps {
   number: string;
@@ -65,6 +65,19 @@ export const NumberHero: React.FC<NumberHeroProps> = ({
   });
 
   const numberFontSize = autoFontSize(`${prefix || ""}${number}${suffix || ""}`, Math.round(width * 0.28), width * 0.92);
+
+  // Subtext は日本語2パスサイジング + 自然な改行 (CTAEndCard 同様)
+  const subtextMaxWidth = width * 0.85;
+  const subtextBase = Math.round(width * 0.05);
+  const subtextInitialFontSize = subtext
+    ? autoFontSizeJa(subtext, subtextBase, subtextMaxWidth)
+    : 0;
+  const wrappedSubtext = subtext
+    ? smartLineBreak(subtext, subtextInitialFontSize, subtextMaxWidth)
+    : "";
+  const subtextFontSize = subtext
+    ? autoFontSizeJa(wrappedSubtext, subtextBase, subtextMaxWidth)
+    : 0;
 
   return (
     <AnimatedBackground accent={accent} variant={bgVariant}>
@@ -164,13 +177,14 @@ export const NumberHero: React.FC<NumberHeroProps> = ({
               transform: `translateY(${subtextSlide}px)`,
               fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
               fontWeight: t.fontWeights.bold,
-              fontSize: autoFontSize(subtext, Math.round(width * 0.05), width * 0.85),
+              fontSize: subtextFontSize,
               color: t.colors.textPrimary,
               textAlign: "center",
               lineHeight: 1.4,
+              whiteSpace: "pre-wrap",
             }}
           >
-            {subtext}
+            {wrappedSubtext}
           </div>
         )}
       </AbsoluteFill>

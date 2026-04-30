@@ -1,0 +1,375 @@
+{
+  "title": "新NISA Shorts #02 v1 — クレカ積立で年間ポイント還元 (NISA × クレカ × ポイ活)",
+  "channel": "genz-money",
+  "format": "shorts",
+  "resolution": "1080x1920",
+  "fps": 30,
+  "aspect_ratio": "9:16",
+  "total_duration_sec": 74.9,
+  "audio": "content/genz-money/audio/shorts_nisa_02-creditcard-v1.wav",
+  "schema_version": "v2",
+  "style_guide": "60s+ TikTok Creator Rewards 維持。共通基盤: captionSegments 手書き / bgVariant 自動推定 / seEvents 7イベント。1カット1メッセージ原則: 比較は comparisonTable で集約、ライフスタイル別誘導は iconGrid 並列、CTA は最後。",
+  "shots": [
+    {
+      "shot_id": "02-01",
+      "start_sec": 0,
+      "duration_sec": 6.37,
+      "narration": "新NISAをやるなら、クレカ積立がお得。クレカで毎月積立てると、その金額にポイントが付く。",
+      "captionSegments": [
+        {
+          "text": "新NISAをやるなら クレカ積立がお得",
+          "startSec": 0,
+          "endSec": 2.7,
+          "highlight": ["クレカ積立"]
+        },
+        {
+          "text": "クレカで毎月積立てると ポイントが付く",
+          "startSec": 2.7,
+          "endSec": 6.37,
+          "highlight": ["ポイント"]
+        }
+      ],
+      "component": "factCard",
+      "data": {
+        "headline": "クレカ積立がお得",
+        "subheadline": "新NISAをやるなら",
+        "highlight": ["クレカ積立"],
+        "variant": "punch",
+        "tone": "positive"
+      },
+      "motion": "popIn",
+      "seEvents": [
+        { "type": "whoosh", "atSec": 0.1, "volume": 0.32 }
+      ]
+    },
+    {
+      "shot_id": "02-02",
+      "start_sec": 6.37,
+      "duration_sec": 8.91,
+      "narration": "例えば、月5万円積立てると、還元率1%なら年間6,000円ぶんのポイントがもらえる。つまり、投資しながらポイントも貯まる。",
+      "captionSegments": [
+        {
+          "text": "月5万円積立 / 還元率1%なら",
+          "startSec": 0,
+          "endSec": 3.0,
+          "highlight": ["5万円", "1%"]
+        },
+        {
+          "text": "年間6,000円ぶんのポイント",
+          "startSec": 3.0,
+          "endSec": 6.5,
+          "highlight": ["6,000円"]
+        },
+        {
+          "text": "投資しながらポイントも貯まる",
+          "startSec": 6.5,
+          "endSec": 8.91,
+          "highlight": ["ポイント"]
+        }
+      ],
+      "component": "numberHero",
+      "data": {
+        "number": "6,000",
+        "prefix": "年間",
+        "suffix": "円",
+        "caption": "クレカ積立のポイント還元",
+        "subtext": "月5万円・還元率1%の場合",
+        "tone": "positive"
+      },
+      "motion": "popIn",
+      "seEvents": [
+        { "type": "pop", "atSec": 0.5, "volume": 0.32 }
+      ]
+    },
+    {
+      "shot_id": "02-03",
+      "start_sec": 15.28,
+      "duration_sec": 8.64,
+      "narration": "主要なネット証券だと、SBI証券、楽天証券、マネックス証券が対応。それぞれ、対応カードと還元率が違う。",
+      "captionSegments": [
+        {
+          "text": "主要なネット証券3社が対応",
+          "startSec": 0,
+          "endSec": 2.0,
+          "highlight": ["3社"]
+        },
+        {
+          "text": "SBI / 楽天 / マネックス",
+          "startSec": 2.0,
+          "endSec": 5.74,
+          "highlight": ["SBI", "楽天", "マネックス"]
+        },
+        {
+          "text": "対応カードと還元率が違う",
+          "startSec": 5.74,
+          "endSec": 8.64,
+          "highlight": ["還元率"]
+        }
+      ],
+      "component": "iconGrid",
+      "data": {
+        "title": "対応するネット証券",
+        "columns": 3,
+        "items": [
+          { "label": "SBI証券", "icon": "🟢", "tone": "neutral" },
+          { "label": "楽天証券", "icon": "🔴", "tone": "neutral" },
+          { "label": "マネックス証券", "icon": "🔵", "tone": "neutral" }
+        ],
+        "staggerSec": 0.5
+      },
+      "motion": "popIn",
+      "seEvents": [
+        { "type": "whoosh", "atSec": 0.1, "volume": 0.30 }
+      ]
+    },
+    {
+      "shot_id": "02-04",
+      "start_sec": 23.92,
+      "duration_sec": 13.98,
+      "narration": "SBI証券なら、三井住友カードで還元率0.5から3%。楽天証券なら、楽天カードで還元率0.5から1%。マネックス証券は、マネックスカードで還元率最大1.1%。",
+      "captionSegments": [
+        {
+          "text": "SBI証券 三井住友カード 0.5〜3%",
+          "startSec": 0,
+          "endSec": 4.89,
+          "highlight": ["0.5〜3%"]
+        },
+        {
+          "text": "楽天証券 楽天カード 0.5〜1%",
+          "startSec": 4.89,
+          "endSec": 9.31,
+          "highlight": ["0.5〜1%"]
+        },
+        {
+          "text": "マネックス証券 マネックスカード 最大1.1%",
+          "startSec": 9.31,
+          "endSec": 13.98,
+          "highlight": ["最大1.1%"]
+        }
+      ],
+      "component": "comparisonTable",
+      "data": {
+        "title": "クレカ積立 還元率比較",
+        "caption": "対応カードと還元率",
+        "columns": [
+          { "key": "card", "label": "対応カード" },
+          { "key": "rate", "label": "還元率", "emphasis": true }
+        ],
+        "rows": [
+          { "label": "SBI証券", "values": { "card": "三井住友カード", "rate": "0.5〜3%" } },
+          { "label": "楽天証券", "values": { "card": "楽天カード", "rate": "0.5〜1%" } },
+          { "label": "マネックス証券", "values": { "card": "マネックスカード", "rate": "最大1.1%" } }
+        ],
+        "highlightLabel": "あなたに合う1社は?"
+      },
+      "motion": "slideIn"
+    },
+    {
+      "shot_id": "02-05",
+      "start_sec": 37.90,
+      "duration_sec": 4.34,
+      "narration": "ポイントだけで選ぶより、普段使うカードと相性で選ぶのがおすすめ。",
+      "captionSegments": [
+        {
+          "text": "ポイントだけで選ばない",
+          "startSec": 0,
+          "endSec": 2.0
+        },
+        {
+          "text": "普段使うカードと相性で選ぶ",
+          "startSec": 2.0,
+          "endSec": 4.34,
+          "highlight": ["相性"]
+        }
+      ],
+      "component": "factCard",
+      "data": {
+        "headline": "普段使うカードとの相性で選ぶ",
+        "subheadline": "ポイント還元率だけで選ばない",
+        "highlight": ["相性"],
+        "variant": "default",
+        "tone": "neutral"
+      },
+      "motion": "popIn"
+    },
+    {
+      "shot_id": "02-06",
+      "start_sec": 42.24,
+      "duration_sec": 7.27,
+      "narration": "たとえば、楽天経済圏なら楽天証券+楽天カード。三井住友カードを使ってるなら、SBI証券。",
+      "captionSegments": [
+        {
+          "text": "楽天経済圏なら 楽天証券+楽天カード",
+          "startSec": 0,
+          "endSec": 3.86,
+          "highlight": ["楽天証券"]
+        },
+        {
+          "text": "三井住友カード派なら SBI証券",
+          "startSec": 3.86,
+          "endSec": 7.27,
+          "highlight": ["SBI証券"]
+        }
+      ],
+      "component": "iconGrid",
+      "data": {
+        "title": "ライフスタイルで選ぶ",
+        "columns": 2,
+        "items": [
+          {
+            "label": "楽天経済圏",
+            "icon": "🛒",
+            "sublabel": "楽天証券 + 楽天カード",
+            "tone": "neutral"
+          },
+          {
+            "label": "三井住友カード派",
+            "icon": "💳",
+            "sublabel": "SBI証券",
+            "tone": "neutral"
+          }
+        ],
+        "staggerSec": 3.6
+      },
+      "motion": "popIn"
+    },
+    {
+      "shot_id": "02-07",
+      "start_sec": 49.51,
+      "duration_sec": 7.69,
+      "narration": "積立可能額は、月10万円までが上限。クレカ積立だけで、年間120万円のつみたて投資枠を埋められる。",
+      "captionSegments": [
+        {
+          "text": "クレカ積立の上限 月10万円",
+          "startSec": 0,
+          "endSec": 3.01,
+          "highlight": ["月10万円"]
+        },
+        {
+          "text": "年間120万円の枠をフルに活用",
+          "startSec": 3.01,
+          "endSec": 7.69,
+          "highlight": ["年間120万円"]
+        }
+      ],
+      "component": "numberHero",
+      "data": {
+        "number": "10",
+        "prefix": "月",
+        "suffix": "万円",
+        "caption": "クレカ積立の上限",
+        "subtext": "年間120万円のつみたて枠をフルに活用できる",
+        "tone": "positive"
+      },
+      "motion": "popIn",
+      "seEvents": [
+        { "type": "pop", "atSec": 0.3, "volume": 0.28 },
+        { "type": "softImpact", "atSec": 4.5, "volume": 0.45 }
+      ]
+    },
+    {
+      "shot_id": "02-08",
+      "start_sec": 57.20,
+      "duration_sec": 7.77,
+      "narration": "注意点は、カードの引落日と積立タイミング。それと、還元率はキャンペーン込みのこともあるので最新情報をチェック。",
+      "captionSegments": [
+        {
+          "text": "注意点① カードの引落日",
+          "startSec": 0,
+          "endSec": 1.6,
+          "highlight": ["引落日"]
+        },
+        {
+          "text": "注意点② 積立タイミング",
+          "startSec": 1.6,
+          "endSec": 3.18,
+          "highlight": ["タイミング"]
+        },
+        {
+          "text": "還元率はキャンペーン込みも",
+          "startSec": 3.28,
+          "endSec": 5.5,
+          "highlight": ["キャンペーン"]
+        },
+        {
+          "text": "最新情報をチェック",
+          "startSec": 5.5,
+          "endSec": 7.77,
+          "highlight": ["最新情報"]
+        }
+      ],
+      "component": "progressSteps",
+      "data": {
+        "title": "クレカ積立の注意点",
+        "steps": [
+          { "label": "カードの引落日", "icon": "1", "intensity": "muted" },
+          { "label": "積立のタイミング", "icon": "2", "intensity": "normal" },
+          { "label": "還元率はキャンペーン込み", "icon": "3", "intensity": "accent" },
+          { "label": "最新情報をチェック", "icon": "★", "intensity": "highlight" }
+        ],
+        "staggerSec": 1.8,
+        "highlightFinal": true
+      },
+      "motion": "slideIn",
+      "seEvents": [
+        { "type": "softImpact", "atSec": 7.0, "volume": 0.45 }
+      ]
+    },
+    {
+      "shot_id": "02-09",
+      "start_sec": 64.97,
+      "duration_sec": 4.43,
+      "narration": "価格変動リスクはあるので、無理のない金額で続けることが大切です。",
+      "captionSegments": [
+        {
+          "text": "価格変動リスクあり",
+          "startSec": 0,
+          "endSec": 2.0,
+          "highlight": ["リスク"]
+        },
+        {
+          "text": "無理のない金額で続ける",
+          "startSec": 2.0,
+          "endSec": 4.43,
+          "highlight": ["無理のない"]
+        }
+      ],
+      "component": "factCard",
+      "data": {
+        "headline": "価格変動リスクあり",
+        "subheadline": "無理のない金額で続ける",
+        "highlight": ["リスク", "無理のない"],
+        "variant": "soft",
+        "tone": "neutral"
+      },
+      "motion": "popIn"
+    },
+    {
+      "shot_id": "02-10",
+      "start_sec": 69.40,
+      "duration_sec": 5.50,
+      "narration": "詳しいネット証券の比較は、固定コメントかプロフィールへ。",
+      "captionSegments": [
+        {
+          "text": "詳しいネット証券の比較は",
+          "startSec": 0,
+          "endSec": 1.8
+        },
+        {
+          "text": "固定コメントかプロフィールへ",
+          "startSec": 1.8,
+          "endSec": 5.50
+        }
+      ],
+      "component": "ctaPanel",
+      "data": {
+        "headline": "詳しい比較は",
+        "preset": "nisaIntro"
+      },
+      "motion": "popIn",
+      "seEvents": [
+        { "type": "softImpact", "atSec": 0.7, "volume": 0.5 }
+      ]
+    }
+  ]
+}
