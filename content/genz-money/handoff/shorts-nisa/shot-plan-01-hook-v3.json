@@ -1,0 +1,231 @@
+{
+  "title": "新NISA Shorts #01 v3 — 100万円利益、20万円が税金で消える",
+  "channel": "genz-money",
+  "format": "shorts",
+  "resolution": "1080x1920",
+  "fps": 30,
+  "aspect_ratio": "9:16",
+  "total_duration_sec": 60,
+  "audio": "content/genz-money/audio/shorts_nisa_01-hook-v3.wav",
+  "schema_version": "v2",
+  "style_guide": "shot durations are aligned to audio segment boundaries (fractional seconds). 数字ドン型/左右比較/スマホUIで画面リズム化",
+  "shots": [
+    {
+      "shot_id": "03-01",
+      "start_sec": 0,
+      "duration_sec": 4.1,
+      "narration": "投資で100万円儲けても、約20万円は税金で取られる。",
+      "caption": "投資の利益には約20%の税金",
+      "component": "factCard",
+      "data": {
+        "headline": "100万円儲けても\n約20万円は税金",
+        "subheadline": "投資の利益には税金がかかる",
+        "highlight": ["20万円", "税金"],
+        "variant": "punch",
+        "tone": "negative"
+      },
+      "motion": "popIn"
+    },
+    {
+      "shot_id": "03-02",
+      "start_sec": 4.1,
+      "duration_sec": 3.2,
+      "narration": "でも新NISAなら、100万円まるまる残る。",
+      "caption": "NISAなら100万円ぜんぶ残る",
+      "component": "taxSavingsDemo",
+      "data": {
+        "scenarioLabel": "利益100万円のとき",
+        "left":  { "label": "普通の口座", "profit": 100, "tax": 20, "takeHome": 80 },
+        "right": { "label": "新NISA", "profit": 100, "tax": 0, "takeHome": 100 },
+        "unit": "万円"
+      },
+      "motion": "countUp"
+    },
+    {
+      "shot_id": "03-03",
+      "start_sec": 7.3,
+      "duration_sec": 4.0,
+      "narration": "これが、新NISA。いま使える、国の非課税投資制度。",
+      "caption": "国の非課税投資制度",
+      "component": "factCard",
+      "data": {
+        "headline": "新NISA",
+        "subheadline": "いま使える、国の非課税投資制度",
+        "highlight": ["非課税"],
+        "variant": "punch",
+        "tone": "positive"
+      },
+      "motion": "popIn"
+    },
+    {
+      "shot_id": "03-04",
+      "start_sec": 11.3,
+      "duration_sec": 8.1,
+      "narration": "つみたて投資枠は年間120万円。成長投資枠は年間240万円。合わせて年間360万円まで、非課税で投資できる。",
+      "caption": "年間360万円まで非課税",
+      "component": "stackedBarCompare",
+      "data": {
+        "title": "年間の非課税投資枠",
+        "bars": [
+          { "label": "つみたて投資枠", "value": 120, "unit": "万円", "color": "positive" },
+          { "label": "成長投資枠", "value": 240, "unit": "万円", "color": "accent" }
+        ],
+        "total": { "label": "合計", "value": 360, "unit": "万円/年" },
+        "highlight": "年360万円まで非課税"
+      },
+      "motion": "growX"
+    },
+    {
+      "shot_id": "03-05",
+      "start_sec": 19.4,
+      "duration_sec": 2.2,
+      "narration": "しかも非課税期間は、無期限。",
+      "caption": "非課税期間は無期限",
+      "component": "infinityFact",
+      "data": {
+        "title": "非課税期間",
+        "emphasis": "無期限",
+        "symbol": "infinity"
+      },
+      "motion": "rotate"
+    },
+    {
+      "shot_id": "03-06",
+      "start_sec": 21.6,
+      "duration_sec": 2.9,
+      "narration": "迷ったら、まずは積立投資枠からスタート。",
+      "caption": "迷ったら積立投資枠から",
+      "component": "compareSplit",
+      "data": {
+        "title": "迷ったらまずはこちら",
+        "left":  { "label": "つみたて投資枠", "value": "120万/年", "tone": "positive" },
+        "right": { "label": "成長投資枠", "value": "240万/年", "tone": "neutral" },
+        "divider": "arrow"
+      },
+      "motion": "slideIn"
+    },
+    {
+      "shot_id": "03-07",
+      "start_sec": 24.5,
+      "duration_sec": 3.4,
+      "narration": "値動きが穏やかなインデックス投信が初心者向き。",
+      "caption": "値動きが穏やかで初心者向き",
+      "component": "factCard",
+      "data": {
+        "headline": "インデックス投信が\n初心者向き",
+        "subheadline": "値動きが穏やか",
+        "highlight": ["インデックス投信"],
+        "variant": "soft",
+        "tone": "neutral"
+      },
+      "motion": "fadeIn"
+    },
+    {
+      "shot_id": "03-08",
+      "start_sec": 27.9,
+      "duration_sec": 5.7,
+      "narration": "始め方はシンプル。ネット証券でNISA口座を開設して、つみたて設定するだけ。",
+      "caption": "STEP 1: NISA口座を開設",
+      "component": "phoneStepsDemo",
+      "data": {
+        "totalSteps": 2,
+        "currentStep": 1,
+        "stepLabel": "NISA口座を開設",
+        "uiMock": "openAccount"
+      },
+      "motion": "slideUp"
+    },
+    {
+      "shot_id": "03-09",
+      "start_sec": 33.6,
+      "duration_sec": 3.5,
+      "narration": "最短ならスマホでサクッと申込みまで進められる。",
+      "caption": "STEP 2: つみたて設定",
+      "component": "phoneStepsDemo",
+      "data": {
+        "totalSteps": 2,
+        "currentStep": 2,
+        "stepLabel": "つみたて設定",
+        "uiMock": "setupAutoInvest"
+      },
+      "motion": "slideUp"
+    },
+    {
+      "shot_id": "03-10",
+      "start_sec": 37.1,
+      "duration_sec": 3.1,
+      "narration": "月100円から積立できる証券会社もある。",
+      "caption": "月100円から積立OK",
+      "component": "numberHero",
+      "data": {
+        "number": "100",
+        "prefix": "月",
+        "suffix": "円",
+        "caption": "クレカ積立の最低金額",
+        "subtext": "から積立できる証券会社も",
+        "tone": "positive"
+      },
+      "motion": "popIn"
+    },
+    {
+      "shot_id": "03-11",
+      "start_sec": 40.2,
+      "duration_sec": 3.5,
+      "narration": "詳しい始め方は、固定コメントかプロフィールへ。",
+      "caption": "固定コメント / プロフィールへ",
+      "component": "ctaPanel",
+      "data": {
+        "headline": "詳しい始め方は",
+        "preset": "nisaIntro"
+      },
+      "motion": "popIn"
+    },
+    {
+      "shot_id": "03-12",
+      "start_sec": 43.7,
+      "duration_sec": 6.4,
+      "narration": "少額からなら、値動きにも慣れやすい。慣れてきたら、少しずつ金額を増やしていけばOK。",
+      "caption": "少額からスタート → 慣れたら増やす",
+      "component": "factCard",
+      "data": {
+        "headline": "少額からなら\n値動きにも慣れやすい",
+        "subheadline": "慣れたら金額を少しずつ増やせばOK",
+        "highlight": ["少額"],
+        "variant": "default",
+        "tone": "positive"
+      },
+      "motion": "fadeIn"
+    },
+    {
+      "shot_id": "03-13",
+      "start_sec": 50.1,
+      "duration_sec": 3.4,
+      "narration": "毎月コツコツ続けるのが、長期の資産形成のコツ。",
+      "caption": "毎月コツコツが長期の資産形成のコツ",
+      "component": "factCard",
+      "data": {
+        "headline": "毎月コツコツ続ける",
+        "subheadline": "長期の資産形成のコツ",
+        "highlight": ["コツコツ", "長期"],
+        "variant": "punch",
+        "tone": "positive"
+      },
+      "motion": "popIn"
+    },
+    {
+      "shot_id": "03-14",
+      "start_sec": 53.5,
+      "duration_sec": 6.5,
+      "narration": "投資には価格変動リスクがあるので、ご自身の判断で運用してください。",
+      "caption": "投資には価格変動リスクがあります",
+      "component": "factCard",
+      "data": {
+        "headline": "投資には\n価格変動リスクが\nあります",
+        "subheadline": "ご自身の判断で運用してください",
+        "variant": "soft",
+        "tone": "neutral"
+      },
+      "motion": "fadeIn"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "type": "davinci_handoff_package",
+  "version": "3.0.1",
+  "channel": "genz-money",
+  "format": "shorts",
+  "generated": "2026-04-16T01-13-35",
+  "export_preset": {
+    "name": "shorts_1080x1920_h264",
+    "resolution": "1080x1920",
+    "codec": "H.264",
+    "fps": 30,
+    "aspectRatio": "9:16"
+  },
+  "handoff_note": "content/genz-money/handoff/2026-04-16T01-13-35_2026-04-16T01-05-16_新nisaの始め方/handoff.md",
+  "assets": [
+    {
+      "type": "script",
+      "originalPath": "content/genz-money/scripts/2026-04-16T01-05-16_新nisaの始め方.md",
+      "packagePath": "content/genz-money/handoff/2026-04-16T01-13-35_2026-04-16T01-05-16_新nisaの始め方/docs/2026-04-16T01-05-16_新nisaの始め方.md",
+      "exists": true,
+      "copied": true
+    }
+  ],
+  "missingAssets": [],
+  "copyStats": {
+    "copied": 1,
+    "missing": 0
+  },
+  "checklist": [
+    {
+      "item": "全クリップをタイムラインに配置",
+      "done": false
+    },
+    {
+      "item": "ナレーション音声を同期",
+      "done": false
+    },
+    {
+      "item": "テキストオーバーレイを追加",
+      "done": false
+    },
+    {
+      "item": "BGMを配置・音量調整",
+      "done": false
+    },
+    {
+      "item": "色調整・LUT適用",
+      "done": false
+    },
+    {
+      "item": "LUFS確認（speech-first）",
+      "done": false
+    },
+    {
+      "item": "書き出し・プレビュー確認",
+      "done": false
+    }
+  ]
+}

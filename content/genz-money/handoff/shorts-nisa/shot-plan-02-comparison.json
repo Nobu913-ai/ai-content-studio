@@ -1,0 +1,121 @@
+{
+  "title": "新NISA Shorts #02 — 25歳から月1万円で200万円の差",
+  "channel": "genz-money",
+  "format": "shorts",
+  "resolution": "1080x1920",
+  "fps": 30,
+  "aspect_ratio": "9:16",
+  "total_duration_sec": 65,
+  "audio": "content/genz-money/audio/shorts_nisa_02-comparison.wav",
+  "style_guide": "clean infographic style, modern typography, data visualization, no human face. Background: dark navy/deep blue gradient. Accent colors: bright green (#00E676) for gains, red (#FF5252) for taxes, gold (#FFD600) for compound interest, white text.",
+  "shots": [
+    {
+      "shot_id": "02-01",
+      "start_sec": 0,
+      "duration_sec": 4,
+      "narration": "25歳から月1万円、投資した場合。",
+      "visual": "「25歳 × 月1万円」の大きなテキスト。カレンダーアイコン。",
+      "text_overlay": "25歳から\n月1万円投資したら？",
+      "motion": "テキストがタイプライター風に表示"
+    },
+    {
+      "shot_id": "02-02",
+      "start_sec": 4,
+      "duration_sec": 5,
+      "narration": "年利5パーセントで計算すると、65歳のとき、約1500万円になる。",
+      "visual": "右肩上がりの成長カーブグラフ。25歳→65歳。最終値1500万円が金色で強調。",
+      "text_overlay": "年利5%\n65歳で約1,500万円",
+      "motion": "グラフが左から右に成長していくアニメーション"
+    },
+    {
+      "shot_id": "02-03",
+      "start_sec": 9,
+      "duration_sec": 5,
+      "narration": "元本は480万円。つまり、1000万円以上が利益。",
+      "visual": "円グラフ。元本480万（グレー）vs 利益1020万（金色）。",
+      "text_overlay": "元本 480万円\n利益 1,020万円+",
+      "motion": "円グラフがスピンして分割を表示"
+    },
+    {
+      "shot_id": "02-04",
+      "start_sec": 14,
+      "duration_sec": 3,
+      "narration": "これが複利の力。",
+      "visual": "「複利の力」の大きなテキスト。背景に雪だるまが大きくなるアイコン。",
+      "text_overlay": "複利の力 ⚡",
+      "motion": "テキストがズームインで強調"
+    },
+    {
+      "shot_id": "02-05",
+      "start_sec": 17,
+      "duration_sec": 6,
+      "narration": "でも普通の口座だと、利益に約20パーセントの税金がかかる。",
+      "visual": "利益1000万円のバーから20%が赤く削られるビジュアル。",
+      "text_overlay": "普通の口座\n利益に税金20%",
+      "motion": "バーの上部が赤く変わって減る"
+    },
+    {
+      "shot_id": "02-06",
+      "start_sec": 23,
+      "duration_sec": 4,
+      "narration": "1000万円の利益なら、200万円が税金で消える。",
+      "visual": "「-200万円」が赤テキストで大きく表示。紙幣が飛んでいくアイコン。",
+      "text_overlay": "税金で -200万円",
+      "motion": "200万円が赤く点滅"
+    },
+    {
+      "shot_id": "02-07",
+      "start_sec": 27,
+      "duration_sec": 5,
+      "narration": "ところが新NISAなら、この税金がゼロ。",
+      "visual": "「税金 0円」が緑で大きく。取り消し線の入った「-200万円」。",
+      "text_overlay": "新NISA → 税金ゼロ！",
+      "motion": "-200万円に取り消し線 → 0円に変化"
+    },
+    {
+      "shot_id": "02-08",
+      "start_sec": 32,
+      "duration_sec": 5,
+      "narration": "200万円、まるまる手元に残る。やるかやらないか、それだけで200万円の差がつく。",
+      "visual": "左右比較。左:「やらない → +0」、右:「やる → +200万円」。緑のハイライト。",
+      "text_overlay": "やらない: +0円\nやる: +200万円",
+      "motion": "右側が緑にハイライトされて強調"
+    },
+    {
+      "shot_id": "02-09",
+      "start_sec": 37,
+      "duration_sec": 8,
+      "narration": "ちなみに、30歳から始めても遅くない。30歳から月1万円でも、60歳で約800万円になる。非課税のメリットだけで、100万円以上の差が出る。",
+      "visual": "2つのタイムライン比較。25歳開始→1500万。30歳開始→800万。「遅くない！」のバッジ。",
+      "text_overlay": "25歳開始 → 1,500万円\n30歳開始 → 800万円\n遅くない！",
+      "motion": "2本のバーが伸びるアニメーション"
+    },
+    {
+      "shot_id": "02-10",
+      "start_sec": 45,
+      "duration_sec": 5,
+      "narration": "大事なのは、いつ始めるか。早く始めるほど、複利の効果は大きくなる。",
+      "visual": "時計アイコン + 「今日が一番若い日」のテキスト。",
+      "text_overlay": "早く始める = 複利が効く\n今日が一番若い日",
+      "motion": "時計の針が加速して回る"
+    },
+    {
+      "shot_id": "02-11",
+      "start_sec": 50,
+      "duration_sec": 8,
+      "narration": "始め方は、ネット証券で口座開設して、毎月のつみたてを設定するだけ。10分で終わる。",
+      "visual": "3ステップ表示。①口座開設 ②ファンド選択 ③つみたて設定。「10分」のタイマー。",
+      "text_overlay": "① 口座開設\n② ファンド選択\n③ つみたて設定\n⏱ 10分",
+      "motion": "ステップが上から順にスライドイン"
+    },
+    {
+      "shot_id": "02-12",
+      "start_sec": 58,
+      "duration_sec": 7,
+      "narration": "やらない理由、ある？",
+      "visual": "「やらない理由、ある？」の大きなテキスト。背景に控えめなグラフ。CTA表示。",
+      "text_overlay": "やらない理由、ある？\n💬 コメントで教えて",
+      "motion": "テキストがセンターに大きく表示 → CTA表示"
+    }
+  ]
+}

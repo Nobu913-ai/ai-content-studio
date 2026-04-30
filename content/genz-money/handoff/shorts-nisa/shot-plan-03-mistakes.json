@@ -1,0 +1,112 @@
+{
+  "title": "新NISA Shorts #03 — 絶対やっちゃダメなこと3つ",
+  "channel": "genz-money",
+  "format": "shorts",
+  "resolution": "1080x1920",
+  "fps": 30,
+  "aspect_ratio": "9:16",
+  "total_duration_sec": 66,
+  "audio": "content/genz-money/audio/shorts_nisa_03-mistakes.wav",
+  "style_guide": "clean infographic style, modern typography, no human face. Background: dark navy/deep blue gradient. Red (#FF5252) for NG/danger, green (#00E676) for OK/correct, yellow (#FFD600) for warnings, white text. Number badges for each mistake.",
+  "shots": [
+    {
+      "shot_id": "03-01",
+      "start_sec": 0,
+      "duration_sec": 4,
+      "narration": "新NISAで絶対やっちゃダメなこと、3つ。",
+      "visual": "「絶対NG 3選」の大きなテキスト。赤い×マーク3つ。",
+      "text_overlay": "新NISAで\n絶対やっちゃダメ ✕\n3つ",
+      "motion": "×マークが1つずつ表示"
+    },
+    {
+      "shot_id": "03-02",
+      "start_sec": 4,
+      "duration_sec": 2,
+      "narration": "1つ目。暴落したときに売ること。",
+      "visual": "赤い「①」バッジ + 「暴落で売る」テキスト。下落チャートアイコン。",
+      "text_overlay": "① 暴落で売る ✕",
+      "motion": "①がスタンプのように押される"
+    },
+    {
+      "shot_id": "03-03",
+      "start_sec": 6,
+      "duration_sec": 8,
+      "narration": "株価が下がると怖くなるよね。でもつみたて投資は、下がったときこそ安く買えるチャンス。売ったら、そこで損が確定する。過去のデータを見ても、長く持ち続けた人が勝ってる。",
+      "visual": "下落→回復→上昇のチャート。「安く買える」の吹き出し。下部に「長期保有が正解」。",
+      "text_overlay": "下がった時 = 安く買える\n長期保有が正解 ⭕",
+      "motion": "チャートが下落して一瞬止まり、回復していくアニメーション"
+    },
+    {
+      "shot_id": "03-04",
+      "start_sec": 14,
+      "duration_sec": 2,
+      "narration": "2つ目。よく分からない個別株を買うこと。",
+      "visual": "赤い「②」バッジ + 「よく分からない個別株」テキスト。",
+      "text_overlay": "② よく分からない個別株 ✕",
+      "motion": "②がスタンプのように押される"
+    },
+    {
+      "shot_id": "03-05",
+      "start_sec": 16,
+      "duration_sec": 8,
+      "narration": "初心者は、全世界株式かエスアンドピー500のインデックスファンドが鉄板。分散されてるから、1社がダメでも全体でカバーできる。",
+      "visual": "左:個別株（1社のアイコン、赤×）、右:インデックス（地球アイコン + 多数の会社、緑○）。「分散 = 安全」テキスト。",
+      "text_overlay": "初心者は\n全世界株式 or S&P500\nインデックスファンド ⭕",
+      "motion": "左が赤く点滅→右が緑にハイライト"
+    },
+    {
+      "shot_id": "03-06",
+      "start_sec": 24,
+      "duration_sec": 2,
+      "narration": "3つ目。生活費を削って投資すること。",
+      "visual": "赤い「③」バッジ + 「生活費を削る」テキスト。",
+      "text_overlay": "③ 生活費を削って投資 ✕",
+      "motion": "③がスタンプのように押される"
+    },
+    {
+      "shot_id": "03-07",
+      "start_sec": 26,
+      "duration_sec": 8,
+      "narration": "投資は余裕資金でやるもの。生活が苦しくなったら本末転倒。まずは生活防衛資金を3ヶ月分確保してから始めよう。",
+      "visual": "財布のアイコン。「余裕資金で」のテキスト。下に「生活防衛資金 3ヶ月分」の目安バー。",
+      "text_overlay": "投資は余裕資金で\n生活防衛資金 3ヶ月分\nを確保してから ⭕",
+      "motion": "バーがたまっていくアニメーション → 「OK」バッジ表示"
+    },
+    {
+      "shot_id": "03-08",
+      "start_sec": 34,
+      "duration_sec": 6,
+      "narration": "月1000円でもいい。続けられる金額から始めるのが一番大事。",
+      "visual": "「月1000円〜OK」の大きなテキスト。コインスタックが少しずつ積み上がるアイコン。",
+      "text_overlay": "月1,000円〜OK\n続けられる額が大事",
+      "motion": "コインが1枚ずつ積み上がる"
+    },
+    {
+      "shot_id": "03-09",
+      "start_sec": 40,
+      "duration_sec": 6,
+      "narration": "この3つを守るだけで、失敗する確率はグッと下がる。",
+      "visual": "3つのルールまとめ。①暴落で売らない ②インデックス ③余裕資金。全部に緑チェック。",
+      "text_overlay": "① 暴落で売らない ✓\n② インデックスファンド ✓\n③ 余裕資金で投資 ✓",
+      "motion": "チェックマークが1つずつ表示"
+    },
+    {
+      "shot_id": "03-10",
+      "start_sec": 46,
+      "duration_sec": 8,
+      "narration": "新NISAは正しく使えば、めちゃくちゃ強い制度。焦らず、コツコツ続けよう。",
+      "visual": "「新NISA = 最強の非課税制度」テキスト。成長する苗木→大きな木のアイコン。",
+      "text_overlay": "新NISA = 最強の非課税制度\n焦らずコツコツ 🌱→🌳",
+      "motion": "苗木が木に成長するアニメーション"
+    },
+    {
+      "shot_id": "03-11",
+      "start_sec": 54,
+      "duration_sec": 12,
+      "narration": "コメント欄で、みんなの投資額も教えてね。",
+      "visual": "CTA画面。「あなたの投資額は？」の質問。コメント・フォロー誘導。",
+      "text_overlay": "💬 あなたの月の投資額は？\nコメントで教えて！\nフォローで最新情報をチェック",
+      "motion": "テキストがフェードイン → コメントアイコンがバウンス"
+    }
+  ]
+}

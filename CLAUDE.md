@@ -1,16 +1,16 @@
-# AI Content Studio v3.0
+# AI Content Studio v3.1
 
 YouTube + TikTok + Instagram + Twitter/X 3チャンネル統合コンテンツ制作パイプライン。
 
 ## プロジェクト概要
 
-Claude API + 4ツール（Runway / ElevenLabs / Descript / DaVinci Resolve）+ VOICEVOX（日本語TTS比較用）を使い、台本生成 → ショットプラン → ナレーション → 動画/音声生成 → AI編集 → 最終仕上げの全工程を CLI で行うツール。
+Claude API + 5ツール（Remotion / Runway / ElevenLabs / Descript / DaVinci Resolve）+ VOICEVOX（日本語TTS）を使い、台本生成 → ショットプラン → ナレーション → 動画生成 → AI編集 → 最終仕上げの全工程を CLI で行うツール。
 
 ### 戦略方針
 - **Shorts先行テスト**: いきなり長尺を作らない。Shortsで仮説検証し、勝ちテーマのみ長尺化
 - **AIは"編集部"**: AI量産ではなく、AIドラフト → 人間の独自視点追加 → 品質チェックの流れ
 - **主力集中**: genz-moneyが主力、japanese-mindsetが並走、chill-cultureは後発
-- **4ツール固定 + VOICEVOX比較**: Runway/ElevenLabs/Descript/DaVinciで制作フローを安定。日本語TTSはVOICEVOXを比較検証中
+- **Remotion中心映像基盤**: Remotionで動画本体を生成。Runwayは補助B-roll、DaVinciは最終仕上げ
 
 ### チャンネル構成
 
@@ -28,14 +28,16 @@ Claude API + 4ツール（Runway / ElevenLabs / Descript / DaVinci Resolve）+ V
 
 ## ツールスタック
 
-### 固定4ツール + VOICEVOX（比較検証用）
+### 固定5ツール + VOICEVOX
+
 | ツール | 役割 | API | 環境変数 |
 |--------|------|-----|---------|
-| Runway Standard | 動画生成ハブ | REST | `RUNWAY_API_KEY` |
-| ElevenLabs Creator | 日英ナレーション | REST | `ELEVENLABS_API_KEY` |
+| Remotion | 動画本体レンダリング（React/TS） | ローカルCLI | — |
+| Runway Standard | B-roll・雰囲気ショット生成 | REST | `RUNWAY_API_KEY` |
+| ElevenLabs Creator | 英語ナレーション | REST | `ELEVENLABS_API_KEY` |
 | Descript Creator | AI編集・字幕・整音 | REST (beta) | `DESCRIPT_API_KEY` |
 | DaVinci Resolve Free | 最終仕上げ | Python Scripting API | `DAVINCI_PYTHON_PATH` (任意) |
-| VOICEVOX ENGINE | 日本語TTS比較用 | ローカルHTTP | `VOICEVOX_ENGINE_URL` (任意), `VOICEVOX_SPEAKER_ID` |
+| VOICEVOX ENGINE | 日本語TTS（genz-money主力） | ローカルHTTP | `VOICEVOX_ENGINE_URL` (任意), `VOICEVOX_SPEAKER_ID` |
 
 ### VOICEVOX 導入ガイド
 - **目的**: 日本語チャンネル（genz-money）の誤読・イントネーション改善の比較検証
@@ -44,8 +46,18 @@ Claude API + 4ツール（Runway / ElevenLabs / Descript / DaVinci Resolve）+ V
 - **商用利用**: 可能。ただしクレジット表記が必要。speaker ごとに利用規約を確認すること
 - **英語チャンネル**: VOICEVOX は日本語専用。english-mindset は引き続き ElevenLabs を使用
 
+### Remotion 動画生成基盤
+
+- **役割**: 動画本編のレンダラー。scene JSONからモーショングラフィックス動画を生成
+- **構成**: React/TypeScript コンポーネント（`src/remotion/`）
+- **scene type**: `hook`, `steps`, `compare`, `warning`, `source`, `cta` の6種
+- **ワークフロー**: `acs remotion-scene` → scene JSON生成 → `acs remotion-render` → MP4出力
+- **音声**: レンダリング時にaudioをpublic/にコピーして同梱
+- **料金**: 個人・3人以下チームは無料。ローカルレンダリングのみ使用
+
 ### 運用原則
-- 基本4ツールを前提にワークフローを固定。VOICEVOX は日本語TTS比較検証用として並行運用
+
+- Remotionが動画本体の標準レンダラー。Runwayは補助B-roll、DaVinciは最終仕上げ
 - 新ツール追加は明確なボトルネック発生時のみ
 - DaVinci は Python Scripting API で自動化可（プロジェクト作成・メディアインポート・タイムライン構築・レンダー）。要 DaVinci Resolve 起動中 + Python 3.6+
 - Descript の export は手動前提
@@ -79,7 +91,7 @@ config/monetization.js   -- 収益化戦略
 config/tools.js          -- ツール設定・Voice routing・Shot style・書き出しプリセット
 config/pronunciation-dictionary.json -- TTS読み辞書（誤読語句のalias登録・カテゴリ別・チャンネル別override対応）
 config/voice-design-templates.json -- Voice Design用プロンプトテンプレート（チャンネル別音声設計）
-src/cli.js               -- メインCLI エントリポイント（34コマンド）
+src/cli.js               -- メインCLI エントリポイント（37コマンド）
 src/clients/             -- 外部APIクライアント
   runway-client.js       -- Runway API（動画生成・ポーリング・ショットプラン実行）
   elevenlabs-client.js   -- ElevenLabs API（TTS・Voice一覧・使用量確認）
@@ -102,7 +114,45 @@ src/generators/          -- 各種生成エンジン
   tts-benchmark.js       -- Voice/Model/Script A/Bテスト（比較生成・スコアシート付きレポート出力）
   topic-generator.js    -- AIトピックアイデア生成（5角度）
   handoff-generator.js   -- DaVinci用ハンドオフノート+パッケージ生成
-  production-pipeline.js -- 4ツール統合制作パイプライン（計画+生成+マニフェスト）
+  remotion-scene-generator.js -- ショットプラン → Remotion scene JSON変換
+  remotion-renderer.js   -- Remotion CLIラッパー（レンダリング・プレビュー）
+  production-pipeline.js -- 5ツール統合制作パイプライン（計画+生成+マニフェスト）
+src/remotion/            -- Remotion動画生成（React/TypeScript）
+  Root.tsx               -- Remotionエントリポイント（registerRoot）
+  compositions/
+    GenzMoneyShort.tsx   -- genz-money Shorts用コンポジション
+  components/
+    HookCard.tsx         -- フック画面（冒頭インパクト）
+    ExplainerStack.tsx   -- ステップ解説（箇条書き段階表示）
+    CompareCard.tsx      -- 左右比較（数字・概念対比）
+    CompareSplit.tsx     -- 左右並列比較（v2 component）
+    WarningCard.tsx      -- 注意喚起・免責表示
+    SourceFooter.tsx     -- 出典表示（金融コンプラ）
+    CTAEndCard.tsx       -- CTA終了画面（フォロー・コメント誘導）
+    FactCard.tsx / NumberHero.tsx / StackedBarCompare.tsx / ProgressSteps.tsx 等 -- v2 専用コンポーネント
+    TaxSavingsDemo.tsx   -- 普通口座 vs NISA 左右並列（中級者向け）
+    TaxFlowDemo.tsx      -- 元本→税金剥がれ→手元→NISA→差額 の時系列フロー（初心者向け冒頭推奨）
+    RecommendationFocus.tsx -- focus 拡大 + secondary 補足化の選択誘導（compareSplit より初心者向け）
+    AnimatedBackground.tsx -- 3変種背景 (impact/data/action/default)
+    SubtitleLayer.tsx    -- captionSegments 同期テロップ（smartLineBreak 適用）
+    SeLayer.tsx          -- shot 内 SE イベント発火 (8役割パレット)
+  theme/
+    genzMoneyTheme.ts    -- カラーパレット・フォント・スペーシング定義
+  types/
+    scene.ts             -- scene JSON型定義（v1 + v2 両対応）
+  utils/
+    scene-timing.ts      -- フレーム計算・タイムライン構築
+    responsive-text.ts   -- 日本語対応 autoFontSize + smartLineBreak（区切り優先度ベース改行）
+    typography.ts        -- テキストスタイルプリセット
+public/audio/            -- Remotionレンダリング用音声（自動コピー）
+public/se/               -- 効果音 8役割パレット (pop / popStrong / tick / whoosh / whooshSoft / whooshPower / softImpact / specialImpact)
+scripts/                 -- 制作補助スクリプト
+  generate-genz-audio.js -- VOICEVOX TTS（共通発音辞書適用）
+  measure-segments.js    -- 段境界の実測 (start/end/dur 出力 + 最終wav差分検証)
+  generate-captions.js   -- shot plan に captionSegments を自動付与（既存手書きは保護）
+  lint-script.js         -- 台本テキスト lint（読み事故・推奨断定・専門用語等9カテゴリ）
+  lint-shot-plan.js      -- shot plan 構造 lint（factCard比率・CTA配置・version不整合等16カテゴリ）
+  lib/pronunciation-loader.js -- 発音辞書ローダー（チャンネルoverride対応・全スクリプト共通）
 src/utils/               -- ユーティリティ
   claude-client.js       -- Claude API クライアント（リトライ付き）
   file-helpers.js        -- ファイル操作
@@ -121,9 +171,25 @@ docs/improvement-roadmap.md -- 改善ロードマップ
 docs/tts-quality-guide.md -- TTS品質管理ガイド（読み辞書運用・Voice比較・QA手順）
 docs/tts-experiment-plan.md -- TTS実験計画（Script→Voice→Model→Provider段階的比較）
 docs/tts-provider-evaluation.md -- TTS Provider採用判定基準（ElevenLabs vs VOICEVOX）
+docs/shorts-production-workflow.md -- Shorts共通基盤の標準制作フロー（7ステップ + lint + 1カット1メッセージ原則）
+docs/remotion-quality-v2-design.md -- Remotion v2 (component-oriented) スキーマ設計
 ```
 
-## CLI コマンド（34コマンド）
+## Shorts 制作の主要原則 (genz-money)
+
+### 共通演出基盤
+- **captionSegments[]**: ライブテロップ。各 segment が中央ビジュアルの stage と同期する
+- **bgVariant**: AnimatedBackground 3変種 (impact/data/action/default)。component種別から自動推定
+- **seEvents**: 8役割 SE パレット。60秒で 7-9 event 程度、説明シーンは静音
+
+### 1カット1メッセージ原則
+- 冒頭の税金/手数料カット: `taxFlowDemo` (時系列フロー) を使う。`taxSavingsDemo` の左右並列は初心者には重い
+- 選択誘導カット: `recommendationFocus` (focus 拡大 + secondary opacity 0.2) を使う。`compareSplit` だと比較に見える
+- 1カット内に主役候補3個以上 / 数字3個以上同時表示は避ける
+- ナレーション順序と画面の理解順序を一致させる
+- 詳細: [docs/shorts-production-workflow.md §7](docs/shorts-production-workflow.md)
+
+## CLI コマンド（37コマンド）
 
 ### 基本操作
 ```bash
@@ -181,6 +247,14 @@ acs tts-bench-provider <ch> <txt> --elevenlabs-voices ... --voicevox-speakers ..
 ```bash
 acs voicevox-status                                       # VOICEVOX ENGINE 接続確認
 acs voicevox-speakers                                     # Speaker 一覧表示
+```
+
+### Remotion 動画生成
+
+```bash
+acs remotion-scene <channel> <shot-plan>                  # ショットプラン→scene JSON生成
+acs remotion-render <channel> <scene-json>                # scene JSON→MP4レンダリング
+acs remotion-preview [scene-json]                         # Remotion Studioでプレビュー
 ```
 
 ### DaVinci Resolve 自動化

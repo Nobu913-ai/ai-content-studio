@@ -1,0 +1,121 @@
+{
+  "title": "新NISA Shorts #01 — 月100円から始められる投資制度",
+  "channel": "genz-money",
+  "format": "shorts",
+  "resolution": "1080x1920",
+  "fps": 30,
+  "aspect_ratio": "9:16",
+  "total_duration_sec": 68,
+  "audio": "content/genz-money/audio/shorts_nisa_01-hook.wav",
+  "style_guide": "clean infographic style, modern typography, data visualization, no human face. Background: dark navy/deep blue gradient. Accent colors: bright green (#00E676) for positive numbers, red (#FF5252) for taxes/losses, white text.",
+  "shots": [
+    {
+      "shot_id": "01-01",
+      "start_sec": 0,
+      "duration_sec": 3,
+      "narration": "ねえ、知ってた？",
+      "visual": "画面中央に大きく「知ってた？」のテキストアニメーション。背景はダークネイビー。",
+      "text_overlay": "知ってた？",
+      "motion": "テキストがポップインで出現"
+    },
+    {
+      "shot_id": "01-02",
+      "start_sec": 3,
+      "duration_sec": 5,
+      "narration": "月100円から始められる、投資の制度があるんだよね。",
+      "visual": "コイン（100円玉）のアイコンが中央に表示。下に「月100円〜」のテキスト。",
+      "text_overlay": "月100円から\n始められる投資制度",
+      "motion": "コインが上から落ちてくるアニメーション"
+    },
+    {
+      "shot_id": "01-03",
+      "start_sec": 8,
+      "duration_sec": 3,
+      "narration": "しかも利益に税金がかからない。",
+      "visual": "「税金 0円」のテキストに取り消し線のかかった「20%」が並ぶ。",
+      "text_overlay": "利益に税金がかからない\n~~20%~~ → 0%",
+      "motion": "20%に取り消し線がスッと引かれる"
+    },
+    {
+      "shot_id": "01-04",
+      "start_sec": 11,
+      "duration_sec": 4,
+      "narration": "知らないだけで損してる人、マジで多いよ。",
+      "visual": "画面に「知らない＝損」の強調テキスト。赤のアクセント。",
+      "text_overlay": "知らない = 損してる",
+      "motion": "テキストが揺れるシェイクエフェクト"
+    },
+    {
+      "shot_id": "01-05",
+      "start_sec": 15,
+      "duration_sec": 6,
+      "narration": "これ、新NISAっていう制度。2024年から始まった、国が用意した非課税の投資枠。",
+      "visual": "「新NISA」のロゴ風テキスト。下に「2024年〜 国の制度」のサブテキスト。",
+      "text_overlay": "新NISA\n2024年スタート\n国が用意した非課税投資枠",
+      "motion": "ロゴがフェードインし、サブテキストが順番に表示"
+    },
+    {
+      "shot_id": "01-06",
+      "start_sec": 21,
+      "duration_sec": 8,
+      "narration": "つみたて投資枠は年間120万円。成長投資枠は年間240万円。合わせて年間360万円まで、非課税で投資できる。",
+      "visual": "2段の棒グラフ。つみたて枠120万（緑）、成長枠240万（青）。合計360万が強調。",
+      "text_overlay": "つみたて投資枠 120万円/年\n成長投資枠 240万円/年\n合計 360万円/年",
+      "motion": "棒グラフが左から伸びるアニメーション"
+    },
+    {
+      "shot_id": "01-07",
+      "start_sec": 29,
+      "duration_sec": 3,
+      "narration": "しかも非課税期間は、無期限。",
+      "visual": "「無期限」の大きなテキスト。∞マークのアイコン。",
+      "text_overlay": "非課税期間\n∞ 無期限",
+      "motion": "∞が回転しながら表示"
+    },
+    {
+      "shot_id": "01-08",
+      "start_sec": 32,
+      "duration_sec": 6,
+      "narration": "つまり、利益が出ても税金ゼロ。普通なら約20パーセント取られるのに。",
+      "visual": "左右比較。左:「普通の口座 税金20%」（赤）、右:「新NISA 税金0%」（緑）。",
+      "text_overlay": "普通: 税金20% vs 新NISA: 税金0%",
+      "motion": "左がフェードイン → 右がフェードイン"
+    },
+    {
+      "shot_id": "01-09",
+      "start_sec": 38,
+      "duration_sec": 8,
+      "narration": "例えば100万円の利益が出たら、普通の口座だと約20万円が税金で消える。新NISAなら、100万円がまるまる手元に残る。",
+      "visual": "100万円の利益を示す図。普通口座:20万円が赤く消える。新NISA:100万円がそのまま緑で残る。",
+      "text_overlay": "利益100万円の場合\n普通: 手取り80万円\n新NISA: 手取り100万円",
+      "motion": "数字がカウントアップで表示"
+    },
+    {
+      "shot_id": "01-10",
+      "start_sec": 46,
+      "duration_sec": 8,
+      "narration": "始め方は簡単。ネット証券で口座を開いて、つみたて設定するだけ。スマホがあれば10分で終わる。",
+      "visual": "スマホのモックアップ画面。ステップ1:口座開設、ステップ2:つみたて設定。「10分で完了」のバッジ。",
+      "text_overlay": "STEP1 口座開設\nSTEP2 つみたて設定\n→ 10分で完了",
+      "motion": "ステップが順番にスライドイン"
+    },
+    {
+      "shot_id": "01-11",
+      "start_sec": 54,
+      "duration_sec": 5,
+      "narration": "月100円からでもいい。まずは始めることが大事。",
+      "visual": "「月100円〜OK」の大きなテキスト。下に「始めることが大事」。",
+      "text_overlay": "月100円〜OK\nまずは始めよう",
+      "motion": "テキストが弾むように表示"
+    },
+    {
+      "shot_id": "01-12",
+      "start_sec": 59,
+      "duration_sec": 9,
+      "narration": "知らなかった人、今日から始めよう。詳しい始め方は、プロフィールのリンクから見てね。",
+      "visual": "CTA画面。「今日から始めよう」+ プロフィールリンク誘導アイコン。フォローボタン風デザイン。",
+      "text_overlay": "今日から始めよう！\n👆 プロフィールのリンクから",
+      "motion": "上向き矢印が繰り返しバウンス"
+    }
+  ]
+}

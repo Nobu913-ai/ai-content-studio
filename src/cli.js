@@ -17,6 +17,8 @@ import { generateHandoff, generateHandoffPackage } from "./generators/handoff-ge
 import { generateTopics, formatTopicIdeas } from "./generators/topic-generator.js";
 import { runPlanPhase, runFullProduction, formatProductionSummary } from "./generators/production-pipeline.js";
 import { benchmarkVoices, benchmarkModels, benchmarkScripts, benchmarkProviders, listJapaneseVoices } from "./generators/tts-benchmark.js";
+import { generateSceneJSON, formatSceneSummary } from "./generators/remotion-scene-generator.js";
+import { renderVideo, startPreview } from "./generators/remotion-renderer.js";
 import { getChannel, getChannelIds } from "../config/channels.js";
 import { getMonetization, revenueTargets } from "../config/monetization.js";
 import { tools, voiceRouting, deferredTools } from "../config/tools.js";
@@ -1001,6 +1003,64 @@ program
         console.log(`  URL: ${status.url}`);
         console.log("  VOICEVOX アプリを起動してください。\n");
       }
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── Remotion シーン生成 ────────────────────────────────────
+program
+  .command("remotion-scene <channel> <shot-plan-path>")
+  .description("ショットプランからRemotionのscene JSONを生成")
+  .option("-a, --audio <path>", "音声ファイルパス")
+  .action((channelId, shotPlanPath, opts) => {
+    console.log(`\n  Generating Remotion scene JSON for [${channelId}] ...\n`);
+    try {
+      const result = generateSceneJSON(channelId, shotPlanPath, {
+        audioPath: opts.audio,
+      });
+      console.log(`  Scene JSON saved: ${result.path}`);
+      console.log(formatSceneSummary(result.sceneJSON));
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── Remotion レンダリング ────────────────────────────────────
+program
+  .command("remotion-render <channel> <scene-json>")
+  .description("scene JSONからRemotionで動画をレンダリング")
+  .option("--codec <codec>", "動画コーデック", "h264")
+  .option("--concurrency <n>", "並列レンダリング数", "4")
+  .option("--gl <backend>", "GPU backend (angle, egl, swiftshader, swangle)")
+  .action(async (channelId, sceneJson, opts) => {
+    console.log(`\n  === Remotion Render ===`);
+    console.log(`  Channel: ${channelId}\n`);
+    try {
+      const result = await renderVideo(channelId, sceneJson, {
+        codec: opts.codec,
+        concurrency: parseInt(opts.concurrency),
+        gl: opts.gl,
+      });
+      console.log(`\n  === Render Complete ===`);
+      console.log(`  Output: ${result.path}`);
+      console.log(`  Duration: ${result.durationSec}s`);
+      console.log(`  Scenes: ${result.scenesCount}\n`);
+    } catch (err) {
+      console.error(`  Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+// ─── Remotion プレビュー ────────────────────────────────────
+program
+  .command("remotion-preview [scene-json]")
+  .description("Remotion Studioでプレビュー起動")
+  .action((sceneJson) => {
+    try {
+      startPreview(sceneJson);
     } catch (err) {
       console.error(`  Error: ${err.message}`);
       process.exit(1);

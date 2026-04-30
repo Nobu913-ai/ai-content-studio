@@ -3,4 +3,16 @@ node_modules/
 content/*/scripts/
 content/*/metadata/
 content/*/calendar/
+content/*/audio/
+content/*/video/
+content/*/kpi/
+content/_prompts/
+content/**/assets/audio/
+content/**/assets/video/
+public/audio/
+public/se/zapsplat/
 *.log
+*.wav
+*.mp3
+*.mp4
+!public/se/*.mp3

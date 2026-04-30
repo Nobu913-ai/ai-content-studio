@@ -1,0 +1,190 @@
+{
+  "title": "クレカ積立 主要5社の還元率比較 #02",
+  "channel": "genz-money",
+  "format": "shorts",
+  "resolution": "1080x1920",
+  "fps": 30,
+  "aspect_ratio": "9:16",
+  "total_duration_sec": 60,
+  "audio": "content/genz-money/audio/shorts_cardstack_02-compare.wav",
+  "schema_version": "v2",
+  "style_guide": "clean infographic, comparison table emphasis, dark navy gradient",
+  "shots": [
+    {
+      "shot_id": "C2-01",
+      "start_sec": 0,
+      "duration_sec": 5,
+      "narration": "NISAをクレカで積み立てると、ポイントがもらえるって知ってた？",
+      "caption": "クレカ積立でポイントがもらえる",
+      "component": "factCard",
+      "data": {
+        "headline": "NISAをクレカで積立てると\nポイントがもらえる",
+        "highlight": ["ポイント"],
+        "variant": "punch",
+        "tone": "positive"
+      },
+      "motion": "popIn"
+    },
+    {
+      "shot_id": "C2-02",
+      "start_sec": 5,
+      "duration_sec": 4,
+      "narration": "毎月10万円積み立てて、還元率1%なら、年間1万2千ポイント。",
+      "caption": "毎月10万円・還元率1%なら年1.2万円相当",
+      "component": "stackedBarCompare",
+      "data": {
+        "title": "毎月10万円・還元率1%の場合",
+        "bars": [
+          { "label": "毎月の積立額", "value": 100000, "unit": "円", "color": "accent" },
+          { "label": "年間ポイント", "value": 12000, "unit": "円相当", "color": "positive" }
+        ],
+        "highlight": "何もしないより年12,000円お得"
+      },
+      "motion": "growX"
+    },
+    {
+      "shot_id": "C2-03",
+      "start_sec": 9,
+      "duration_sec": 3,
+      "narration": "何もしないより、確実に得する仕組み。",
+      "caption": "確実に得する仕組み",
+      "component": "factCard",
+      "data": {
+        "headline": "確実に得する仕組み",
+        "subheadline": "やらない理由がない",
+        "variant": "soft",
+        "tone": "positive"
+      },
+      "motion": "fadeIn"
+    },
+    {
+      "shot_id": "C2-04",
+      "start_sec": 12,
+      "duration_sec": 3,
+      "narration": "主要5社のクレカ積立還元率を比較してみた。",
+      "caption": "主要5社の還元率を比較",
+      "component": "factCard",
+      "data": {
+        "headline": "主要5社の\n還元率を比較",
+        "highlight": ["5社"],
+        "variant": "default",
+        "tone": "neutral"
+      },
+      "motion": "fadeIn"
+    },
+    {
+      "shot_id": "C2-05",
+      "start_sec": 15,
+      "duration_sec": 19,
+      "narration": "マネックス証券、マネックスカードで還元率1.1%。au カブコム証券、au PAYカードで1.0%。楽天証券、楽天カードで0.5から1.0%。SBI証券、三井住友カードで0.5から3.0%。松井証券、MATSUIカードで0.5から1.0%。",
+      "caption": "クレカ積立 還元率比較",
+      "component": "comparisonTable",
+      "data": {
+        "title": "クレカ積立 還元率比較",
+        "caption": "毎月10万円までの積立で",
+        "columns": [
+          { "key": "card", "label": "クレジットカード" },
+          { "key": "rate", "label": "還元率", "emphasis": true }
+        ],
+        "rows": [
+          { "label": "マネックス", "values": { "card": "マネックスカード", "rate": "1.1%" } },
+          { "label": "auカブコム", "values": { "card": "au PAYカード", "rate": "1.0%" } },
+          { "label": "楽天", "values": { "card": "楽天カード", "rate": "0.5〜1.0%" } },
+          { "label": "SBI", "values": { "card": "三井住友カード", "rate": "0.5〜3.0%" }, "highlight": true },
+          { "label": "松井", "values": { "card": "MATSUIカード", "rate": "0.5〜1.0%" } }
+        ],
+        "highlightLabel": "最大還元率はSBIがトップ"
+      },
+      "motion": "slideIn"
+    },
+    {
+      "shot_id": "C2-06",
+      "start_sec": 34,
+      "duration_sec": 5,
+      "narration": "最大還元率で見るなら、SBI証券のプラチナ系カードがトップ。",
+      "caption": "最大還元率はSBI×プラチナ系",
+      "component": "factCard",
+      "data": {
+        "headline": "最大還元率なら\nSBI×プラチナ系",
+        "highlight": ["SBI", "プラチナ系"],
+        "variant": "punch",
+        "tone": "positive"
+      },
+      "motion": "popIn"
+    },
+    {
+      "shot_id": "C2-07",
+      "start_sec": 39,
+      "duration_sec": 3,
+      "narration": "ただし、年会費とのバランスで判断しよう。",
+      "caption": "年会費とのバランスを忘れずに",
+      "component": "factCard",
+      "data": {
+        "headline": "年会費との\nバランスで判断",
+        "highlight": ["年会費"],
+        "variant": "default",
+        "tone": "neutral"
+      },
+      "motion": "fadeIn"
+    },
+    {
+      "shot_id": "C2-08",
+      "start_sec": 42,
+      "duration_sec": 4,
+      "narration": "無料カードで使うなら、マネックス証券が安定。",
+      "caption": "年会費無料ならマネックスが安定",
+      "component": "factCard",
+      "data": {
+        "headline": "年会費無料なら\nマネックスが安定",
+        "highlight": ["マネックス"],
+        "variant": "punch",
+        "tone": "positive"
+      },
+      "motion": "popIn"
+    },
+    {
+      "shot_id": "C2-09",
+      "start_sec": 46,
+      "duration_sec": 4,
+      "narration": "まずは自分が使ってるカード会社を確認するのが近道。",
+      "caption": "今使ってるカードから確認",
+      "component": "factCard",
+      "data": {
+        "headline": "今使ってるカードを\n確認するのが近道",
+        "variant": "soft",
+        "tone": "neutral"
+      },
+      "motion": "fadeIn"
+    },
+    {
+      "shot_id": "C2-10",
+      "start_sec": 50,
+      "duration_sec": 4,
+      "narration": "詳しい比較表は、固定コメントとプロフィールリンクへ。",
+      "caption": "固定コメント / プロフィールへ",
+      "component": "ctaPanel",
+      "data": {
+        "headline": "詳しい比較表は",
+        "preset": "cardCompare"
+      },
+      "motion": "popIn"
+    },
+    {
+      "shot_id": "C2-11",
+      "start_sec": 54,
+      "duration_sec": 6,
+      "narration": "",
+      "caption": "情報は2026年4月時点。投資には価格変動リスク",
+      "component": "dataSourceCard",
+      "data": {
+        "title": "情報源",
+        "sources": [
+          { "name": "各証券会社公式サイト（クレカ積立還元率）", "date": "2026-04-29" }
+        ],
+        "asOfDate": "2026-04-29",
+        "disclaimer": "還元率・条件は変更される場合があります。投資には価格変動リスクがあります"
+      },
+      "motion": "fadeIn"
+    }
+  ]
+}

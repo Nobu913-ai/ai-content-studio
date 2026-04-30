@@ -44,6 +44,14 @@ export const tools = {
     monthlyCost: "$0",
     note: "ローカル実行。商用利用可（クレジット表記必要・speaker別規約確認）",
   },
+  remotion: {
+    name: "Remotion",
+    role: "動画本編レンダリング（React/TypeScriptベース）",
+    apiEndpoint: null,
+    envKey: null,
+    monthlyCost: "$0",
+    note: "ローカルレンダリング。個人・3人以下チームは無料。scene JSONからモーショングラフィックス動画を生成",
+  },
 };
 
 /**
@@ -54,14 +62,14 @@ export const voicevoxPresets = {
   "genz-money-shorts": {
     name: "四国めたん ショート用（メイン）",
     speakerId: 2,
-    speedScale: 1.02,
+    speedScale: 1.12,
     pitchScale: -0.02,
     intonationScale: 1.00,
-    volumeScale: 1.00,
-    prePhonemeLength: 0.08,
-    postPhonemeLength: 0.12,
-    pauseLengthScale: 1.00,
-    segmentGapMs: 300,
+    volumeScale: 1.16,
+    prePhonemeLength: 0.04,
+    postPhonemeLength: 0.07,
+    pauseLengthScale: 0.75,
+    segmentGapMs: 100,
     enableInterrogativeUpspeak: true,
   },
   "genz-money-longform": {

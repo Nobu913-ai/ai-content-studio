@@ -12,13 +12,14 @@ import {
 } from "../../config/tools.js";
 
 describe("tools config", () => {
-  it("should have 5 active tools", () => {
-    assert.equal(Object.keys(tools).length, 5);
+  it("should have 6 active tools", () => {
+    assert.equal(Object.keys(tools).length, 6);
     assert.ok(tools.runway);
     assert.ok(tools.elevenlabs);
     assert.ok(tools.descript);
     assert.ok(tools.davinci);
     assert.ok(tools.voicevox);
+    assert.ok(tools.remotion);
   });
 
   it("should have API keys defined for API-based tools", () => {
@@ -45,11 +46,11 @@ describe("voice routing", () => {
     assert.ok(voiceRouting["chill-culture"]);
   });
 
-  it("should route genz-money to Japanese voice", () => {
+  it("should route genz-money to Japanese VOICEVOX voice", () => {
     const config = getVoiceConfig("genz-money");
     assert.equal(config.language, "ja");
-    assert.ok(config.voice_id);
-    assert.ok(config.stability > 0);
+    assert.equal(config.provider, "voicevox");
+    assert.ok(config.preset);
   });
 
   it("should route japanese-mindset to English voice", () => {
