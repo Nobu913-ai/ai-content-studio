@@ -448,6 +448,38 @@ const sharedSize = autoFontSizeJa(longerText, maxFont, maxWidth);
 - 演出意図は shot plan の data に明示 (デフォルト値と同じでも書き下す → 量産時の可読性)
 - 既存の `compareSplit` / `taxSavingsDemo` は廃止せず、中級者向け詳細解説カットで温存
 
+### 縦位置の一貫性 (Shorts 視線設計)
+
+各シーンで主要コンテンツの縦中心 y がバラバラだと、視聴者の視線が上下に大きく飛ぶ。1080×1920 縦動画の標準位置:
+
+| コンテンツ種別 | 縦中心 y 目安 | 設定例 |
+|-------------|------------|--------|
+| 標準中央 (factCard, numberHero, infinityFact 等) | ~960 | top: 50% |
+| 比較カード (taxFlowDemo, recommendationFocus) | ~830 | 中心 -130px shift |
+| 中央モーフ (taxFlowDemo の 100→80) | ~806 | top: 42% |
+| CTA 主要コンテンツ | ~860 | paddingBottom +128 |
+| PhoneStepsDemo STEP ヘッダー | y=244-320 | paddingTop +180 + flex-start |
+
+新規シーンを設計する際は、前後シーンの主要コンテンツ y 位置を確認してから配置 (乖離 200px 以下を目標)。
+
+### テロップ (SubtitleLayer) のプラットフォーム safe zone
+
+縦動画 Shorts の下端は YouTube/TikTok/Reels が UI を被せるため、テロップは下端から十分上に。
+
+| プラットフォーム | 下端 UI 領域 |
+|---|---|
+| YouTube Shorts | 200-240px |
+| TikTok | 280-340px |
+| Instagram Reels | 280-340px |
+
+**設定**: SubtitleLayer の `paddingBottom: 240` でほぼ全プラットフォームの safe zone 内 (TikTok/Reels は理想値より少しタイトだが許容範囲)。
+
+### 量産時のレイアウト落とし穴 3点
+
+1. **`display: flex` の default は row** — `flexDirection: column` を明示しないと `justifyContent` が水平方向に効く (PhoneStepsDemo で遭遇)
+2. **アニメーションの translate range は settle 位置と整合** — settle (top 等) を変えたら translate range も比例変更しないと「古い位置から落ちる」見え方になる (RecommendationFocus バッジで遭遇)
+3. **autoFontSize の長さ逆転** — 長い文字列ほど自動縮小が大きい。並列描画は `sharedValueSize` (longer 基準) を計算して両方に適用
+
 ---
 
 ## 8. v1〜v8 の振り返り（参考）
@@ -464,5 +496,6 @@ const sharedSize = autoFontSizeJa(longerText, maxFont, maxWidth);
 | v8 | progressSteps 段階表示、stackedBar 段階刻み、複利文言緩和、共通基盤対応 (captionSegments / bgVariant / seEvents) |
 | v8.1 | 冒頭 taxFlowDemo / 選択誘導 recommendationFocus 導入、1カット1メッセージ原則確立 |
 | v8.2 | TaxFlowDemo 中央モーフ (100→80 countdown) + prefix 利益→手元切替 + sharedValueSize、両カード4スロット並列、NISAカード主役化 (cardScale 1.10 + ✓ + 強グロー)、普通口座 「税引後」accent red ラベル + 増幅バウンド + value text hue-rotate filter、フローティングバッジ削除 (下部 diff と重複)、SE softImpact 5.0→5.8s で diff バッジに同期、「慣れたら」→「慣れてきたら」フレーズ変更でイントネーション解決 |
+| v8.3 | レイアウト調整: 08-01 比較カード中心 -130px / diff バッジ bottom 520 / 中央モーフ top 42% で縦位置を統一、08-06/07 PhoneStepsDemo paddingTop +180 + phone コンテナ flex-start (要 flexDirection: column 明示)、08-05 「まずはこっち」バッジ top -15 + drop range -20px、08-11 CTA paddingBottom +128 で 64px 上シフト、SubtitleLayer paddingBottom 110→240 でプラットフォーム safe zone 確保 |
 
 各 review ファイル: `Downloads/remotion-video-review_nisa-hook_*-feedback_*.md`

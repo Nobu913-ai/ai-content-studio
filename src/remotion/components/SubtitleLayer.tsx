@@ -128,7 +128,9 @@ export const SubtitleLayer: React.FC<SubtitleLayerProps> = ({
         flexDirection: "column",
         justifyContent: "flex-end",
         alignItems: "center",
-        paddingBottom: 110,
+        // 縦動画 Shorts 下端は YouTube/TikTok/Reels が UI (進捗バー/コメント/フォロー等) を被せるため
+        // 110px だと TikTok/Reels で隠れるリスクあり。240px で各プラットフォームの safe zone 内に収める。
+        paddingBottom: 240,
         pointerEvents: "none",
       }}
     >

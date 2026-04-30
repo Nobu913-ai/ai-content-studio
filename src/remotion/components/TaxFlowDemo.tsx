@@ -281,11 +281,14 @@ export const TaxFlowDemo: React.FC<TaxFlowDemoProps> = ({
           alignItems: "center",
         }}
       >
-        {/* Center column: principal display (cross-fade morph) + tax label */}
+        {/* Center column: principal display (cross-fade morph) + tax label.
+            top を 32% → 42% に下げ、後続の比較カード位置 (y=580-1100) の中央近くに配置。
+            「手元80万円」がそのまま左カード位置に流れる視覚的継続を作り、
+            08-02 以降の中央 (~960px) との縦位置乖離も縮める。 */}
         <div
           style={{
             position: "absolute",
-            top: "32%",
+            top: "42%",
             left: "50%",
             transform: "translate(-50%, -50%)",
             display: "flex",
@@ -379,13 +382,15 @@ export const TaxFlowDemo: React.FC<TaxFlowDemoProps> = ({
           </div>
         </div>
 
-        {/* Stage4: 左右カード (4.7s 以降に同時スライドイン) */}
+        {/* Stage4: 左右カード (4.7s 以降に同時スライドイン)。
+            top を 50% より 130px 上に寄せ、下部 diffMessage との視線距離を縮める。
+            morph 中央表示 (top: 32% = ~614px) は s4 までに fade out 済みなので空間衝突は無し。 */}
         <div
           style={{
             position: "absolute",
             top: "50%",
             left: "50%",
-            transform: "translate(-50%, -50%)",
+            transform: "translate(-50%, calc(-50% - 130px))",
             display: "flex",
             flexDirection: "row",
             gap: t.spacing.md,
@@ -470,11 +475,12 @@ export const TaxFlowDemo: React.FC<TaxFlowDemoProps> = ({
           </div>
         )}
 
-        {/* Stage5: 差額バッジ。diffMessage 指定時は複数行可。 */}
+        {/* Stage5: 差額バッジ。diffMessage 指定時は複数行可。
+            bottom を 280 → 520 に上げて、上部の比較カードとの視線距離を縮める。 */}
         <div
           style={{
             position: "absolute",
-            bottom: 280,
+            bottom: 520,
             left: "50%",
             transform: `translateX(-50%) scale(${diffScale * diffPulse || 0.0001})`,
             opacity: diffOpacity,

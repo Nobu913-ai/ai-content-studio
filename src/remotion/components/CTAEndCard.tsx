@@ -88,6 +88,9 @@ export const CTAEndCard: React.FC<CTAEndCardProps> = ({
           justifyContent: "center",
           alignItems: "center",
           padding: t.spacing.xl,
+          // 下端の Shorts UI / ライブテロップ / 視聴者の親指位置との干渉を避けるため、
+          // CTA 全体を中央より 64px 上に寄せる (paddingBottom +128 で justify-center が上方向に biased)。
+          paddingBottom: t.spacing.xl + 128,
         }}
       >
         {/* Decorative rings */}

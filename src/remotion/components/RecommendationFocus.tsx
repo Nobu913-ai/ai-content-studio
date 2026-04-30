@@ -114,7 +114,9 @@ export const RecommendationFocus: React.FC<RecommendationFocusProps> = ({
     fps,
     config: { damping: 7, mass: 0.5, stiffness: 240 },
   });
-  const badgeDropY = interpolate(frame, [s3, s3 + 14], [-60, 0], {
+  // 落下幅は -20px に抑えて、settle 位置 (top: -15) に近い位置から bounce する。
+  // 落下幅が大きすぎると開始位置が画面上方に飛び出して settle と乖離する。
+  const badgeDropY = interpolate(frame, [s3, s3 + 14], [-20, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.out(Easing.bounce),
@@ -197,11 +199,13 @@ export const RecommendationFocus: React.FC<RecommendationFocusProps> = ({
         >
           {cards}
 
-          {/* Badge: focus card position — 上から落下 + overshoot scale で主役性強調 */}
+          {/* Badge: focus card position — 上から落下 + overshoot scale で主役性強調。
+              top を -45 → -15 に近づけ、focus card の緑枠とのスペースを狭めて
+              「カードに貼られたタグ」感を強める。 */}
           <div
             style={{
               position: "absolute",
-              top: -45,
+              top: -15,
               left: secondarySide === "right" ? "25%" : "75%",
               transform: `translate(-50%, ${badgeDropY}px) scale(${badgeScale * badgePulse || 0.0001})`,
               opacity: badgeOpacity,

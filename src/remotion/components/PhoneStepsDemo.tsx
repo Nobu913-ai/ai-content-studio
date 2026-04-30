@@ -439,7 +439,8 @@ export const PhoneStepsDemo: React.FC<PhoneStepsDemoProps> = ({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          paddingTop: t.spacing.xl,
+          // STEP ヘッダーをさらに下方に: +180px (合計 244px) で画面中央寄りに
+          paddingTop: t.spacing.xl + 180,
           paddingBottom: t.spacing.xl + 240,
           gap: t.spacing.md,
         }}
@@ -461,7 +462,8 @@ export const PhoneStepsDemo: React.FC<PhoneStepsDemoProps> = ({
           style={{
             flex: 1,
             display: "flex",
-            justifyContent: "center",
+            flexDirection: "column",
+            justifyContent: "flex-start",
             alignItems: "center",
             width: "100%",
           }}
