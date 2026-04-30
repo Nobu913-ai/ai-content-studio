@@ -47,3 +47,28 @@ export function applyPronunciationDictionary(text, channelId) {
   for (const [from, to] of dict) result = result.replaceAll(from, to);
   return result;
 }
+
+/**
+ * 辞書置換を逆方向に適用 (kana読み → 元の漢字/英字表記)。
+ *
+ * 用途: measure-segments.js は applyPronunciationDictionary 後のテキストで音声を生成するため
+ *       segment.text は kana 化された読み (例: "ニーサ口座") になる。
+ *       これを caption 表示用に元の表記 (例: "NISA口座") に戻す。
+ *
+ * 注意: 1対多のマッピングがある場合は最初に登録された方が優先される (実用上問題ないはず)。
+ */
+export function reversePronunciationDictionary(text, channelId) {
+  const dict = loadPronunciationDictionary(channelId);
+  // reading -> original の逆引きマップを構築。長い reading から優先する。
+  const reverse = [];
+  const seen = new Set();
+  for (const [from, to] of dict) {
+    if (seen.has(to)) continue; // ambiguous reading: keep first
+    seen.add(to);
+    reverse.push([to, from]);
+  }
+  reverse.sort((a, b) => b[0].length - a[0].length);
+  let result = text;
+  for (const [reading, original] of reverse) result = result.replaceAll(reading, original);
+  return result;
+}

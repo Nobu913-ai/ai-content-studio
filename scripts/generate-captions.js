@@ -25,6 +25,7 @@
  * - 重要語（数字＋単位、強調記号）は highlight に自動抽出
  */
 import { readFileSync, writeFileSync } from "node:fs";
+import { reversePronunciationDictionary } from "./lib/pronunciation-loader.js";
 
 const args = process.argv.slice(2);
 const shotPlanPath = args[0];
@@ -158,7 +159,10 @@ function buildCaptionSegmentsSmart(narration, durationSec, shotStartSec, measure
 
   const segments = [];
   for (const m of matched) {
-    const text = m.text.trim();
+    // measure-segments.js は発音辞書置換後のテキストで音声を生成するため、
+    // segment.text は kana 化された読み (例: "ニーサ口座") になっている。
+    // caption 表示用には元の表記 (例: "NISA口座") に戻す。
+    const text = reversePronunciationDictionary(m.text.trim(), "genz-money");
     const phrases = splitPhrases(text, maxLen);
     if (phrases.length === 0) continue;
     const segCharTotal = phrases.reduce((s, p) => s + p.length, 0);

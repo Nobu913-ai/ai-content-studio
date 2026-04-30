@@ -55,16 +55,21 @@
         "tax": 20,
         "unit": "万円",
         "principalLabel": "利益100万円",
+        "principalPrefix": "利益",
+        "takeHomePrefix": "手元",
         "regularLabel": "普通の口座",
         "regularTakeHomeLabel": "手元",
+        "regularSubLabel": "税引後",
+        "regularCardStyle": { "scale": 0.94, "opacity": 0.85 },
         "nisaLabel": "新NISA",
         "nisaTakeHomeLabel": "手元",
+        "nisaCardStyle": { "scale": 1.10, "checkIcon": true },
         "diffMessage": "NISAなら\n約20万円多く残る"
       },
       "motion": "moneyFlow",
       "seEvents": [
         { "type": "whoosh", "atSec": 0.1, "volume": 0.32 },
-        { "type": "softImpact", "atSec": 5.0, "volume": 0.45 }
+        { "type": "softImpact", "atSec": 5.8, "volume": 0.42 }
       ]
     },
     {
@@ -170,7 +175,7 @@
       "caption": "最初は積立投資枠から",
       "component": "recommendationFocus",
       "data": {
-        "title": "最初に見るなら",
+        "title": "はじめに検討するなら",
         "focus": {
           "label": "つみたて投資枠",
           "value": "年120万円まで",
@@ -188,7 +193,7 @@
       },
       "motion": "focusZoom",
       "seEvents": [
-        { "type": "pop", "atSec": 0.8, "volume": 0.22 }
+        { "type": "pop", "atSec": 0.8, "volume": 0.20 }
       ]
     },
     {
@@ -212,7 +217,7 @@
           "endSec": 1.2
         },
         {
-          "text": "ネット証券でニーサ口座を開設して",
+          "text": "ネット証券でNISA口座を開設して",
           "startSec": 1.3,
           "endSec": 3.7
         },
@@ -283,7 +288,7 @@
       "shot_id": "08-09",
       "start_sec": 39.6,
       "duration_sec": 8.2,
-      "narration": "少額からスタート。慣れたら金額を増やしていく。毎月コツコツが資産形成のコツ。続けるほど、複利で資産が育ちやすい。",
+      "narration": "少額からスタート。慣れてきたら金額を増やしていく。毎月コツコツが資産形成のコツ。続けるほど、複利で資産が育ちやすい。",
       "captionSegments": [
         {
           "text": "少額からスタート",
@@ -294,7 +299,7 @@
           ]
         },
         {
-          "text": "慣れたら金額を増やす",
+          "text": "慣れてきたら金額を増やす",
           "startSec": 1.7,
           "endSec": 3.5
         },
@@ -325,7 +330,7 @@
             "intensity": "muted"
           },
           {
-            "label": "慣れたら金額を増やす",
+            "label": "慣れてきたら金額を増やす",
             "icon": "2",
             "intensity": "muted"
           },

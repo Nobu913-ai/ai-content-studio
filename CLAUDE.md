@@ -183,11 +183,19 @@ docs/remotion-quality-v2-design.md -- Remotion v2 (component-oriented) スキー
 - **seEvents**: 8役割 SE パレット。60秒で 7-9 event 程度、説明シーンは静音
 
 ### 1カット1メッセージ原則
-- 冒頭の税金/手数料カット: `taxFlowDemo` (時系列フロー) を使う。`taxSavingsDemo` の左右並列は初心者には重い
+- 冒頭の税金/手数料カット: `taxFlowDemo` (時系列フロー: 元本提示→税金剥がれ→中央モーフ100→80→左右カード分割→差額バッジ) を使う。`taxSavingsDemo` の左右並列は初心者には重い
 - 選択誘導カット: `recommendationFocus` (focus 拡大 + secondary opacity 0.2) を使う。`compareSplit` だと比較に見える
-- 1カット内に主役候補3個以上 / 数字3個以上同時表示は避ける
-- ナレーション順序と画面の理解順序を一致させる
+- 主役/脇役カードの非対称化: `cardScale` 1.10 vs 0.94、`cardOpacity` 1.0 vs 0.85、border 3px vs 2px、glow有/無、✓ icon有/無
+- 比較カードの value は longer text 基準の sharedValueSize で計算 (autoFontSize の長さ逆転を回避)
+- 1カット内に主役候補3個以上 / 数字3個以上同時表示は避ける、煽り文言なし、感情を SE で表現しない
+- アニメ微調整より明示テキスト (例: 「税引後」ラベル accent red 色) のほうが量産時に確実に伝わる
+- 演出意図は shot plan の data に明示 (デフォルト値と同じでも書き下す)
 - 詳細: [docs/shorts-production-workflow.md §7](docs/shorts-production-workflow.md)
+
+### VOICEVOX イントネーション (難所)
+- アクセントが不自然なら **第一選択はフレーズ変更** (例: 「慣れたら」→「慣れてきたら」)
+- user_dict 登録は罠が多い (読点なしだと無視される、heiban=棒読みになる、word_type の選択ミスで活用形拾えず)
+- 詳細: [docs/shorts-production-workflow.md §6.5](docs/shorts-production-workflow.md) / `config/voicevox-accent-dictionary.json` / `scripts/register-voicevox-accents.js`
 
 ## CLI コマンド（37コマンド）
 

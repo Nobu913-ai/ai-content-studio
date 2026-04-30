@@ -335,6 +335,8 @@ const ComponentRenderer: React.FC<{ scene: SceneV2 }> = ({ scene }) => {
           tax={data.tax}
           unit={data.unit}
           principalLabel={data.principalLabel}
+          principalPrefix={data.principalPrefix}
+          takeHomePrefix={data.takeHomePrefix}
           regularLabel={data.regularLabel}
           regularTakeHome={data.regularTakeHome}
           regularTakeHomeLabel={data.regularTakeHomeLabel}
@@ -343,6 +345,10 @@ const ComponentRenderer: React.FC<{ scene: SceneV2 }> = ({ scene }) => {
           diffPrefix={data.diffPrefix}
           diffApprox={data.diffApprox}
           diffMessage={data.diffMessage}
+          regularCardStyle={data.regularCardStyle}
+          nisaCardStyle={data.nisaCardStyle}
+          regularSubLabel={data.regularSubLabel}
+          nisaFloatingBadge={data.nisaFloatingBadge}
           bgVariant={bg}
         />
       );

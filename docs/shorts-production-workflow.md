@@ -330,6 +330,47 @@ const wrapped = smartLineBreak(text, fontSize, maxWidth);
 
 ---
 
+## 6.5. VOICEVOX イントネーション問題への対処
+
+音声を聴いて「アクセントが関西訛り風」「棒読み感がある」等が気になったら、以下の優先順位で対処する。
+
+### 第一選択: フレーズ変更 (推奨、罠が少ない)
+
+スクリプト側で言い換える。例:
+- 「慣れたら」(関西訛り風) → 「慣れてきたら」(自然) — 連用形+補助動詞「くる」+条件形は morph 解析で正しく分割される
+- 「年120万円」(「とし120」と誤読) → 「年間120万円」(正常)
+
+複合語/接続語のほうが解析が安定する。Single token の動詞活用形は VOICEVOX デフォルト辞書に依存して安定しないことが多い。
+
+### 第二選択: `config/voicevox-accent-dictionary.json` への登録
+
+`scripts/register-voicevox-accents.js` で `/user_dict_word` API に冪等登録 (既存 surface は削除して再登録)。
+
+**推奨設定:**
+- `word_type: COMMON_NOUN` (VERB は活用形を拾えない、PROPER_NOUN は priority 上限が低い)
+- `priority: 10` (上限値、morph 辞書を上書き)
+- `accent_type`: `0` (heiban) は棒読みになりがち、自然な抑揚は `2` (LHLL) や `3` (LHHL) を試す
+
+**確認手順:**
+```bash
+curl -s -X POST "http://127.0.0.1:50021/audio_query?text=<URL_ENCODED>&speaker=2" \
+  | node -e "let d=''; process.stdin.on('data',c=>d+=c).on('end',()=>{const q=JSON.parse(d); q.accent_phrases.forEach(p=>console.log('accent='+p.accent, '|', p.moras.map(m=>m.text+'('+m.pitch.toFixed(2)+')').join('')))})"
+```
+
+### 罠: 読点なしだと user_dict accent_type が無視される
+
+VOICEVOX の morph 解析は前後語と結合して 1つの accent_phrase を作ることがある。結合された場合、user_dict の accent_type は使われず結合語全体のアクセントが計算される。
+
+対処は (a) フレーズ自体を変える、または (b) スクリプトに読点 (、) を入れて accent_phrase を強制分離する (ただし読点は 0.15-0.2s pause を生むので Shorts では timing と相談)。
+
+### 罠: heiban (accent_type=0) は「自然」ではなく「棒読み」
+
+heiban は LHHH... で pitch 変化が極小になる → 棒読み。自然な抑揚が欲しいなら N型 (1-N) を使う。
+
+詳細は memory `feedback_voicevox_intonation_strategy.md` 参照。
+
+---
+
 ## 7. 1カット1メッセージ原則（量産時のビジュアル設計指針）
 
 初心者向け Shorts では、**1カット内に主役メッセージを1つに絞る**。比較表より動き・強調が刺さる。
@@ -340,22 +381,26 @@ const wrapped = smartLineBreak(text, fontSize, maxWidth);
 
 | ❌ 避ける | ✅ 推奨 |
 |----------|----------|
-| `taxSavingsDemo` (普通口座 vs NISA を最初から並列) | `taxFlowDemo` (元本 → 税金が剥がれる → 普通側固定 → NISA側固定 → 差額バッジ) |
+| `taxSavingsDemo` (普通口座 vs NISA を最初から並列) | `taxFlowDemo` (元本 → 税金が剥がれる → 中央モーフ → 左右カード分割 → 差額バッジ) |
 
 `taxFlowDemo` の主要 prop:
-- `principal` / `tax`: 数値
-- `principalLabel`: 最初に出す中央ラベル
-- `regularLabel` / `nisaLabel`: 左右カードのラベル
-- `diffMessage`: 最終バッジ文言（`\n` で改行可）。煽り防止に「NISAなら\n約20万円多く残る」のような表現推奨
+- 数値: `principal` / `tax` / `unit`
+- 中央表示: `principalLabel` / `principalPrefix` (= "利益") / `takeHomePrefix` (= "手元")
+- 左右カード: `regularLabel` / `nisaLabel` / `regularSubLabel` (= "税引後", 必須) / `regularTakeHomeLabel` / `nisaTakeHomeLabel`
+- カード非対称化: `regularCardStyle: { scale: 0.94, opacity: 0.85 }` / `nisaCardStyle: { scale: 1.10, checkIcon: true }`
+- 最終バッジ: `diffMessage`（`\n` で改行可）。煽り防止に「NISAなら\n約20万円多く残る」推奨
 
-`captionSegments` は taxFlowDemo の各 stage と同期させる（先にネタバレしない）:
+5段階タイムライン (durationSec=7.7s 基準):
 
 | stage | 時間 | 中央ビジュアル | caption |
 |------|------|---------|---------|
-| 1 | 0.0–1.2s | 利益100万円 | 「利益100万円」 |
-| 2 | 1.2–3.0s | -20万円 が剥がれて飛ぶ | 「普通の口座だと 約20万円が税金」 |
-| 3 | 3.0–4.7s | 左カード 手元80万円 | 「手元に残るのは 約80万円」 |
-| 4 | 4.7–7.7s | 右カード 100万円 + 差額バッジ | 「NISAなら 100万円まるまる残る」 |
+| 1 | 0.0–1.0s | 元本 (e.g. "利益100万円") | 「利益100万円」 |
+| 2 | 1.0–3.0s | -20万円 が下から落ちて → 右下に剥がれて飛ぶ | 「普通の口座だと 約20万円が税金」 |
+| 3 | 3.0–3.8s | **中央で 100→80 数字カウントダウンモーフ** + prefix 利益→手元 切替 + 80着地時 punch scale 1.18 | 「手元に残るのは 約80万円」 |
+| 4 | 3.8–4.7s | 「手元80万円」中央でホールド | (同上) |
+| 5 | 4.7–end | 左カード (`scale 0.94 + opacity 0.85` + 「税引後」 + 「ドスン」と沈むバウンド + brief loss tint filter on value) + 右カード (`scale 1.10` + ✓ + 強グロー) + 下部 diffMessage バッジ | 「NISAなら 100万円まるまる残る」 |
+
+**重要**: caption は手書きで stage と同期させる (`generate-captions.js` の自動生成は narration の句読点ベースで stage と一致しない)。手書きの captionSegments があれば auto 生成はスキップされる。
 
 ### 選択誘導カット（証券会社・カード・枠・プラン推薦）
 
@@ -370,11 +415,37 @@ const wrapped = smartLineBreak(text, fontSize, maxWidth);
 - `secondary.label` / `secondary.value` / `secondary.opacity`（0.2 まで下げると補足扱い）/ `secondary.scale`（0.7-0.8 で完全に脇役化）
 - secondary の `value` は数字より補足文言推奨（「年240万円」より「慣れてから検討でもOK」）
 
+### 主役/脇役カードの非対称化テクニック (taxFlowDemo / recommendationFocus 共通)
+
+| 要素 | 主役側 | 脇役側 |
+|------|--------|--------|
+| `cardScale` | 1.10-1.15 | 0.92-0.96 |
+| `cardOpacity` | 1.0 | 0.78-0.85 |
+| Border thickness | 3px | 2px |
+| Glow | 50px + 100px 2重 boxShadow | なし |
+| Check icon | あり (✓ in positive 緑) | なし |
+| sub label slot | 「税金0円」(positive 緑) | 「税引後」(accent red 色で表示、textSecondary だと認識されにくい) |
+
+### 比較カードの fontSize 揃え (autoFontSize の罠回避)
+
+並列描画する value (e.g. 80万円 / 100万円) は **共有 fontSize を計算** する:
+```ts
+const longerText = `${Math.max(principal, takeHome)}${unit}`;
+const sharedSize = autoFontSizeJa(longerText, maxFont, maxWidth);
+// 両カード sharedSize で描画、視覚強弱は scale で
+```
+理由: autoFontSize は長い文字列ほど自動縮小が大きい。「100万円」のほうを emphasize したいのに「80万円」より小さくなる逆転が起きる。
+
 ### 全体ルール
 
 - 1カット内に主役候補が3つ以上ない
 - 数字を3個以上同時に表示しない
 - ナレーション順序と画面の理解順序を一致させる
+- 同じメッセージを 2か所表示しない (例: NISA横の `+20万円` バッジ + 下部 `NISAなら20万円多く残る` バッジは重複)
+- 「損した！」「もったいない！」等の煽り文言なし (calm-trust トーンが下がる)
+- 「減っちゃった感」を SE で表現しない (音で悲しさを出すと安っぽい)
+- アニメーションの微調整より明示テキスト (例: 「税引後」ラベル) のほうが量産時に確実に伝わる
+- 演出意図は shot plan の data に明示 (デフォルト値と同じでも書き下す → 量産時の可読性)
 - 既存の `compareSplit` / `taxSavingsDemo` は廃止せず、中級者向け詳細解説カットで温存
 
 ---
@@ -392,5 +463,6 @@ const wrapped = smartLineBreak(text, fontSize, maxWidth);
 | v7 | 06-09 統合、リスク中立化、PhoneStepsDemo 操作反応 |
 | v8 | progressSteps 段階表示、stackedBar 段階刻み、複利文言緩和、共通基盤対応 (captionSegments / bgVariant / seEvents) |
 | v8.1 | 冒頭 taxFlowDemo / 選択誘導 recommendationFocus 導入、1カット1メッセージ原則確立 |
+| v8.2 | TaxFlowDemo 中央モーフ (100→80 countdown) + prefix 利益→手元切替 + sharedValueSize、両カード4スロット並列、NISAカード主役化 (cardScale 1.10 + ✓ + 強グロー)、普通口座 「税引後」accent red ラベル + 増幅バウンド + value text hue-rotate filter、フローティングバッジ削除 (下部 diff と重複)、SE softImpact 5.0→5.8s で diff バッジに同期、「慣れたら」→「慣れてきたら」フレーズ変更でイントネーション解決 |
 
 各 review ファイル: `Downloads/remotion-video-review_nisa-hook_*-feedback_*.md`

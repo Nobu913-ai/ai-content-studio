@@ -594,6 +594,8 @@ const taxFlowDemoData = z.object({
   tax: z.number().min(0),
   unit: z.string().optional(),
   principalLabel: z.string().optional(),
+  principalPrefix: z.string().optional(),
+  takeHomePrefix: z.string().optional(),
   regularLabel: z.string().optional(),
   regularTakeHome: z.number().optional(),
   regularTakeHomeLabel: z.string().optional(),
@@ -602,6 +604,20 @@ const taxFlowDemoData = z.object({
   diffPrefix: z.string().optional(),
   diffApprox: z.string().optional(),
   diffMessage: z.string().optional(),
+  regularCardStyle: z
+    .object({
+      scale: z.number().min(0.5).max(2).optional(),
+      opacity: z.number().min(0).max(1).optional(),
+    })
+    .optional(),
+  nisaCardStyle: z
+    .object({
+      scale: z.number().min(0.5).max(2).optional(),
+      checkIcon: z.boolean().optional(),
+    })
+    .optional(),
+  regularSubLabel: z.string().optional(),
+  nisaFloatingBadge: z.string().optional(),
 });
 
 const recommendationFocusData = z.object({

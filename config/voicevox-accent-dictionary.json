@@ -1,0 +1,8 @@
+{
+  "_comment": "VOICEVOX user_dict_word に登録するアクセント補正辞書。発音辞書 (pronunciation-dictionary.json) は読み (kana) を制御するが、本辞書はアクセント型 (heiban / atamadaka 等) を制御する。",
+  "_usage": "scripts/register-voicevox-accents.js を実行すると、このJSONの全entriesがVOICEVOXのuser_dictに登録される (既存の同 surface entry は削除して再登録)。",
+  "_accent_type": "0=平板 (heiban, LHHH...), N=N番目モーラの後で下がる (例: ナ↓レタラ なら 1, ナレ↓タラ なら 2)",
+  "_word_type_note": "COMMON_NOUN priority=10 が最も高優先度で morph dict を上書きできる。VERB だと活用形がうまく拾えないケースあり。",
+  "_design_note": "**辞書登録だけでイントネーションを直そうとすると沼る** (VOICEVOX は読点なしで次語と結合する場合 user_dict accent_type が無視されるなど多くの罠がある)。発音/抑揚の問題は、可能な限り**フレーズ自体を変える**ことで回避するのが推奨アプローチ。例: 「慣れたら」→「慣れてきたら」に変更。本辞書は最後の手段として使う。",
+  "entries": []
+}

@@ -108,17 +108,24 @@ export const RecommendationFocus: React.FC<RecommendationFocusProps> = ({
     easing: Easing.out(Easing.cubic),
   });
 
-  // stage3: バッジ出現
+  // stage3: バッジ出現 — 上から落ちて overshoot scale (主役性をさらに強調)
   const badgeScale = spring({
     frame: Math.max(0, frame - s3),
     fps,
-    config: { damping: 8, mass: 0.6, stiffness: 220 },
+    config: { damping: 7, mass: 0.5, stiffness: 240 },
+  });
+  const badgeDropY = interpolate(frame, [s3, s3 + 14], [-60, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.out(Easing.bounce),
   });
   const badgeOpacity = interpolate(frame, [s3, s3 + 10], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const badgePulse = Math.sin(Math.max(0, frame - s3 - 8) * 0.1) * 0.08 + 0.92;
+  const badgePulse = Math.sin(Math.max(0, frame - s3 - 8) * 0.1) * 0.10 + 0.90;
+  // focus card glow: 軽くもう一段強める (badgePulse の上限を引き上げ)
+  const focusGlow = badgePulse * 1.25;
 
   const focusCard = (
     <FocusCard
@@ -129,7 +136,7 @@ export const RecommendationFocus: React.FC<RecommendationFocusProps> = ({
       scale={focusScale}
       opacity={cardsOpacity}
       isFocus
-      glow={badgePulse}
+      glow={focusGlow}
     />
   );
   const secondaryCard = (
@@ -190,22 +197,22 @@ export const RecommendationFocus: React.FC<RecommendationFocusProps> = ({
         >
           {cards}
 
-          {/* Badge: focus card position */}
+          {/* Badge: focus card position — 上から落下 + overshoot scale で主役性強調 */}
           <div
             style={{
               position: "absolute",
-              top: -30,
+              top: -45,
               left: secondarySide === "right" ? "25%" : "75%",
-              transform: `translateX(-50%) scale(${badgeScale * badgePulse || 0.0001})`,
+              transform: `translate(-50%, ${badgeDropY}px) scale(${badgeScale * badgePulse || 0.0001})`,
               opacity: badgeOpacity,
-              padding: `${t.spacing.xs}px ${t.spacing.md}px`,
+              padding: `${t.spacing.sm}px ${t.spacing.md}px`,
               backgroundColor: t.colors.highlight,
               border: `3px solid ${t.colors.highlight}`,
               borderRadius: 100,
-              boxShadow: `0 0 40px ${t.colors.highlight}`,
+              boxShadow: `0 6px 50px ${t.colors.highlight}`,
               fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
               fontWeight: t.fontWeights.black,
-              fontSize: Math.round(width * 0.045),
+              fontSize: Math.round(width * 0.05),
               color: t.colors.bgPrimary,
               whiteSpace: "nowrap",
             }}
@@ -228,8 +235,11 @@ const FocusCard: React.FC<{
   glow: number;
 }> = ({ label, value, accent, scale, opacity, isFocus, glow }) => {
   const { width } = t.resolution;
-  const labelSize = autoFontSizeJa(label, Math.round(width * (isFocus ? 0.062 : 0.05)), width * 0.36);
-  const valueSize = value ? autoFontSizeJa(value, Math.round(width * (isFocus ? 0.045 : 0.038)), width * 0.36) : 0;
+  // カード実幅は (1080 - padding xl×2 - gap md) / 2 = ~464、内側 padding lg×2 = 80 → 実content幅 ≈ 380px。
+  // safety margin として width * 0.32 (=346px) を maxWidth に。さらに whiteSpace: nowrap で auto-wrap を抑止。
+  const labelMaxWidth = width * 0.32;
+  const labelSize = autoFontSizeJa(label, Math.round(width * (isFocus ? 0.062 : 0.05)), labelMaxWidth);
+  const valueSize = value ? autoFontSizeJa(value, Math.round(width * (isFocus ? 0.045 : 0.038)), labelMaxWidth) : 0;
 
   return (
     <div
@@ -260,6 +270,7 @@ const FocusCard: React.FC<{
           textShadow: isFocus ? `0 0 24px ${accent}80` : "none",
           textAlign: "center",
           lineHeight: 1.2,
+          whiteSpace: "nowrap",
         }}
       >
         {label}
