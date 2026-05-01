@@ -1,0 +1,122 @@
+{
+  "overall_score": 82,
+  "overall_verdict": "warn",
+  "checks": {
+    "exaggeration": {
+      "score": 85,
+      "verdict": "pass",
+      "issues": [
+        {
+          "line_hint": "冒頭",
+          "text": "100万円まるまる残る",
+          "suggestion": "事実として正しい (NISA口座内の運用益は非課税) が、視聴者が『投資すれば必ず100万円儲かる』と誤読するリスクがある。動画タイトル・description で『利益100万円が出た場合』と前提を明示してリスク中和済み (本対応は SEO/repurpose JSON で完了)。スクリプト本体は短尺ゆえそのままで OK"
+        },
+        {
+          "line_hint": "中盤",
+          "text": "続けるほど、複利で資産が育ちやすい",
+          "suggestion": "『育ちやすい』は中立的表現で OK。『絶対育つ』『必ず増える』のような断定は避けられている"
+        }
+      ]
+    },
+    "ai_smell": {
+      "score": 80,
+      "verdict": "pass",
+      "issues": [
+        {
+          "text": "毎月コツコツが資産形成のコツ",
+          "suggestion": "やや教科書的。Z世代向けには『毎月コツコツが、結局いちばん効く』など口語に寄せても良い (ただし v8 確定後なので今回は触らない)"
+        },
+        {
+          "text": "始め方はシンプル",
+          "suggestion": "ふつうの言い回しでテンプレ感あり。次の Shorts では具体動詞 (例: 『3ステップで完了』) も検討"
+        }
+      ],
+      "human_edit_points": [
+        "失敗談・体験談・特定銘柄の運用イメージなどの『人間の声』は短尺ゆえ取り込めなかったが、長尺化時には『私はSBIで月3,000円から始めた』のような具体例で生身感を出すと良い",
+        "『複利で資産が育つ』は説明が薄い。長尺版では具体数字 (月3万円30年で◯◯円) で訴求すべき (Shorts #03 の compoundDemo で対応予定)"
+      ]
+    },
+    "compliance": {
+      "score": 75,
+      "verdict": "warn",
+      "issues": [
+        {
+          "rule": "投資は自己責任の明示",
+          "text": "(スクリプト本体に明示なし、価格変動リスクへの言及のみ)",
+          "suggestion": "スクリプト本体は短尺制約により『価格変動リスクがあるので、無理のない金額で続けることが大切です』で risk disclosure 済み。description / 固定コメントで『投資は自己責任でお願いします』を明記必須 (repurpose JSON で対応済み)"
+        },
+        {
+          "rule": "出典明示",
+          "text": "(スクリプト内に [SOURCE:] マーカーなし)",
+          "suggestion": "スクリプトは音声化前提のため [SOURCE:] マーカーは入れず、description に金融庁 NISA ページ (https://www.fsa.go.jp/policy/nisa2/) を出典として明記する方針 (SEO/repurpose JSON で対応済み)"
+        },
+        {
+          "rule": "景品表示法 / PR表記",
+          "text": "アフィリエイトリンクを含む場合の PR表記",
+          "suggestion": "description / 各プラットフォーム caption に PR表記を明記済み (repurpose JSON)。YouTube 側の動画設定で『有償プロモーション開示』のチェックも公開時に必須 (repurpose JSON の _publish_checklist 参照)"
+        },
+        {
+          "rule": "特定銘柄の推奨禁止",
+          "text": "(スクリプト本体は特定証券会社を名指ししていない)",
+          "suggestion": "スクリプト本体は『ネット証券で』と一般化されており銘柄推奨にならない。description で SBI/楽天証券に言及するが『候補』表現で中立化済み (repurpose JSON で対応)"
+        }
+      ],
+      "has_disclaimer": false,
+      "has_source_citations": false,
+      "separates_info_from_advice": true,
+      "source_check": {
+        "total_claims": 7,
+        "sourced_claims": 0,
+        "unsourced_claims": [
+          "投資で100万円儲けても、普通の口座だと税金で約20万円取られる (国税庁 譲渡所得課税の根拠)",
+          "つみたて投資枠が年間120万円 (金融庁)",
+          "成長投資枠が年間240万円 (金融庁)",
+          "合計360万円まで非課税で投資できる (金融庁)",
+          "非課税期間は無期限 (金融庁)",
+          "月100円から積立できる証券会社もある (各社公式情報)",
+          "続けるほど、複利で資産が育ちやすい (general/opinion - 市況に依存)"
+        ],
+        "missing_info_dates": [
+          "新NISA は2024年1月開始の制度のため [INFO DATE: 2024-01-01] 級の前提情報がスクリプト内に明示されていない (description に記載済み)"
+        ]
+      },
+      "forbidden_expressions": []
+    },
+    "originality": {
+      "score": 82,
+      "verdict": "pass",
+      "overlap_with_existing": [
+        "新NISA 入門系の Shorts は YouTube に多数存在。一般的な制度説明型は競合多い"
+      ],
+      "unique_angle": "『100万円→80万円 vs 100万円』の loss aversion 視覚比較 (taxFlowDemo) と『年120/240/360万円・無期限』の数字段階提示で、ビジュアル差別化を実現。calm-trust トーンで煽らず、Z世代の『金融初心者だけど煽り動画は嫌』層に刺さる設計"
+    }
+  },
+  "human_edit_priority": [
+    {
+      "section": "YouTube description (公開前)",
+      "action": "『投資は自己責任でお願いします』『一部アフィリエイトリンクを含みます (PR)』の2文が確実に含まれているか最終確認",
+      "why": "金融コンプラ最低限。repurpose JSON では含まれているが、実アップロード時に YouTube 文字数制限などで切れていないか目視チェック必須"
+    },
+    {
+      "section": "YouTube 動画設定 (公開時)",
+      "action": "『有償プロモーション、スポンサーシップ、または推奨を含む』にチェックを入れる",
+      "why": "アフィリエイトリンク含むため。YouTube ヘルプの広告主開示要件 (Connected TVs Federal Trade Commission Act 16 CFR Part 255 相当の日本ガイドライン)"
+    },
+    {
+      "section": "サムネ・タイトル (公開前)",
+      "action": "『利益100万円』表記が反映されているか確認 (元案『投資100万円』だと『投資元本=100万円』と誤読される)",
+      "why": "ChatGPT SEO feedback 反映済みだが、最終アップロード時に古い案を貼らないよう注意"
+    },
+    {
+      "section": "固定コメント (公開直後)",
+      "action": "投稿後に固定コメントを即投稿してピン留め。内容: 『詳しい始め方ガイド・関連サービスは(LINE)→(SBI証券)→(楽天証券) の順 [PR含む]』",
+      "why": "Shorts は CTA が固定コメント依存。公開直後にピン留めしないと CTA経路が機能しない"
+    },
+    {
+      "section": "公開後 1週間 / 2週間 KPI",
+      "action": "再生数 / CTR / 平均視聴維持率 / コメント感情 / アフィリエイト発生 を記録 → acs kpi で蓄積",
+      "why": "Shorts #02 (クレカ積立) の公開タイミングと #03 のテーマ選定の判断材料。データなしの体感運用は危険"
+    }
+  ],
+  "summary": "スクリプト本体は禁止表現なし・特定銘柄推奨なし・価格変動リスク明示済みで音声原稿として合格 (score 82, verdict warn)。出典と『投資は自己責任』はスクリプト外 (description) で必須対応となり、SEO/repurpose JSON で既に対応済み。公開前の最終チェック (YouTube有償プロモーション開示、placeholder 残存、固定コメント即投稿) を確実に実施すれば公開可能なレベル。"
+}
