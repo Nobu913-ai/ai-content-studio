@@ -8,7 +8,7 @@
 ## Phase 1: 基盤構築（Day 1〜30）
 
 ### 運用アカウント
-- **本命**: genz-money（Z世代マネー教室）
+- **本命**: genz-money (channelId) — 公開ブランド「お金の初期設定」(handle: @okane_setup)
 - **並走**: japanese-mindset（Japanese Mindset）
 - **待機**: chill-culture（後からスタート）
 

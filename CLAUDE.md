@@ -16,7 +16,7 @@ Claude API + 5ツール（Remotion / Runway / ElevenLabs / Descript / DaVinci Re
 
 | ID | 名前 | 言語 | ターゲット | 優先度 |
 |----|------|------|-----------|--------|
-| `genz-money` | Z世代マネー教室 | JA | 日本 18-28歳。金融リテラシーをカジュアルに | 主力 |
+| `genz-money` (channelId) / 公開ブランド名「お金の初期設定」 (`@okane_setup`) | お金の初期設定｜20代の投資とポイ活 | JA | 日本 20代中心 (18-28歳)、30代以降も歓迎。新NISA・クレカ積立・ポイ活・家計管理 | 主力 |
 | `japanese-mindset` | Japanese Mindset | EN | 英語圏 25-45歳。日本の哲学・マインドセットを紹介 | 並走 |
 | `chill-culture` | チルカルチャーガイド | JA | 日本 18-30歳。シーシャ、カフェ、サウナ、音楽 | 後発 |
 

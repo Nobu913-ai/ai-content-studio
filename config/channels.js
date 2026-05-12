@@ -109,11 +109,14 @@ export const channels = {
   },
 
   "genz-money": {
-    name: "Z世代マネー教室",
+    // channelId は `genz-money` で維持 (システム的識別子)。公開ブランド名は 2026-05 から「お金の初期設定」。
+    name: "お金の初期設定",
+    displayName: "お金の初期設定｜20代の投資とポイ活",
+    handle: "@okane_setup",
     language: "ja",
-    description: "Z世代向けに金融リテラシーをカジュアルに楽しく伝える",
-    target: "日本の18-28歳。投資初心者、社会人1-5年目、大学生。SNSネイティブ世代",
-    tone: "カジュアルでテンポが速い。敬語は最小限。若者言葉OK。「ぶっちゃけ」「マジで」等を適度に使用。ただし正確性は維持。",
+    description: "20代から整えたい、お金の初期設定。新NISA・クレカ積立・ポイ活・家計管理を、60秒でやさしく解説。",
+    target: "日本の20代 (18-28歳) 中心、30代以降も歓迎。投資初心者、社会人1-5年目、大学生。SNSネイティブ世代",
+    tone: "calm-trust。やさしく整理する語り。煽らない。むずかしい言葉なし。「儲かる」「得する」等の煽り表現は禁止。",
     videoStyle: "ポップなアニメーション + テンポの速い編集 + AI音声ナレーション",
     estimatedCPM: "$10-20 (金融系高CPM)",
     uploadFrequency: "2-3 videos/week",

@@ -1,6 +1,15 @@
 {
   "package_id": "shorts-nisa-01-publish",
   "channel": "genz-money",
+  "_brand_note": "channelId は `genz-money` で維持。公開ブランドは 2026-05-12 から「お金の初期設定」(handle: @okane_setup)。旧名「Z世代マネー教室」+ ハンドル「@genz-money」は廃止。",
+  "brand": {
+    "channel_name": "お金の初期設定",
+    "display_name": "お金の初期設定｜20代の投資とポイ活",
+    "handle": "@okane_setup",
+    "core_concept": "20代から整えたい、お金の初期設定。",
+    "tagline": "60秒で、未来の自分をラクにする。",
+    "categories": ["新NISA", "クレカ積立", "ポイ活", "家計管理"]
+  },
   "topic": "新NISA入門 (Shorts #01)",
   "format": "shorts",
   "aspect_ratio": "9:16",
