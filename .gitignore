@@ -1,14 +1,10 @@
 node_modules/
 .env
-content/*/scripts/
-content/*/metadata/
-content/*/calendar/
-content/*/audio/
-content/*/video/
-content/*/kpi/
-content/_prompts/
-content/**/assets/audio/
-content/**/assets/video/
+
+# Content materials (creative output / IP) - keep out of git
+content/
+docs/review/
+
 public/audio/
 public/se/zapsplat/
 *.log

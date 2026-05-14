@@ -17,7 +17,7 @@ export interface IconGridItem {
   sublabel?: string;
   emphasis?: boolean;
   tone?: "positive" | "negative" | "neutral";
-  variant?: "circle" | "card";
+  variant?: "circle" | "card" | "badge";
   brandColor?: string;
 }
 
@@ -138,9 +138,11 @@ export const IconGrid: React.FC<IconGridProps> = ({
             const accent = toneAccent(item.tone);
             const isEmphasis = item.emphasis;
             const isCard = item.variant === "card";
+            const isBadge = item.variant === "badge";
             const brandColor = item.brandColor;
             const cardWidth = Math.min(iconSize * 1.45, cellSize - 16);
             const cardHeight = cardWidth * 0.63;
+            const badgeSize = Math.min(iconSize * 1.1, cellSize - 24);
             const labelFontSize = autoFontSizeJa(
               item.label,
               Math.round(width * 0.034),
@@ -216,6 +218,52 @@ export const IconGrid: React.FC<IconGridProps> = ({
                         letterSpacing: 1,
                         textShadow: "0 1px 4px rgba(0,0,0,0.3)",
                         marginTop: cardHeight * 0.06,
+                      }}
+                    >
+                      {item.icon || item.label.charAt(0)}
+                    </div>
+                  </div>
+                ) : isBadge ? (
+                  <div
+                    style={{
+                      width: badgeSize,
+                      height: badgeSize,
+                      borderRadius: badgeSize * 0.22,
+                      background: brandColor
+                        ? `linear-gradient(135deg, ${brandColor}, ${brandColor}DD)`
+                        : `linear-gradient(135deg, ${accent}, ${accent}DD)`,
+                      boxShadow: `0 6px 20px ${(brandColor || accent)}55, inset 0 1px 0 rgba(255,255,255,0.25)`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      position: "relative",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: "50%",
+                        background:
+                          "linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0))",
+                        pointerEvents: "none",
+                      }}
+                    />
+                    <div
+                      style={{
+                        fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
+                        fontWeight: t.fontWeights.black,
+                        fontSize: autoFontSizeJa(
+                          item.icon || item.label.charAt(0),
+                          Math.round(badgeSize * 0.4),
+                          badgeSize * 0.85,
+                        ),
+                        color: "#FFFFFF",
+                        letterSpacing: 1,
+                        textShadow: "0 2px 6px rgba(0,0,0,0.25)",
                       }}
                     >
                       {item.icon || item.label.charAt(0)}
