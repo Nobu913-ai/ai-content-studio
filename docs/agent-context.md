@@ -382,6 +382,18 @@ content/<channel>/handoff/<date>_<topic>-publish/
 - X: Web版で予約可能 (無料)
 - Instagram フィード: Meta Business Suite で可能、ストーリーズは予約不可
 
+### YouTube 動画 URL 形式の使い分け (2026-05-14 知見)
+
+| プラットフォーム | 推奨URL形式 | 理由 |
+|---|---|---|
+| **X (Twitter)** | `https://youtu.be/<id>` | 短縮URLの方が動画プレビュー (カード) が生成されやすい。`/shorts/` 形式は X がプレビュー化しないケースあり |
+| **note** | `https://youtube.com/shorts/<id>` | Shorts であることが視聴者に伝わる、note 内表示でサムネ取得可能 |
+| **note 記事間の一貫性** | 形式を統一する | バラバラだと運用が散乱する |
+| **メール・LINE 等** | `https://youtu.be/<id>` | リンク短くて見やすい |
+| **YouTube 説明欄の関連動画リンク** | `https://youtu.be/<id>` | コンパクト |
+
+Shorts #02 公開時の実例: X 予約ポストに `/shorts/` 形式を入れたところプレビューが出ず、`youtu.be/` 形式に差し替えで解決。
+
 ---
 
 ## 7. アフィリエイト・収益化戦略
