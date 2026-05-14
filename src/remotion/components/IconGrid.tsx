@@ -72,17 +72,22 @@ export const IconGrid: React.FC<IconGridProps> = ({
   const iconSize = Math.min(cellSize * 0.55, 140);
   const badgeSizeShared = Math.min(iconSize * 1.25, cellSize - 16);
 
-  // Shared font size across badge siblings (longest text determines size)
-  const badgeFontSizes = items
+  // Shared font size across badge siblings.
+  // Use the LONGEST LINE across all badges (after \n splits) so multi-line
+  // text gets larger font while still fitting horizontally.
+  const longestBadgeLines = items
     .filter((item) => item.variant === "badge")
     .map((item) => {
       const text = item.icon || item.label;
-      return autoFontSizeJa(
-        text,
-        Math.round(badgeSizeShared * 0.28),
-        badgeSizeShared * 0.78,
-      );
+      return text.split("\n").reduce((a, b) => (a.length >= b.length ? a : b), "");
     });
+  const badgeFontSizes = longestBadgeLines.map((line) =>
+    autoFontSizeJa(
+      line,
+      Math.round(badgeSizeShared * 0.36),
+      badgeSizeShared * 0.82,
+    ),
+  );
   const sharedBadgeFontSize =
     badgeFontSizes.length > 0 ? Math.min(...badgeFontSizes) : 0;
 
@@ -282,7 +287,9 @@ export const IconGrid: React.FC<IconGridProps> = ({
                         whiteSpace: "pre-line",
                       }}
                     >
-                      {smartLineBreak(badgeText, sharedBadgeFontSize, badgeSize * 0.78)}
+                      {badgeText.includes("\n")
+                        ? badgeText
+                        : smartLineBreak(badgeText, sharedBadgeFontSize, badgeSize * 0.82)}
                     </div>
                   </div>
                 ) : (
