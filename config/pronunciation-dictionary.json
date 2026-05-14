@@ -34,7 +34,9 @@
   },
   "channel_overrides": {
     "_comment": "チャンネル固有の上書き辞書。entries よりも優先される",
-    "genz-money": {},
+    "genz-money": {
+      "dカード": "ディーカード"
+    },
     "japanese-mindset": {},
     "chill-culture": {}
   }
