@@ -17,6 +17,8 @@ export interface IconGridItem {
   sublabel?: string;
   emphasis?: boolean;
   tone?: "positive" | "negative" | "neutral";
+  variant?: "circle" | "card";
+  brandColor?: string;
 }
 
 export interface IconGridProps {
@@ -135,6 +137,10 @@ export const IconGrid: React.FC<IconGridProps> = ({
             });
             const accent = toneAccent(item.tone);
             const isEmphasis = item.emphasis;
+            const isCard = item.variant === "card";
+            const brandColor = item.brandColor;
+            const cardWidth = Math.min(iconSize * 1.45, cellSize - 16);
+            const cardHeight = cardWidth * 0.63;
             const labelFontSize = autoFontSizeJa(
               item.label,
               Math.round(width * 0.034),
@@ -161,26 +167,84 @@ export const IconGrid: React.FC<IconGridProps> = ({
                   boxShadow: isEmphasis ? `0 0 30px ${accent}50` : "none",
                 }}
               >
-                <div
-                  style={{
-                    width: iconSize,
-                    height: iconSize,
-                    borderRadius: iconSize / 2,
-                    background: isEmphasis
-                      ? `radial-gradient(circle, ${accent}, ${accent}AA)`
-                      : `linear-gradient(135deg, ${t.colors.accent}40, ${t.colors.accent}20)`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: Math.round(iconSize * 0.45),
-                    fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
-                    fontWeight: t.fontWeights.black,
-                    color: isEmphasis ? "#fff" : t.colors.textPrimary,
-                    textShadow: isEmphasis ? `0 0 16px ${accent}` : "none",
-                  }}
-                >
-                  {item.icon || item.label.charAt(0)}
-                </div>
+                {isCard ? (
+                  <div
+                    style={{
+                      width: cardWidth,
+                      height: cardHeight,
+                      borderRadius: cardWidth * 0.08,
+                      background: brandColor
+                        ? `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)`
+                        : `linear-gradient(135deg, ${accent}, ${accent}CC)`,
+                      boxShadow: `0 4px 18px ${(brandColor || accent)}55, inset 0 1px 0 rgba(255,255,255,0.2)`,
+                      position: "relative",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: cardHeight * 0.14,
+                        left: cardWidth * 0.1,
+                        width: cardWidth * 0.16,
+                        height: cardHeight * 0.18,
+                        borderRadius: 4,
+                        background: "linear-gradient(135deg, #F0D27A, #C9A24A)",
+                        boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.15)",
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: cardHeight * 0.12,
+                        left: cardWidth * 0.1,
+                        right: cardWidth * 0.1,
+                        height: 2,
+                        background: "rgba(255,255,255,0.35)",
+                        borderRadius: 2,
+                      }}
+                    />
+                    <div
+                      style={{
+                        fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
+                        fontWeight: t.fontWeights.black,
+                        fontSize: Math.round(cardHeight * 0.38),
+                        color: "#FFFFFF",
+                        letterSpacing: 1,
+                        textShadow: "0 1px 4px rgba(0,0,0,0.3)",
+                        marginTop: cardHeight * 0.06,
+                      }}
+                    >
+                      {item.icon || item.label.charAt(0)}
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      width: iconSize,
+                      height: iconSize,
+                      borderRadius: iconSize / 2,
+                      background: brandColor
+                        ? `radial-gradient(circle, ${brandColor}, ${brandColor}CC)`
+                        : isEmphasis
+                          ? `radial-gradient(circle, ${accent}, ${accent}AA)`
+                          : `linear-gradient(135deg, ${t.colors.accent}40, ${t.colors.accent}20)`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: Math.round(iconSize * 0.45),
+                      fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
+                      fontWeight: t.fontWeights.black,
+                      color: isEmphasis || brandColor ? "#fff" : t.colors.textPrimary,
+                      textShadow: isEmphasis ? `0 0 16px ${accent}` : "none",
+                    }}
+                  >
+                    {item.icon || item.label.charAt(0)}
+                  </div>
+                )}
                 <div
                   style={{
                     fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,

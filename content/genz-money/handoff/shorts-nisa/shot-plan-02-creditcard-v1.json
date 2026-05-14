@@ -46,7 +46,7 @@
       "shot_id": "02-02",
       "start_sec": 6.37,
       "duration_sec": 8.91,
-      "narration": "例えば、月5万円積立てると、還元率1%なら年間6,000円ぶんのポイントがもらえる。つまり、投資しながらポイントも貯まる。",
+      "narration": "例えば、月5万円積立てると、還元率1%なら年間6,000円分のポイントがもらえる。つまり、投資しながらポイントも貯まる。",
       "captionSegments": [
         {
           "text": "月5万円積立 / 還元率1%なら",
@@ -55,7 +55,7 @@
           "highlight": ["5万円", "1%"]
         },
         {
-          "text": "年間6,000円ぶんのポイント",
+          "text": "年間6,000円分のポイント",
           "startSec": 3.0,
           "endSec": 6.5,
           "highlight": ["6,000円"]
@@ -111,9 +111,30 @@
         "title": "対応するネット証券",
         "columns": 3,
         "items": [
-          { "label": "SBI証券", "icon": "🟢", "tone": "neutral" },
-          { "label": "楽天証券", "icon": "🔴", "tone": "neutral" },
-          { "label": "マネックス証券", "icon": "🔵", "tone": "neutral" }
+          {
+            "label": "SBI証券",
+            "icon": "SBI",
+            "variant": "card",
+            "brandColor": "#00A95F",
+            "sublabel": "三井住友カード",
+            "tone": "neutral"
+          },
+          {
+            "label": "楽天証券",
+            "icon": "楽天",
+            "variant": "card",
+            "brandColor": "#BF0000",
+            "sublabel": "楽天カード",
+            "tone": "neutral"
+          },
+          {
+            "label": "マネックス証券",
+            "icon": "MONEX",
+            "variant": "card",
+            "brandColor": "#0066B2",
+            "sublabel": "マネックスカード",
+            "tone": "neutral"
+          }
         ],
         "staggerSec": 0.5
       },
