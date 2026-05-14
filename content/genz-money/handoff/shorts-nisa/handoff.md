@@ -1,7 +1,7 @@
 # 新NISA Shorts 3本 — 編集ハンドオフノート
 
 ## 概要
-- チャンネル: Z世代マネー教室 (genz-money)
+- チャンネル: お金の初期設定 (channelId: genz-money, handle: @okane_setup)
 - フォーマット: YouTube Shorts / TikTok / Instagram Reels
 - 解像度: 1080×1920 (9:16)
 - FPS: 30

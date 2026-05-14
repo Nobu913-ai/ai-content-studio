@@ -204,7 +204,7 @@ describe("splitNarrationSegments", () => {
 // =========================================================================
 
 const NISA_SAMPLE_SCRIPT = `---
-channel: Z世代マネー教室
+channel: お金の初期設定
 topic: "新NISAの始め方"
 generated: 2026-04-16T01-05-16
 language: ja

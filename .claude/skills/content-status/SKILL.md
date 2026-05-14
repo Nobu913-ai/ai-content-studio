@@ -32,7 +32,7 @@ ls -lt content/chill-culture/scripts/ 2>/dev/null | head -5
 | チャンネル | 台本 | SEO | カレンダー | 最終更新 |
 |-----------|------|-----|----------|---------|
 | Japanese Mindset | X本 | X件 | X件 | YYYY-MM-DD |
-| Z世代マネー教室 | X本 | X件 | X件 | YYYY-MM-DD |
+| お金の初期設定 | X本 | X件 | X件 | YYYY-MM-DD |
 | チルカルチャー | X本 | X件 | X件 | YYYY-MM-DD |
 
 ### 次のアクション
