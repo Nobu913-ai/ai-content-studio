@@ -70,6 +70,21 @@ export const IconGrid: React.FC<IconGridProps> = ({
   const cellGap = t.spacing.sm;
   const cellSize = (gridWidth - cellGap * (cols - 1)) / cols;
   const iconSize = Math.min(cellSize * 0.55, 140);
+  const badgeSizeShared = Math.min(iconSize * 1.25, cellSize - 16);
+
+  // Shared font size across badge siblings (longest text determines size)
+  const badgeFontSizes = items
+    .filter((item) => item.variant === "badge")
+    .map((item) => {
+      const text = item.icon || item.label;
+      return autoFontSizeJa(
+        text,
+        Math.round(badgeSizeShared * 0.28),
+        badgeSizeShared * 0.78,
+      );
+    });
+  const sharedBadgeFontSize =
+    badgeFontSizes.length > 0 ? Math.min(...badgeFontSizes) : 0;
 
   return (
     <AnimatedBackground accent={t.colors.accent} variant={bgVariant}>
@@ -142,7 +157,8 @@ export const IconGrid: React.FC<IconGridProps> = ({
             const brandColor = item.brandColor;
             const cardWidth = Math.min(iconSize * 1.45, cellSize - 16);
             const cardHeight = cardWidth * 0.63;
-            const badgeSize = Math.min(iconSize * 1.1, cellSize - 24);
+            const badgeSize = badgeSizeShared;
+            const badgeText = item.icon || item.label;
             const labelFontSize = autoFontSizeJa(
               item.label,
               Math.round(width * 0.034),
@@ -238,6 +254,7 @@ export const IconGrid: React.FC<IconGridProps> = ({
                       justifyContent: "center",
                       position: "relative",
                       overflow: "hidden",
+                      padding: badgeSize * 0.08,
                     }}
                   >
                     <div
@@ -256,17 +273,16 @@ export const IconGrid: React.FC<IconGridProps> = ({
                       style={{
                         fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
                         fontWeight: t.fontWeights.black,
-                        fontSize: autoFontSizeJa(
-                          item.icon || item.label.charAt(0),
-                          Math.round(badgeSize * 0.4),
-                          badgeSize * 0.85,
-                        ),
+                        fontSize: sharedBadgeFontSize,
                         color: "#FFFFFF",
-                        letterSpacing: 1,
+                        letterSpacing: 0.5,
                         textShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                        textAlign: "center",
+                        lineHeight: 1.15,
+                        whiteSpace: "pre-line",
                       }}
                     >
-                      {item.icon || item.label.charAt(0)}
+                      {smartLineBreak(badgeText, sharedBadgeFontSize, badgeSize * 0.78)}
                     </div>
                   </div>
                 ) : (
@@ -293,18 +309,20 @@ export const IconGrid: React.FC<IconGridProps> = ({
                     {item.icon || item.label.charAt(0)}
                   </div>
                 )}
-                <div
-                  style={{
-                    fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
-                    fontWeight: t.fontWeights.bold,
-                    fontSize: labelFontSize,
-                    color: isEmphasis ? accent : t.colors.textPrimary,
-                    textAlign: "center",
-                    lineHeight: 1.2,
-                  }}
-                >
-                  {item.label}
-                </div>
+                {!isBadge && (
+                  <div
+                    style={{
+                      fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
+                      fontWeight: t.fontWeights.bold,
+                      fontSize: labelFontSize,
+                      color: isEmphasis ? accent : t.colors.textPrimary,
+                      textAlign: "center",
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {item.label}
+                  </div>
+                )}
                 {item.sublabel && (
                   <div
                     style={{
