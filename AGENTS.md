@@ -41,8 +41,10 @@ When working in this repo:
 3. **VOICEVOX must be running** on `http://127.0.0.1:50021` for audio generation and segment measurement scripts.
 4. **Don't auto-generate brand-sensitive copy** without reviewing `docs/agent-context.md` rules (e.g. no 「儲かる」「絶対」「最大化」 in titles/descriptions; PR/出典/リスク注記 mandatory).
 5. **When editing Remotion components**: read related 罠集 in `docs/agent-context.md` §3.
-6. **For new Shorts**: follow the 7-step pipeline in `docs/agent-context.md` §5.
-7. **For publish (公開) work**: follow the workflow in `docs/agent-context.md` §6.
+6. **For new Shorts**: follow the 7-step pipeline in `docs/agent-context.md` §4.
+7. **For publish (公開) work**: follow the workflow in `docs/agent-context.md` §5.
+8. **For overall SNS strategy / funnel architecture**: see `docs/agent-context.md` §6.
+9. **For platform-specific publishing patterns (URL formats, scheduling, etc.)**: see `docs/agent-context.md` §7.
 
 ## Local Environment Specifics
 
