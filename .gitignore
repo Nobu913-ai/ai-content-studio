@@ -4,6 +4,8 @@ node_modules/
 # Content materials (creative output / IP) - keep out of git
 content/
 docs/review/
+docs/note/
+out/
 
 public/audio/
 public/se/zapsplat/
