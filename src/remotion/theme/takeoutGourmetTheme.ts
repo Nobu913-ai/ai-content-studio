@@ -1,32 +1,42 @@
 /**
- * takeout-gourmet (Nobuグルメ) チャンネル用 Remotion テーマ
+ * takeout-gourmet (Nobuグルメ) チャンネル用 Remotion テーマ v2
  *
- * デザイン方針:
- * - 暖色系 (クリーム / アンバー / 紙袋ブラウン) で食欲・温度感を表現
- * - calm-trust ではなく warm-friendly トーン
- * - スマホUI風・チェックリスト・架空デリバリーアプリ画面に合う配色
- * - genzMoneyTheme と同じ構造を維持して既存コンポーネントを互換利用可能に
+ * 設計方針:
+ * - Instagram Reels に映えるブライト+ビビッド+ポップな暖色系
+ * - 食欲をそそる赤・オレンジ・黄色のアクセント
+ * - クリーム背景に濃いめのテキストで可読性最大化
+ * - 紙袋・夜のテーブルではなく「明るい食卓・お店の照明」イメージ
+ * - genzMoneyTheme と同じ構造を維持して既存コンポーネント互換利用可能
  */
 export const takeoutGourmetTheme = {
   colors: {
-    /** メイン背景: 焙煎ブラウン (深い暖色) */
-    bgPrimary: "#2A1810",
-    /** サブ背景: グラデーション用の少し明るい焙煎 */
-    bgSecondary: "#3D2817",
-    /** プライマリテキスト: クリーム白 (温かみのある白) */
-    textPrimary: "#FFFAF0",
-    /** セカンダリテキスト: タン (紙袋色) */
-    textSecondary: "#D4C5B0",
-    /** ポジティブ: 黄金 (おすすめ・○マーク) */
-    positive: "#FFD93D",
-    /** ネガティブ: トマトレッド (注意喚起・×マーク) */
-    negative: "#FF6B35",
-    /** ハイライト: アンバー (重要ポイント) */
-    highlight: "#FFB627",
-    /** 警告: 深いオレンジレッド (やや控えめな注意) */
-    warning: "#C73E1D",
-    /** アクセント: ウォームオレンジ (CTA・主要要素) */
-    accent: "#FF9F43",
+    /** メイン背景: ウォームクリーム (明るい・食欲が湧く) */
+    bgPrimary: "#FFF4E0",
+    /** サブ背景: ピーチクリーム (グラデーション・カードベース) */
+    bgSecondary: "#FFE4B5",
+    /** ゴールデンゾーン: 強調シーン用の温かい黄色 */
+    bgAccent: "#FFD27A",
+    /** プライマリテキスト: ダークブラウン (高コントラスト) */
+    textPrimary: "#2E1A0F",
+    /** セカンダリテキスト: ソフトブラウン */
+    textSecondary: "#6B4F3A",
+    /** ポジティブ: 明るいゴールデンイエロー */
+    positive: "#FFC93C",
+    /** ネガティブ: 深い警告レッド */
+    negative: "#C73E1D",
+    /** ハイライト: 食欲をそそるトマトオレンジ */
+    highlight: "#FF6B35",
+    /** 警告: アンバーオレンジ */
+    warning: "#FF9F43",
+    /** アクセント: メインのビビッドオレンジ (CTA・強調) */
+    accent: "#FF6B35",
+    /** カード背景 (白で抜く時用) */
+    cardBg: "#FFFFFF",
+    /** カードボーダー */
+    cardBorder: "#E8D5B0",
+    /** シャドウ用 */
+    shadowSoft: "rgba(46, 26, 15, 0.12)",
+    shadowStrong: "rgba(46, 26, 15, 0.25)",
   },
   fonts: {
     main: "Noto Sans JP",
@@ -48,6 +58,7 @@ export const takeoutGourmetTheme = {
     sm: 8,
     md: 16,
     lg: 24,
+    xl: 32,
   },
   resolution: {
     width: 1080,

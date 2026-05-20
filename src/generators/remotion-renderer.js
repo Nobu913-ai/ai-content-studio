@@ -67,12 +67,20 @@ export async function renderVideo(channelId, sceneJsonPath, opts = {}) {
   const codec = opts.codec || "h264";
   const concurrency = opts.concurrency || 4;
 
+  // チャンネルごとに使用する Remotion composition を切替
+  const compositionByChannel = {
+    "genz-money": "GenzMoneyShort",
+    "takeout-gourmet": "TakeoutGourmetReel",
+  };
+  const compositionId =
+    opts.composition || compositionByChannel[channelId] || "GenzMoneyShort";
+
   const cmd = [
     "npx",
     "remotion",
     "render",
     entryPoint,
-    "GenzMoneyShort",
+    compositionId,
     outputPath,
     `--props=${propsPath}`,
     `--codec=${codec}`,
