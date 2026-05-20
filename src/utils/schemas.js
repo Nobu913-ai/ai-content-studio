@@ -326,6 +326,8 @@ const sceneV2Base = z.object({
     "factCard",
     "compareSplit",
     "stackedBarCompare",
+    "compoundFlowDemo",
+    "checklistPanel",
     "taxSavingsDemo",
     "infinityFact",
     "phoneStepsDemo",
@@ -417,6 +419,7 @@ const stackedBarCompareData = z.object({
         value: z.number(),
         unit: z.string().optional(),
         color: z.string().optional(),
+        revealSec: z.number().min(0).optional(),
       }),
     )
     .min(1),
@@ -428,8 +431,53 @@ const stackedBarCompareData = z.object({
     })
     .optional(),
   highlight: z.string().optional(),
+  layout: z.enum(["separate", "stacked"]).optional(),
+  revealMode: z.enum(["auto", "timed"]).optional(),
+  totalRevealSec: z.number().min(0).optional(),
+  highlightRevealSec: z.number().min(0).optional(),
   staggerFrames: z.number().optional(),
   growthFrames: z.number().optional(),
+});
+
+const compoundFlowDemoData = z.object({
+  title: z.string().optional(),
+  leadLabel: z.string().optional(),
+  left: z.object({
+    label: z.string().min(1),
+    value: z.string().optional(),
+    tone: z.enum(["neutral", "positive"]).optional(),
+  }),
+  right: z.object({
+    label: z.string().min(1),
+    value: z.string().optional(),
+    tone: z.enum(["neutral", "positive"]).optional(),
+  }),
+  result: z.object({
+    label: z.string().min(1),
+    value: z.string().optional(),
+    tone: z.enum(["neutral", "positive"]).optional(),
+  }),
+  loopLabel: z.string().optional(),
+  footnote: z.string().optional(),
+  revealTimings: z.object({
+    leftSec: z.number().min(0).optional(),
+    rightSec: z.number().min(0).optional(),
+    resultSec: z.number().min(0).optional(),
+    loopSec: z.number().min(0).optional(),
+    footnoteSec: z.number().min(0).optional(),
+  }).optional(),
+});
+
+const checklistPanelData = z.object({
+  title: z.string().optional(),
+  subtitle: z.string().optional(),
+  items: z.array(
+    z.object({
+      text: z.string().min(1),
+      tone: z.enum(["positive", "negative", "neutral"]).optional(),
+      revealSec: z.number().min(0).optional(),
+    }),
+  ).min(1),
 });
 
 const taxSavingsDemoData = z.object({
@@ -546,11 +594,17 @@ const iconGridData = z.object({
         sublabel: z.string().optional(),
         emphasis: z.boolean().optional(),
         tone: z.enum(["positive", "negative", "neutral"]).optional(),
+        variant: z.enum(["circle", "card", "badge"]).optional(),
+        brandColor: z.string().optional(),
+        revealSec: z.number().optional(),
       }),
     )
     .min(2),
   columns: z.number().int().optional(),
   staggerSec: z.number().optional(),
+  layout: z.enum(["grid", "startSmallFlow"]).optional(),
+  ctaLabel: z.string().optional(),
+  footerLabel: z.string().optional(),
 });
 
 const brokerScreenMockupData = z.object({
@@ -587,6 +641,36 @@ const compoundDemoData = z.object({
   title: z.string().optional(),
   unit: z.string().optional(),
   milestones: z.array(z.number().int().min(0)).optional(),
+  xAxisTicks: z.array(z.number().int().min(0)).optional(),
+  milestoneDetails: z.array(z.object({
+    year: z.number().int().min(0),
+    displayValue: z.number().optional(),
+    label: z.string().optional(),
+  })).optional(),
+  focusTimeline: z.array(z.object({
+    year: z.number().int().min(0),
+    startSec: z.number().min(0),
+    endSec: z.number().min(0),
+    label: z.string().optional(),
+    panelTitle: z.string().optional(),
+    panelValue: z.string().optional(),
+    panelSubtext: z.string().optional(),
+    panelLines: z.array(z.string()).optional(),
+    equation: z.object({
+      principalLabel: z.string().optional(),
+      principalValue: z.string().min(1),
+      growthLabel: z.string().optional(),
+      growthValue: z.string().min(1),
+      resultLabel: z.string().optional(),
+      resultValue: z.string().min(1),
+    }).optional(),
+  })).optional(),
+  finalDisplayValue: z.number().optional(),
+  showMilestoneLabels: z.boolean().optional(),
+  principalLegendLabel: z.string().optional(),
+  totalLegendLabel: z.string().optional(),
+  chartOpacity: z.number().min(0).max(1).optional(),
+  progressMode: z.enum(["auto", "focusTimeline"]).optional(),
 });
 
 const taxFlowDemoData = z.object({
@@ -642,6 +726,8 @@ const componentDataMap = {
   factCard: factCardData,
   compareSplit: compareSplitData,
   stackedBarCompare: stackedBarCompareData,
+  compoundFlowDemo: compoundFlowDemoData,
+  checklistPanel: checklistPanelData,
   taxSavingsDemo: taxSavingsDemoData,
   infinityFact: infinityFactData,
   phoneStepsDemo: phoneStepsDemoData,

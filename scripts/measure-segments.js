@@ -8,7 +8,7 @@
  *   - 最終ナレーションwavとセグメント累積尺の差分検証
  *
  * 使い方:
- *   node scripts/measure-segments.js <script-path> [--json <out.json>] [--final-wav <wav>]
+ *   node scripts/measure-segments.js <script-path> [--json <out.json>] [--final-wav <wav>] [--gap-ms <ms>]
  *
  * オプション:
  *   --json <path>      測定結果を JSON で出力（shot plan generator向け）
@@ -29,13 +29,15 @@ const args = process.argv.slice(2);
 const scriptPath = args[0];
 let jsonOutPath = null;
 let finalWavPath = null;
+let gapMsOverride = null;
 for (let i = 1; i < args.length; i++) {
   if (args[i] === "--json") jsonOutPath = args[++i];
   else if (args[i] === "--final-wav") finalWavPath = args[++i];
+  else if (args[i] === "--gap-ms") gapMsOverride = Number(args[++i]);
 }
 
 if (!scriptPath) {
-  console.error("Usage: node scripts/measure-segments.js <script-path> [--json <out.json>] [--final-wav <wav>]");
+  console.error("Usage: node scripts/measure-segments.js <script-path> [--json <out.json>] [--final-wav <wav>] [--gap-ms <ms>]");
   process.exit(1);
 }
 
@@ -52,7 +54,8 @@ const text = applyPronunciationDictionary(readFileSync(scriptPath, "utf-8"), "ge
 const segments = text.split(/\n\s*\n/).map((s) => s.replace(/\n/g, "").trim()).filter(Boolean);
 
 const preset = voicevoxPresets["genz-money-shorts"];
-const gapSec = preset.segmentGapMs / 1000;
+const segmentGapMs = Number.isFinite(gapMsOverride) ? gapMsOverride : preset.segmentGapMs;
+const gapSec = segmentGapMs / 1000;
 
 console.log(`Measuring ${segments.length} segments... (gap=${gapSec}s, speed=${preset.speedScale})`);
 
@@ -130,7 +133,7 @@ if (jsonOutPath) {
       name: preset.name,
       speakerId: preset.speakerId,
       speedScale: preset.speedScale,
-      segmentGapMs: preset.segmentGapMs,
+      segmentGapMs,
       volumeScale: preset.volumeScale,
     },
     cumulativeFinalSec: Number(cumulativeFinal.toFixed(3)),

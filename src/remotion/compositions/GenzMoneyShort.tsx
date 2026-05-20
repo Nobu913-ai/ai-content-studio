@@ -9,6 +9,7 @@ import { CTAEndCard } from "../components/CTAEndCard";
 import { FactCard } from "../components/FactCard";
 import { CompareSplit } from "../components/CompareSplit";
 import { StackedBarCompare } from "../components/StackedBarCompare";
+import { ChecklistPanel } from "../components/ChecklistPanel";
 import { TaxSavingsDemo } from "../components/TaxSavingsDemo";
 import { InfinityFact } from "../components/InfinityFact";
 import { PhoneStepsDemo } from "../components/PhoneStepsDemo";
@@ -20,6 +21,7 @@ import { IconGrid } from "../components/IconGrid";
 import { BrokerScreenMockup } from "../components/BrokerScreenMockup";
 import { CalendarHighlight } from "../components/CalendarHighlight";
 import { CompoundDemo } from "../components/CompoundDemo";
+import { CompoundFlowDemo } from "../components/CompoundFlowDemo";
 import { TaxFlowDemo } from "../components/TaxFlowDemo";
 import { RecommendationFocus } from "../components/RecommendationFocus";
 import { SubtitleLayer } from "../components/SubtitleLayer";
@@ -140,8 +142,10 @@ const defaultBgVariantFor = (component: SceneV2["component"]): "impact" | "data"
     case "taxFlowDemo":
     case "numberHero":
     case "compoundDemo":
+    case "compoundFlowDemo":
       return "impact";
     case "stackedBarCompare":
+    case "checklistPanel":
     case "comparisonTable":
     case "infinityFact":
     case "compareSplit":
@@ -185,6 +189,20 @@ const ComponentRenderer: React.FC<{ scene: SceneV2 }> = ({ scene }) => {
           bgVariant={bg}
         />
       );
+    case "compoundFlowDemo":
+      return (
+        <CompoundFlowDemo
+          title={data.title}
+          leadLabel={data.leadLabel}
+          left={data.left}
+          right={data.right}
+          result={data.result}
+          loopLabel={data.loopLabel}
+          footnote={data.footnote}
+          revealTimings={data.revealTimings}
+          bgVariant={bg}
+        />
+      );
     case "stackedBarCompare":
       return (
         <StackedBarCompare
@@ -192,8 +210,21 @@ const ComponentRenderer: React.FC<{ scene: SceneV2 }> = ({ scene }) => {
           bars={data.bars}
           total={data.total}
           highlight={data.highlight}
+          layout={data.layout}
+          revealMode={data.revealMode}
+          totalRevealSec={data.totalRevealSec}
+          highlightRevealSec={data.highlightRevealSec}
           staggerFrames={data.staggerFrames}
           growthFrames={data.growthFrames}
+          bgVariant={bg}
+        />
+      );
+    case "checklistPanel":
+      return (
+        <ChecklistPanel
+          title={data.title}
+          subtitle={data.subtitle}
+          items={data.items}
           bgVariant={bg}
         />
       );
@@ -288,6 +319,9 @@ const ComponentRenderer: React.FC<{ scene: SceneV2 }> = ({ scene }) => {
           items={data.items}
           columns={data.columns}
           staggerSec={data.staggerSec}
+          layout={data.layout}
+          ctaLabel={data.ctaLabel}
+          footerLabel={data.footerLabel}
           bgVariant={bg}
         />
       );
@@ -325,6 +359,15 @@ const ComponentRenderer: React.FC<{ scene: SceneV2 }> = ({ scene }) => {
           title={data.title}
           unit={data.unit}
           milestones={data.milestones}
+          xAxisTicks={data.xAxisTicks}
+          milestoneDetails={data.milestoneDetails}
+          focusTimeline={data.focusTimeline}
+          finalDisplayValue={data.finalDisplayValue}
+          showMilestoneLabels={data.showMilestoneLabels}
+          principalLegendLabel={data.principalLegendLabel}
+          totalLegendLabel={data.totalLegendLabel}
+          chartOpacity={data.chartOpacity}
+          progressMode={data.progressMode}
           bgVariant={bg}
         />
       );

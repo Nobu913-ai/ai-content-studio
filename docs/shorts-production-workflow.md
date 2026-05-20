@@ -213,8 +213,8 @@ node scripts/lint-shot-plan.js <shot-plan.json> \
 |------|------|------|
 | ❌ error | 必須フィールド (component / duration_sec) 欠落 | — |
 | ❌ error | duration_sec < 0.5s | — |
-| ❌ error | audio参照のバージョン不整合 (plan v8 ↔ audio v7 等) | v8 feedback: 整合確認指摘 |
 | ❌ error | audioファイルが存在しない | — |
+| ⚠️ warn | audio参照のバージョン不整合 (plan v8 ↔ audio v7 等) | visual-only revision では許容可、ナレーション変更時は要修正 |
 | ⚠️ warn | 合計尺 < 60s | v6 feedback: TikTok Creator Rewards要件 |
 | ⚠️ warn | total_duration_sec と shot合計の不一致 | — |
 | ⚠️ warn | start_sec が累積と不一致 | shot plan の手動編集ミス |
@@ -222,8 +222,10 @@ node scripts/lint-shot-plan.js <shot-plan.json> \
 | ⚠️ warn | 同一component が3つ以上連続 | テンプレ感 |
 | ⚠️ warn | 最後のshotが ctaPanel でない | v4: CTA最後配置指摘 |
 | ⚠️ warn | CTA shot 長すぎ (>7s) / 短すぎ (<3s) | v5→v6: CTA尺の指摘 |
-| ⚠️ warn | リスク注記shot不在 (`価格変動リスク` 等の語句がどこにもない) | v3以降必須 |
-| ⚠️ warn | 冒頭がimpact componentでない | v3: strongest proof 冒頭5秒指摘 |
+| ⚠️ warn | リスク注記shot不在 (`価格変動リスク` / `利益保証ではない` / `値動き・下落` 等の語句がどこにもない) | v3以降必須 |
+| ⚠️ warn | `footerLabel` / `loopLabel` が narration / captionSegments に接続していない | #03: ナレーションにない補足文が画面上のノイズになった |
+| ⚠️ warn | captionSegments の endSec が shot duration を超過 | #03: 03-08 の字幕 endSec がシーン尺外になっていた |
+| ⚠️ warn | 冒頭5秒にimpact componentがない | v3: strongest proof 冒頭5秒指摘 |
 | ⚠️ warn | shot 範囲外の audio segment | shot timing と実音声の乖離 |
 | ⚠️ warn | 静的ホールド > 5s | v2: 12秒無音免責の指摘 |
 | ℹ️ info | 長い shot に caption / captionSegments なし | 音なし視聴対応 |
@@ -246,6 +248,23 @@ node scripts/lint-shot-plan.js <plan>.json --strict  # warnings でも失敗
 - ❌ error は必ず修正してから次のステップへ
 - ⚠️ warn は意図的な逸脱でなければ修正
 - ℹ️ info は参考。スキップ可
+
+### 5-4. 映像・ナレーション整合レビュー（レンダー前後で必須）
+
+Shorts #03 の修正で、公開品質を左右したのは「画面をきれいにする」ことよりも、**ナレーションで説明している順番と画面上の理解順序を一致させる**ことだった。以後、レンダー前の shot plan / scene JSON 確認と、レンダー後の実動画レビューで以下を必ず見る。
+
+| 観点 | チェック内容 | NG例 | OK例 |
+|---|---|---|---|
+| ナレーション外テキスト | 画面内の結論文・補足文は narration / captionSegments に出てくるか | 「毎月つみたてに設定」など音声にない文を追加 | 音声にない結論文は削除し、必要なラベルだけ残す |
+| 数字の一致 | ナレーション・グラフ・大見出し・字幕の数字が同じ丸め方か | 「約2,500万円」と言いながら画面は2,507万円 | すべて「約2,500万円」に統一 |
+| 数字の指し示し | ナレーションで読む数字が画面上で明示されているか | 10年466万円と言うが、目盛や点が見つからない | 10年点・466万円ラベル・補助線を同時にハイライト |
+| 段階表示 | 説明前の要素を最初から全表示していないか | 画面に先の答えが出て音声が追いつかない | ナレーション順に1要素ずつ reveal / highlight |
+| 図の意味 | 比較なのか内訳なのか、図の型が合っているか | 元本と増えた分を `VS` で並べる | 1,080万円 + 1,420万円 = 約2,500万円の内訳で示す |
+| 視認余白 | 説明終了直後にすぐ切り替わらないか | 読み終わる前に次画面へ遷移 | 0.5-0.8秒程度ホールドしてから切替 |
+| 演出強度 | glow / pulse / typing が説明を邪魔していないか | 合計枠が強く点滅し続ける | 控えめな scale / glow で一度だけ強調 |
+| 画面統一 | 文字サイズ・枠線・余白・左右位置がカット間で揃っているか | 同じ役割の枠線が画面ごとに太さ違い | 共通 border / font scale / content width を使う |
+
+レンダー後レビューでは、全編を流し見するだけでなく、各 scene の **最終状態 still** と **reveal途中 still** を確認する。グラフ線・ゲージ・棒グラフは動画でしか分からないため、該当箇所だけ必ず再生して滑らかさを見る。
 
 ---
 
@@ -441,6 +460,10 @@ const sharedSize = autoFontSizeJa(longerText, maxFont, maxWidth);
 - 1カット内に主役候補が3つ以上ない
 - 数字を3個以上同時に表示しない
 - ナレーション順序と画面の理解順序を一致させる
+- ナレーションで触れる前に答え・次ステップ・注目数字を全表示しない
+- ナレーションで読まない結論文は画面に置かない（固定コメント/noteで補足する）
+- 「約」と言う数字は視聴者が追いやすい丸め値に揃える（例: 2,507万円ではなく約2,500万円）
+- グラフで説明する年・金額は、軸目盛・点ラベル・補助線・ハイライトのいずれかで必ず指し示す
 - 同じメッセージを 2か所表示しない (例: NISA横の `+20万円` バッジ + 下部 `NISAなら20万円多く残る` バッジは重複)
 - 「損した！」「もったいない！」等の煽り文言なし (calm-trust トーンが下がる)
 - 「減っちゃった感」を SE で表現しない (音で悲しさを出すと安っぽい)

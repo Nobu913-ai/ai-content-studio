@@ -70,6 +70,8 @@ export type ComponentType =
   | "factCard"
   | "compareSplit"
   | "stackedBarCompare"
+  | "compoundFlowDemo"
+  | "checklistPanel"
   | "taxSavingsDemo"
   | "infinityFact"
   | "phoneStepsDemo"

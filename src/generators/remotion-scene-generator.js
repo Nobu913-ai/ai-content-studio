@@ -67,8 +67,10 @@ function defaultBgVariantFor(component) {
     case "taxFlowDemo":
     case "numberHero":
     case "compoundDemo":
+    case "compoundFlowDemo":
       return "impact";
     case "stackedBarCompare":
+    case "checklistPanel":
     case "comparisonTable":
     case "infinityFact":
     case "compareSplit":
@@ -347,6 +349,8 @@ function sceneTitle(s) {
       case "factCard": return d.headline?.replace(/\n/g, " / ");
       case "compareSplit": return `${d.left?.label} vs ${d.right?.label}`;
       case "stackedBarCompare": return d.title || d.highlight;
+      case "checklistPanel": return d.title || d.subtitle;
+      case "compoundFlowDemo": return d.title || d.result?.label;
       case "taxSavingsDemo": return d.scenarioLabel;
       case "taxFlowDemo": return d.principalLabel || `${d.principal}${d.unit || "万円"} → ${d.principal - d.tax}${d.unit || "万円"}`;
       case "recommendationFocus": return d.focus?.label;

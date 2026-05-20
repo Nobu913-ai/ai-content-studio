@@ -3,7 +3,7 @@
  * genz-money Shorts 用音声生成スクリプト（汎用）
  *
  * 使い方:
- *   node scripts/generate-genz-audio.js <script-path> <output-wav-path>
+ *   node scripts/generate-genz-audio.js <script-path> <output-wav-path> [--gap-ms <ms>]
  *
  * 例:
  *   node scripts/generate-genz-audio.js \
@@ -19,11 +19,16 @@ import { generateNarration } from "../src/clients/voicevox-client.js";
 import { voicevoxPresets } from "../config/tools.js";
 import { applyPronunciationDictionary } from "./lib/pronunciation-loader.js";
 
-const [, , scriptPathArg, outputWavArg] = process.argv;
+const [, , scriptPathArg, outputWavArg, ...optionArgs] = process.argv;
 
 if (!scriptPathArg || !outputWavArg) {
-  console.error("Usage: node scripts/generate-genz-audio.js <script-path> <output-wav-path>");
+  console.error("Usage: node scripts/generate-genz-audio.js <script-path> <output-wav-path> [--gap-ms <ms>]");
   process.exit(1);
+}
+
+let gapMsOverride = null;
+for (let i = 0; i < optionArgs.length; i++) {
+  if (optionArgs[i] === "--gap-ms") gapMsOverride = Number(optionArgs[++i]);
 }
 
 const rawText = readFileSync(scriptPathArg, "utf-8");
@@ -37,7 +42,8 @@ const segments = text
 console.log(`Loaded script: ${scriptPathArg} (${text.length} chars, ${segments.length} segments)`);
 
 const preset = voicevoxPresets["genz-money-shorts"];
-console.log(`Preset: ${preset.name} (speed=${preset.speedScale}, gap=${preset.segmentGapMs}ms, vol=${preset.volumeScale})`);
+const segmentGapMs = Number.isFinite(gapMsOverride) ? gapMsOverride : preset.segmentGapMs;
+console.log(`Preset: ${preset.name} (speed=${preset.speedScale}, gap=${segmentGapMs}ms, vol=${preset.volumeScale})`);
 
 const result = await generateNarration("genz-money", text, {
   speakerId: preset.speakerId,
@@ -49,7 +55,7 @@ const result = await generateNarration("genz-money", text, {
   prePhonemeLength: preset.prePhonemeLength,
   postPhonemeLength: preset.postPhonemeLength,
   enableInterrogativeUpspeak: preset.enableInterrogativeUpspeak,
-  segmentGapMs: preset.segmentGapMs,
+  segmentGapMs,
   segments,
 });
 

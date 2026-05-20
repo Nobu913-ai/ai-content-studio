@@ -8,6 +8,7 @@ import {
 } from "remotion";
 import { genzMoneyTheme as t } from "../theme/genzMoneyTheme";
 import { autoFontSizeJa, smartLineBreak } from "../utils/responsive-text";
+import { formatJapaneseNumericText } from "../utils/format-number-ja";
 
 export interface CaptionSegment {
   text: string;
@@ -116,8 +117,9 @@ export const SubtitleLayer: React.FC<SubtitleLayerProps> = ({
   const captionMaxWidth = width * 0.86;
   const baseFontSize = Math.round(width * 0.044);
   // 1パス目: 入力テキストのまま font計算 → smartLineBreakの判定に使う
-  const initialFontSize = autoFontSizeJa(activeText, baseFontSize, captionMaxWidth);
-  const wrappedText = smartLineBreak(activeText, initialFontSize, captionMaxWidth);
+  const formattedText = formatJapaneseNumericText(activeText);
+  const initialFontSize = autoFontSizeJa(formattedText, baseFontSize, captionMaxWidth);
+  const wrappedText = smartLineBreak(formattedText, initialFontSize, captionMaxWidth);
   // 2パス目: 改行後の最長行をベースに再計算 (改行で短くなれば font を大きくできる)
   const fontSize = autoFontSizeJa(wrappedText, baseFontSize, captionMaxWidth);
 

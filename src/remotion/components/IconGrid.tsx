@@ -10,6 +10,7 @@ import {
 import { genzMoneyTheme as t } from "../theme/genzMoneyTheme";
 import { AnimatedBackground, BackgroundVariant } from "./AnimatedBackground";
 import { autoFontSizeJa, smartLineBreak } from "../utils/responsive-text";
+import { formatJapaneseNumericText } from "../utils/format-number-ja";
 
 export interface IconGridItem {
   label: string;
@@ -19,6 +20,7 @@ export interface IconGridItem {
   tone?: "positive" | "negative" | "neutral";
   variant?: "circle" | "card" | "badge";
   brandColor?: string;
+  revealSec?: number;
 }
 
 export interface IconGridProps {
@@ -27,6 +29,9 @@ export interface IconGridProps {
   items: IconGridItem[];
   columns?: number;
   staggerSec?: number;
+  layout?: "grid" | "startSmallFlow";
+  ctaLabel?: string;
+  footerLabel?: string;
   bgVariant?: BackgroundVariant;
 }
 
@@ -36,17 +41,299 @@ const toneAccent = (tone: IconGridItem["tone"]) => {
   return t.colors.accent;
 };
 
+const sharedBorderWidth = 3;
+
+const StartSmallFlow: React.FC<IconGridProps> = ({
+  title,
+  subtitle,
+  items,
+  ctaLabel,
+  footerLabel,
+  bgVariant,
+}) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const { width } = t.resolution;
+
+  const titleOpacity = interpolate(frame, [0, 10], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const titleSlide = interpolate(frame, [0, 10], [-16, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.out(Easing.cubic),
+  });
+
+  const amountItems = items.slice(0, 3);
+  const amountDelay = Math.round((amountItems[0]?.revealSec ?? 3.1) * fps);
+  const decisionDelay = amountDelay + 34;
+
+  const reveal = (delay: number, distance = 18) => ({
+    opacity: interpolate(frame, [delay, delay + 12], [0, 1], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    }),
+    transform: `translateY(${interpolate(frame, [delay, delay + 12], [distance, 0], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+      easing: Easing.out(Easing.cubic),
+    })}px)`,
+  });
+
+  const arrowProgress = (delay: number) =>
+    interpolate(frame, [delay, delay + 18], [0, 1], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+      easing: Easing.out(Easing.cubic),
+    });
+
+  const titleText = title ? formatJapaneseNumericText(title) : "";
+  const subtitleText = subtitle ? formatJapaneseNumericText(subtitle) : "";
+
+  return (
+    <AnimatedBackground accent={t.colors.positive} variant={bgVariant}>
+      <AbsoluteFill
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: t.spacing.xl,
+          paddingBottom: t.spacing.xl + 120,
+          gap: t.spacing.md,
+        }}
+      >
+        {title ? (
+          <div
+            style={{
+              opacity: titleOpacity,
+              transform: `translateY(${titleSlide}px)`,
+              fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
+              fontWeight: t.fontWeights.black,
+              fontSize: autoFontSizeJa(titleText, Math.round(width * 0.06), width * 0.85),
+              color: t.colors.textPrimary,
+              textAlign: "center",
+              lineHeight: 1.25,
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {smartLineBreak(titleText, Math.round(width * 0.06), width * 0.85)}
+          </div>
+        ) : null}
+
+        {subtitle ? (
+          <div
+            style={{
+              opacity: titleOpacity,
+              fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
+              fontWeight: t.fontWeights.bold,
+              fontSize: Math.round(width * 0.038),
+              color: t.colors.textSecondary,
+              textAlign: "center",
+            }}
+          >
+            {subtitleText}
+          </div>
+        ) : null}
+
+        <div
+          style={{
+            position: "relative",
+            width: 900,
+            height: 620,
+            marginTop: t.spacing.md,
+          }}
+        >
+          <div
+            style={{
+              ...reveal(amountDelay - 10, 8),
+              position: "absolute",
+              left: 0,
+              right: 0,
+              top: 0,
+              fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
+              fontWeight: t.fontWeights.bold,
+              fontSize: 34,
+              color: t.colors.textSecondary,
+              textAlign: "center",
+            }}
+          >
+            月額の例
+          </div>
+
+          <div
+            style={{
+              position: "absolute",
+              left: 32,
+              right: 32,
+              top: 56,
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 18,
+            }}
+          >
+            {amountItems.map((item, index) => {
+              const itemDelay = Math.round((item.revealSec ?? 3.1) * fps) + index * 7;
+              const accent = t.colors.accent;
+              const scale = spring({
+                frame: Math.max(0, frame - itemDelay),
+                fps,
+                config: { damping: 10, mass: 0.5, stiffness: 190 },
+              });
+              return (
+                <div
+                  key={`${item.label}-${index}`}
+                  style={{
+                    ...reveal(itemDelay),
+                    transform: `${reveal(itemDelay).transform} scale(${scale})`,
+                    height: 156,
+                    borderRadius: 28,
+                    border: `${sharedBorderWidth}px solid ${accent}90`,
+                    backgroundColor: `${accent}18`,
+                    boxShadow: `0 0 24px ${accent}35`,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
+                      fontWeight: t.fontWeights.black,
+                      fontSize: 46,
+                      color: t.colors.textPrimary,
+                      lineHeight: 1,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {formatJapaneseNumericText(item.icon || item.label)}
+                  </div>
+                  {item.sublabel ? (
+                    <div
+                      style={{
+                        fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
+                        fontWeight: t.fontWeights.bold,
+                        fontSize: 24,
+                        color: t.colors.textSecondary,
+                      }}
+                    >
+                      {formatJapaneseNumericText(item.sublabel)}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+
+          <svg
+            width="900"
+            height="120"
+            viewBox="0 0 900 120"
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 230,
+              opacity: interpolate(frame, [decisionDelay - 12, decisionDelay], [0, 1], {
+                extrapolateLeft: "clamp",
+                extrapolateRight: "clamp",
+              }),
+              overflow: "visible",
+            }}
+          >
+            <defs>
+              <marker
+                id="start-small-arrow"
+                markerWidth="20"
+                markerHeight="20"
+                refX="10"
+                refY="10"
+                orient="auto"
+                markerUnits="userSpaceOnUse"
+              >
+                <path d="M0,0 L20,10 L0,20 z" fill={t.colors.positive} />
+              </marker>
+            </defs>
+            <line
+              x1="450"
+              y1="8"
+              x2="450"
+              y2={8 + 82 * arrowProgress(decisionDelay - 12)}
+              stroke={t.colors.positive}
+              strokeWidth="7"
+              strokeLinecap="round"
+              markerEnd="url(#start-small-arrow)"
+              style={{ filter: `drop-shadow(0 0 12px ${t.colors.positive})` }}
+            />
+          </svg>
+
+          <div
+            style={{
+              ...reveal(decisionDelay),
+              position: "absolute",
+              left: 100,
+              top: 342,
+              width: 700,
+              minHeight: 150,
+              padding: "26px 34px",
+              borderRadius: 30,
+              border: `${sharedBorderWidth}px solid ${t.colors.positive}`,
+              backgroundColor: `${t.colors.positive}18`,
+              boxShadow: `0 0 34px ${t.colors.positive}55`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
+              fontWeight: t.fontWeights.black,
+              fontSize: 44,
+              color: t.colors.positive,
+              textShadow: `0 0 16px ${t.colors.positive}70`,
+              lineHeight: 1.25,
+            }}
+          >
+            {formatJapaneseNumericText(ctaLabel || "続けられる金額を選ぶ")}
+          </div>
+
+        </div>
+      </AbsoluteFill>
+    </AnimatedBackground>
+  );
+};
+
 export const IconGrid: React.FC<IconGridProps> = ({
   title,
   subtitle,
   items,
   columns,
   staggerSec = 0.3,
+  layout = "grid",
+  ctaLabel,
+  footerLabel,
   bgVariant,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const { width } = t.resolution;
+
+  if (layout === "startSmallFlow") {
+    return (
+      <StartSmallFlow
+        title={title}
+        subtitle={subtitle}
+        items={items}
+        columns={columns}
+        staggerSec={staggerSec}
+        layout={layout}
+        ctaLabel={ctaLabel}
+        footerLabel={footerLabel}
+        bgVariant={bgVariant}
+      />
+    );
+  }
 
   // Auto-pick columns if not specified
   const cols = columns ?? (items.length <= 4 ? items.length : items.length === 5 ? 5 : 3);
@@ -163,9 +450,9 @@ export const IconGrid: React.FC<IconGridProps> = ({
             const cardWidth = Math.min(iconSize * 1.45, cellSize - 16);
             const cardHeight = cardWidth * 0.63;
             const badgeSize = badgeSizeShared;
-            const badgeText = item.icon || item.label;
+            const badgeText = formatJapaneseNumericText(item.icon || item.label);
             const labelFontSize = autoFontSizeJa(
-              item.label,
+              formatJapaneseNumericText(item.label),
               Math.round(width * 0.034),
               cellSize - 8,
             );
@@ -185,8 +472,8 @@ export const IconGrid: React.FC<IconGridProps> = ({
                     ? `${accent}1f`
                     : "rgba(255,255,255,0.04)",
                   border: isEmphasis
-                    ? `2px solid ${accent}`
-                    : "1px solid rgba(255,255,255,0.08)",
+                    ? `${sharedBorderWidth}px solid ${accent}`
+                    : "2px solid rgba(255,255,255,0.08)",
                   boxShadow: isEmphasis ? `0 0 30px ${accent}50` : "none",
                 }}
               >
@@ -241,7 +528,7 @@ export const IconGrid: React.FC<IconGridProps> = ({
                         marginTop: cardHeight * 0.06,
                       }}
                     >
-                      {item.icon || item.label.charAt(0)}
+                      {formatJapaneseNumericText(item.icon || item.label.charAt(0))}
                     </div>
                   </div>
                 ) : isBadge ? (
@@ -327,7 +614,7 @@ export const IconGrid: React.FC<IconGridProps> = ({
                       lineHeight: 1.2,
                     }}
                   >
-                    {item.label}
+                      {formatJapaneseNumericText(item.label)}
                   </div>
                 )}
                 {item.sublabel && (
@@ -340,7 +627,7 @@ export const IconGrid: React.FC<IconGridProps> = ({
                       textAlign: "center",
                     }}
                   >
-                    {item.sublabel}
+                      {formatJapaneseNumericText(item.sublabel)}
                   </div>
                 )}
               </div>

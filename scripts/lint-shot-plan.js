@@ -10,12 +10,15 @@
  *   [error] audio参照ファイルが存在しない
  *   [error] shot plan合計尺と各shot start_sec/duration_secの整合
  *   [warn]  動画尺が60秒未満 (TikTok Creator Rewards要件)
+ *   [warn]  audio参照のバージョン不整合 (visual-only revision なら許容)
  *   [warn]  factCard比率が高すぎ (>35%)
  *   [warn]  同一componentが3つ以上連続
  *   [warn]  最後のshotがctaPanelでない
  *   [warn]  CTA shotが長すぎ (>7s) または短すぎ (<3s)
  *   [warn]  リスク注記shotが見当たらない
  *   [warn]  冒頭shotが軽量 (factCard等で始まり、impact要素がない)
+ *   [warn]  footerLabel 等の補足文がナレーション/字幕に接続していない
+ *   [warn]  captionSegments が shot duration を超えている
  *   [warn]  shot timing と measure-segments JSON が大きくずれている (--segments指定時)
  *   [warn]  audio尺と shot plan 合計の差が >5s (静的ホールド過剰)
  *   [info]  bgVariant が明示指定 (default 推定との差を確認推奨)
@@ -49,6 +52,31 @@ const segments = shotPlan.shots || [];
 const issues = [];
 const push = (level, where, message, suggestion) => {
   issues.push({ level, where, message, suggestion });
+};
+
+const normalizeJa = (value) =>
+  String(value || "")
+    .replace(/[\s　、。,.・/／|｜「」『』（）()【】\[\]!?！？:：;；"'“”‘’\-—→⇒＋+]/g, "")
+    .toLowerCase();
+
+const captionTextFor = (shot) => {
+  const segmentsText = Array.isArray(shot.captionSegments)
+    ? shot.captionSegments.map((c) => c.text || "").join("")
+    : "";
+  return `${shot.narration || ""}${shot.caption || ""}${segmentsText}`;
+};
+
+const hasSharedPhrase = (text, support, minLen = 5) => {
+  const normalizedText = normalizeJa(text);
+  const normalizedSupport = normalizeJa(support);
+  if (!normalizedText || !normalizedSupport) return false;
+  if (normalizedSupport.includes(normalizedText)) return true;
+  if (normalizedText.length < minLen) return normalizedSupport.includes(normalizedText);
+  for (let i = 0; i <= normalizedText.length - minLen; i++) {
+    const chunk = normalizedText.slice(i, i + minLen);
+    if (normalizedSupport.includes(chunk)) return true;
+  }
+  return false;
 };
 
 const wavDurationSec = (path) => {
@@ -130,7 +158,12 @@ if (shotPlan.audio) {
   const planVer = planSlug.match(/v\d+/)?.[0];
   const audioVer = shotPlan.audio.match(/v\d+/)?.[0];
   if (planVer && audioVer && planVer !== audioVer) {
-    push("error", "audio", `バージョン不整合: plan=${planVer} / audio=${audioVer}`, "audio を同一バージョンに揃える");
+    push(
+      "warn",
+      "audio",
+      `バージョン不整合: plan=${planVer} / audio=${audioVer}`,
+      "ナレーション変更がある場合はaudioも同一バージョンへ。visual-only revision なら許容可",
+    );
   }
 }
 
@@ -184,20 +217,22 @@ for (const c of ctaShots) {
 // === 6. Disclaimer presence ===
 const hasDisclaimer = segments.some((s) => {
   const blob = JSON.stringify(s.data || {}) + (s.narration || "") + (s.caption || "");
-  return /(価格変動リスク|元本割れ|無理のない範囲|リスクがあ)/.test(blob);
+  return /(価格変動リスク|元本割れ|無理のない範囲|リスクがあ|利益保証|保証では|手数料|値動き|下落|生活費とは分ける)/.test(blob);
 });
 if (!hasDisclaimer) {
   push("warn", "全体", "リスク注記shotが見当たらない", "末尾付近にfactCard/progressSteps形式で1ショット追加推奨");
 }
 
 // === 7. Opening impact ===
-const firstShot = segments[0];
 const impactComponents = ["taxSavingsDemo", "numberHero", "compareSplit", "stackedBarCompare"];
-if (firstShot && !impactComponents.includes(firstShot.component)) {
+const hasImpactWithin5Sec = segments.some(
+  (s) => (s.start_sec ?? 0) < 5 && impactComponents.includes(s.component),
+);
+if (!hasImpactWithin5Sec) {
   push(
     "warn",
-    `shot 1`,
-    `冒頭が ${firstShot.component} (テキスト寄り)`,
+    "冒頭5秒",
+    "impact component が見当たらない",
     "strongest proof を冒頭5秒以内に配置 (taxSavingsDemo / numberHero 等推奨)",
   );
 }
@@ -216,14 +251,62 @@ for (const s of segments) {
   }
 }
 
-// === 9. bgVariant explicit set check ===
+// === 9. Caption segment timing bounds ===
+for (const s of segments) {
+  if (!Array.isArray(s.captionSegments)) continue;
+  for (let i = 0; i < s.captionSegments.length; i++) {
+    const cap = s.captionSegments[i];
+    if (typeof cap.startSec !== "number" || typeof cap.endSec !== "number") continue;
+    if (cap.endSec < cap.startSec) {
+      push(
+        "warn",
+        `shot ${s.shot_id}`,
+        `captionSegments[${i}] の endSec (${cap.endSec}) が startSec (${cap.startSec}) より前`,
+        "captionSegments の startSec / endSec を確認",
+      );
+    }
+    if (typeof s.duration_sec === "number" && cap.endSec > s.duration_sec + 0.01) {
+      push(
+        "warn",
+        `shot ${s.shot_id}`,
+        `captionSegments[${i}] の endSec (${cap.endSec}) が shot duration (${s.duration_sec}) を超過`,
+        "endSec をシーン尺内に収める",
+      );
+    }
+  }
+}
+
+// === 10. Visual text grounded in narration/captions ===
+// footerLabel / loopLabel は「画面だけの結論」になりやすい。ナレーションや字幕に
+// 接続していない場合、視聴者はどこを聞けばよいか迷うため事前警告する。
+const groundedTextFields = [
+  { key: "footerLabel", label: "footerLabel" },
+  { key: "loopLabel", label: "loopLabel" },
+];
+for (const s of segments) {
+  const supportText = captionTextFor(s);
+  for (const { key, label } of groundedTextFields) {
+    const value = s.data?.[key];
+    if (typeof value !== "string" || value.trim().length === 0) continue;
+    if (!hasSharedPhrase(value, supportText)) {
+      push(
+        "warn",
+        `shot ${s.shot_id}`,
+        `${label} "${value}" が narration/captionSegments と接続していない可能性`,
+        "ナレーションで触れる、captionSegmentsに含める、または画面から削除する",
+      );
+    }
+  }
+}
+
+// === 11. bgVariant explicit set check ===
 for (const s of segments) {
   if (s.bgVariant !== undefined) {
     push("info", `shot ${s.shot_id}`, `bgVariant 明示指定: ${s.bgVariant}`, "default推定でも良い場合は省略可");
   }
 }
 
-// === 10. Compare with measured segments (if provided) ===
+// === 12. Compare with measured segments (if provided) ===
 if (segmentsPath && existsSync(segmentsPath)) {
   const meas = JSON.parse(readFileSync(segmentsPath, "utf-8"));
   const measSegs = meas.segments || [];
@@ -252,7 +335,7 @@ if (segmentsPath && existsSync(segmentsPath)) {
   }
 }
 
-// === 11. Schema validation ===
+// === 13. Schema validation ===
 // Build a synthetic scene JSON to validate (best-effort: shot plan uses different naming)
 // Skip strict zod here for simplicity since schema is enforced at scene-generator stage.
 // We mainly check known required fields.

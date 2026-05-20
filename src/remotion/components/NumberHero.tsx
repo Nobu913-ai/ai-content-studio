@@ -10,6 +10,7 @@ import {
 import { genzMoneyTheme as t } from "../theme/genzMoneyTheme";
 import { AnimatedBackground, BackgroundVariant } from "./AnimatedBackground";
 import { autoFontSize, autoFontSizeJa, smartLineBreak } from "../utils/responsive-text";
+import { formatJapaneseNumericText, formatNumberJa } from "../utils/format-number-ja";
 
 export interface NumberHeroProps {
   number: string;
@@ -40,6 +41,8 @@ export const NumberHero: React.FC<NumberHeroProps> = ({
   const { fps } = useVideoConfig();
   const { width } = t.resolution;
   const accent = toneColor(tone);
+  const displayNumber = formatNumberJa(number);
+  const displaySubtext = subtext ? formatJapaneseNumericText(subtext) : "";
 
   const captionOpacity = interpolate(frame, [0, 8], [0, 1], {
     extrapolateLeft: "clamp",
@@ -64,16 +67,16 @@ export const NumberHero: React.FC<NumberHeroProps> = ({
     easing: Easing.out(Easing.cubic),
   });
 
-  const numberFontSize = autoFontSize(`${prefix || ""}${number}${suffix || ""}`, Math.round(width * 0.28), width * 0.92);
+  const numberFontSize = autoFontSize(`${prefix || ""}${displayNumber}${suffix || ""}`, Math.round(width * 0.28), width * 0.92);
 
   // Subtext は日本語2パスサイジング + 自然な改行 (CTAEndCard 同様)
   const subtextMaxWidth = width * 0.85;
   const subtextBase = Math.round(width * 0.05);
   const subtextInitialFontSize = subtext
-    ? autoFontSizeJa(subtext, subtextBase, subtextMaxWidth)
+    ? autoFontSizeJa(displaySubtext, subtextBase, subtextMaxWidth)
     : 0;
   const wrappedSubtext = subtext
-    ? smartLineBreak(subtext, subtextInitialFontSize, subtextMaxWidth)
+    ? smartLineBreak(displaySubtext, subtextInitialFontSize, subtextMaxWidth)
     : "";
   const subtextFontSize = subtext
     ? autoFontSizeJa(wrappedSubtext, subtextBase, subtextMaxWidth)
@@ -153,8 +156,8 @@ export const NumberHero: React.FC<NumberHeroProps> = ({
               textShadow: `0 0 ${50 * pulse}px ${accent}, 0 0 ${100 * pulse}px ${accent}80`,
               lineHeight: 1,
             }}
-          >
-            {number}
+            >
+              {displayNumber}
           </span>
           {suffix && (
             <span
