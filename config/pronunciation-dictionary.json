@@ -38,6 +38,15 @@
       "dカード": "ディーカード"
     },
     "japanese-mindset": {},
-    "chill-culture": {}
+    "chill-culture": {},
+    "takeout-gourmet": {
+      "家で": "いえで",
+      "家に": "いえに",
+      "家から": "いえから",
+      "Uber Eats": "ウーバーイーツ",
+      "Uber": "ウーバー",
+      "Nobuグルメ": "ノブグルメ",
+      "Nobu": "ノブ"
+    }
   }
 }

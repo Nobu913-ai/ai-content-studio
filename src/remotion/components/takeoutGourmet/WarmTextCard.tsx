@@ -162,11 +162,11 @@ export const WarmTextCard: React.FC<WarmTextCardProps> = ({
               color: "#FFFFFF",
               fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
               fontWeight: t.fontWeights.black,
-              fontSize: Math.round(width * 0.038),
-              padding: `${t.spacing.xs}px ${t.spacing.lg}px`,
+              fontSize: Math.round(width * 0.046),
+              padding: `${t.spacing.sm}px ${t.spacing.xl}px`,
               borderRadius: 999,
               letterSpacing: 2,
-              boxShadow: `0 6px 16px rgba(255,107,53,0.35)`,
+              boxShadow: `0 8px 20px rgba(255,107,53,0.4)`,
             }}
           >
             {badge}

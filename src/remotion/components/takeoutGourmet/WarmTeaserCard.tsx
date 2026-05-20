@@ -15,6 +15,10 @@ export interface WarmTeaserCardProps {
   label: string;
   /** メインタイトル */
   headline: string;
+  /** サブタイトル (例: 「3つの見方を紹介」) */
+  subheadline?: string;
+  /** 大きな絵文字 (ラベルとヘッドラインの間に表示) */
+  emoji?: string;
   /** チェックポイント (例: 3つの見方) */
   hintItems?: { icon?: string; text: string }[];
   /** 締めのテキスト */
@@ -30,6 +34,8 @@ export interface WarmTeaserCardProps {
 export const WarmTeaserCard: React.FC<WarmTeaserCardProps> = ({
   label,
   headline,
+  subheadline,
+  emoji,
   hintItems = [],
   footnote,
   bgVariant = "hero",
@@ -57,12 +63,26 @@ export const WarmTeaserCard: React.FC<WarmTeaserCardProps> = ({
     extrapolateRight: "clamp",
   });
 
-  const labelFontSize = Math.round(width * 0.044);
-  const headlineFontSize = autoFontSizeJa(headline, Math.round(width * 0.082), width * 0.86);
+  const labelFontSize = Math.round(width * 0.046);
+  const headlineFontSize = autoFontSizeJa(headline, Math.round(width * 0.092), width * 0.86);
   const headlineWrapped = smartLineBreak(headline, headlineFontSize, width * 0.86);
-  const hintFontSize = Math.round(width * 0.038);
-  const footFontSize = Math.round(width * 0.032);
-  const hintIconSize = Math.round(width * 0.06);
+  const subheadlineFontSize = subheadline
+    ? autoFontSizeJa(subheadline, Math.round(width * 0.052), width * 0.85)
+    : 0;
+  const hintFontSize = Math.round(width * 0.054);
+  const footFontSize = Math.round(width * 0.034);
+  const hintIconSize = Math.round(width * 0.085);
+  const emojiSize = Math.round(width * 0.14);
+  const emojiPop = spring({
+    frame: Math.max(0, frame - 4),
+    fps,
+    config: { damping: 8, mass: 0.5, stiffness: 200 },
+  });
+  const emojiWobble = Math.sin((frame / fps) * 2.5) * 5;
+  const subheadlineOpacity = interpolate(frame, [20, 36], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
 
   const hintStaggerFrames = Math.round(0.22 * fps);
   const hintBase = 22;
@@ -101,15 +121,29 @@ export const WarmTeaserCard: React.FC<WarmTeaserCardProps> = ({
             fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
             fontWeight: t.fontWeights.black,
             fontSize: labelFontSize,
-            padding: `${t.spacing.xs}px ${t.spacing.lg}px`,
+            padding: `${t.spacing.sm}px ${t.spacing.xl}px`,
             borderRadius: 999,
             letterSpacing: 2,
-            boxShadow: `0 8px 20px rgba(255,107,53,0.4)`,
+            boxShadow: `0 10px 24px rgba(255,107,53,0.45)`,
           }}
         >
           <span style={{ fontSize: labelFontSize * 1.1, transform: `translateY(${arrowBounce / 4}px)` }}>▶</span>
           <span>{label}</span>
         </div>
+
+        {emoji && (
+          <div
+            style={{
+              fontSize: emojiSize,
+              transform: `scale(${emojiPop}) translateY(${emojiWobble}px)`,
+              filter: `drop-shadow(0 8px 16px ${t.colors.shadowStrong})`,
+              lineHeight: 1,
+              marginTop: t.spacing.sm,
+            }}
+          >
+            {emoji}
+          </div>
+        )}
 
         <div
           style={{
@@ -130,14 +164,32 @@ export const WarmTeaserCard: React.FC<WarmTeaserCardProps> = ({
           {headlineWrapped}
         </div>
 
+        {subheadline && (
+          <div
+            style={{
+              opacity: subheadlineOpacity,
+              fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
+              fontWeight: t.fontWeights.bold,
+              fontSize: subheadlineFontSize,
+              color: t.colors.accent,
+              textAlign: "center",
+              lineHeight: 1.4,
+              marginTop: t.spacing.sm,
+              textShadow: `0 2px 6px ${t.colors.shadowSoft}`,
+            }}
+          >
+            {subheadline}
+          </div>
+        )}
+
         {hintItems.length > 0 && (
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: t.spacing.xs,
+              gap: t.spacing.sm,
               marginTop: t.spacing.md,
-              width: "82%",
+              width: "92%",
             }}
           >
             {hintItems.map((hint, i) => {
@@ -146,7 +198,7 @@ export const WarmTeaserCard: React.FC<WarmTeaserCardProps> = ({
                 extrapolateLeft: "clamp",
                 extrapolateRight: "clamp",
               });
-              const slide = interpolate(frame, [delay, delay + 14], [25, 0], {
+              const slide = interpolate(frame, [delay, delay + 14], [50, 0], {
                 extrapolateLeft: "clamp",
                 extrapolateRight: "clamp",
               });
@@ -158,19 +210,23 @@ export const WarmTeaserCard: React.FC<WarmTeaserCardProps> = ({
                     transform: `translateX(${slide}px)`,
                     display: "flex",
                     alignItems: "center",
-                    gap: t.spacing.sm,
+                    gap: t.spacing.md,
                     backgroundColor: t.colors.cardBg,
-                    border: `2px solid ${t.colors.warning}`,
-                    borderRadius: t.borderRadius.md,
-                    padding: `${t.spacing.xs}px ${t.spacing.md}px`,
-                    boxShadow: `0 4px 12px ${t.colors.shadowSoft}`,
+                    border: `3px solid ${t.colors.warning}`,
+                    borderRadius: t.borderRadius.lg,
+                    padding: `${t.spacing.md}px ${t.spacing.lg}px`,
+                    boxShadow: `0 8px 20px ${t.colors.shadowSoft}, 0 2px 6px ${t.colors.shadowSoft}`,
+                    minHeight: hintIconSize * 1.4,
                   }}
                 >
                   <div
                     style={{
                       fontSize: hintIconSize,
                       lineHeight: 1,
-                      filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.18))",
+                      flexShrink: 0,
+                      width: hintIconSize * 1.2,
+                      textAlign: "center",
+                      filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.18))",
                     }}
                   >
                     {hint.icon || "✨"}
@@ -178,9 +234,11 @@ export const WarmTeaserCard: React.FC<WarmTeaserCardProps> = ({
                   <div
                     style={{
                       fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
-                      fontWeight: t.fontWeights.bold,
+                      fontWeight: t.fontWeights.black,
                       fontSize: hintFontSize,
                       color: t.colors.textPrimary,
+                      lineHeight: 1.25,
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {hint.text}

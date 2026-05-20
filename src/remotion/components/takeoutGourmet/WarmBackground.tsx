@@ -103,14 +103,14 @@ export const WarmBackground: React.FC<WarmBackgroundProps> = ({ variant = "warm"
           opacity: 0.8,
         }}
       />
-      {/* 装飾ドット (食卓のテクスチャ感) */}
+      {/* 装飾ドット (食卓のテクスチャ感) — 大きめ・はっきり見える */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          backgroundImage: `radial-gradient(circle at 20% 15%, ${cfg.glow}22 2px, transparent 2.5px), radial-gradient(circle at 80% 25%, ${cfg.sparkle}33 2.5px, transparent 3px), radial-gradient(circle at 70% 75%, ${cfg.glow}22 2px, transparent 2.5px), radial-gradient(circle at 25% 85%, ${cfg.sparkle}33 2.5px, transparent 3px)`,
-          backgroundSize: "260px 260px, 320px 320px, 280px 280px, 240px 240px",
-          opacity: 0.7,
+          backgroundImage: `radial-gradient(circle at 20% 15%, ${cfg.glow}55 8px, transparent 9px), radial-gradient(circle at 80% 25%, ${cfg.sparkle}66 9px, transparent 10px), radial-gradient(circle at 70% 75%, ${cfg.glow}55 7px, transparent 8px), radial-gradient(circle at 25% 85%, ${cfg.sparkle}66 8px, transparent 9px), radial-gradient(circle at 50% 50%, ${cfg.glow}33 5px, transparent 6px), radial-gradient(circle at 90% 60%, ${cfg.sparkle}44 6px, transparent 7px)`,
+          backgroundSize: "240px 240px, 280px 280px, 260px 260px, 220px 220px, 200px 200px, 300px 300px",
+          opacity: 0.9,
         }}
       />
       {children}

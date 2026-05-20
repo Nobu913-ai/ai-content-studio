@@ -111,6 +111,8 @@ const ComponentRenderer: React.FC<{ scene: SceneV2 }> = ({ scene }) => {
         <WarmTeaserCard
           label={String(data.label ?? "次回予告")}
           headline={String(data.headline ?? "")}
+          subheadline={data.subheadline ? String(data.subheadline) : undefined}
+          emoji={data.emoji ? String(data.emoji) : undefined}
           hintItems={(data.hintItems as any[]) ?? []}
           footnote={data.footnote ? String(data.footnote) : undefined}
           bgVariant={data.bgVariant as any}
@@ -123,6 +125,8 @@ const ComponentRenderer: React.FC<{ scene: SceneV2 }> = ({ scene }) => {
           badge={data.badge ? String(data.badge) : undefined}
           subtext={data.subtext ? String(data.subtext) : undefined}
           topics={(data.topics as string[]) ?? []}
+          actions={(data.actions as any[]) ?? []}
+          actionsLabel={data.actionsLabel ? String(data.actionsLabel) : undefined}
           cta={data.cta ? String(data.cta) : undefined}
           emoji={data.emoji ? String(data.emoji) : undefined}
           bgVariant={data.bgVariant as any}

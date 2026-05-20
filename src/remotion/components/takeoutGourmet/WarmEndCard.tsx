@@ -19,6 +19,10 @@ export interface WarmEndCardProps {
   subtext?: string;
   /** 紹介するシリーズトピック (pill 表示) */
   topics?: string[];
+  /** エンゲージメントアクション (アイコン+ラベル) */
+  actions?: { icon: string; label: string }[];
+  /** actions の上に表示する誘導テキスト (例: "▼ こちらもお願いします") */
+  actionsLabel?: string;
   /** CTA 行 (例: 「フォローして次回をお楽しみに」) */
   cta?: string;
   /** 大きな絵文字 (上部) */
@@ -34,6 +38,8 @@ export const WarmEndCard: React.FC<WarmEndCardProps> = ({
   headline,
   subtext,
   topics = [],
+  actions = [],
+  actionsLabel,
   cta,
   emoji,
   bgVariant = "hero",
@@ -76,7 +82,7 @@ export const WarmEndCard: React.FC<WarmEndCardProps> = ({
   const topicStaggerFrames = Math.round(0.2 * fps);
   const topicBaseDelay = 36;
 
-  const ctaStart = topicBaseDelay + topics.length * topicStaggerFrames + 8;
+  const ctaStart = topicBaseDelay + Math.max(topics.length, actions.length) * topicStaggerFrames + 8;
   const ctaOpacity = interpolate(frame, [ctaStart, ctaStart + 12], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
@@ -106,11 +112,11 @@ export const WarmEndCard: React.FC<WarmEndCardProps> = ({
               color: "#FFFFFF",
               fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
               fontWeight: t.fontWeights.black,
-              fontSize: Math.round(width * 0.038),
-              padding: `${t.spacing.xs}px ${t.spacing.lg}px`,
+              fontSize: Math.round(width * 0.046),
+              padding: `${t.spacing.sm}px ${t.spacing.xl}px`,
               borderRadius: 999,
               letterSpacing: 2,
-              boxShadow: `0 6px 16px rgba(255,107,53,0.4)`,
+              boxShadow: `0 8px 20px rgba(255,107,53,0.4)`,
             }}
           >
             {badge}
@@ -207,6 +213,98 @@ export const WarmEndCard: React.FC<WarmEndCardProps> = ({
                   }}
                 >
                   {topic}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {actions.length > 0 && actionsLabel && (
+          <div
+            style={{
+              opacity: interpolate(frame, [topicBaseDelay - 8, topicBaseDelay + 4], [0, 1], {
+                extrapolateLeft: "clamp",
+                extrapolateRight: "clamp",
+              }),
+              fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
+              fontWeight: t.fontWeights.black,
+              fontSize: Math.round(width * 0.038),
+              color: t.colors.textPrimary,
+              textAlign: "center",
+              marginTop: t.spacing.lg,
+              textShadow: `0 2px 6px ${t.colors.shadowSoft}`,
+              letterSpacing: 1,
+            }}
+          >
+            {actionsLabel}
+          </div>
+        )}
+
+        {actions.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: t.spacing.md,
+              maxWidth: width * 0.92,
+              marginTop: actionsLabel ? t.spacing.sm : t.spacing.lg,
+            }}
+          >
+            {actions.map((action, i) => {
+              const delay = topicBaseDelay + i * topicStaggerFrames;
+              const op = interpolate(frame, [delay, delay + 12], [0, 1], {
+                extrapolateLeft: "clamp",
+                extrapolateRight: "clamp",
+              });
+              const popScale = spring({
+                frame: Math.max(0, frame - delay),
+                fps,
+                config: { damping: 8, mass: 0.5, stiffness: 200 },
+              });
+              const wobble = Math.sin(((frame - delay) / fps) * 3 + i) * 4;
+
+              return (
+                <div
+                  key={i}
+                  style={{
+                    opacity: op,
+                    transform: `scale(${popScale})`,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: t.spacing.xs,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: Math.round(width * 0.16),
+                      height: Math.round(width * 0.16),
+                      borderRadius: "50%",
+                      backgroundColor: t.colors.cardBg,
+                      border: `3px solid ${t.colors.accent}`,
+                      boxShadow: `0 8px 20px ${t.colors.shadowSoft}`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: Math.round(width * 0.085),
+                      lineHeight: 1,
+                      transform: `translateY(${wobble}px)`,
+                      filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.18))",
+                    }}
+                  >
+                    {action.icon}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: `"${t.fonts.main}", ${t.fonts.fallback}`,
+                      fontWeight: t.fontWeights.black,
+                      fontSize: Math.round(width * 0.034),
+                      color: t.colors.textPrimary,
+                      textAlign: "center",
+                    }}
+                  >
+                    {action.label}
+                  </div>
                 </div>
               );
             })}
