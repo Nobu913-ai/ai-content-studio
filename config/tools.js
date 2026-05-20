@@ -111,6 +111,19 @@ export const voicevoxPresets = {
     segmentGapMs: 300,
     enableInterrogativeUpspeak: true,
   },
+  "takeout-gourmet-shorts": {
+    name: "春日部つむぎ グルメ系（メイン）",
+    speakerId: 8,
+    speedScale: 1.05,
+    pitchScale: 0.01,
+    intonationScale: 1.15,
+    volumeScale: 1.04,
+    prePhonemeLength: 0.06,
+    postPhonemeLength: 0.10,
+    pauseLengthScale: 0.95,
+    segmentGapMs: 200,
+    enableInterrogativeUpspeak: true,
+  },
 };
 
 /**
@@ -141,6 +154,13 @@ export const voiceRouting = {
     similarity_boost: 0.7,
     description: "リラックスした穏やかな日本語ナレーション",
   },
+  "takeout-gourmet": {
+    language: "ja",
+    provider: "voicevox",
+    preset: "takeout-gourmet-shorts",
+    style: "warm, friendly, lifestyle",
+    description: "春日部つむぎ ノーマル — 明るく親しみやすい、生活感のある日本語ナレーション",
+  },
 };
 
 /**
@@ -168,6 +188,15 @@ export const shotStyles = {
     motionNote: "gentle movement, relaxed pacing",
     durationRange: { min: 4, max: 8 },
     description: "実写優位。AIは補助的に使う。雰囲気重視",
+  },
+  "takeout-gourmet": {
+    defaultAspectRatio: "9:16",
+    style:
+      "warm cream and amber tones, fictional smartphone UI mockup (NOT real apps), abstract food illustration, check list cards, no human face, no specific real restaurant/brand",
+    motionNote: "friendly tempo, pop-style transitions, slight bounce",
+    durationRange: { min: 3, max: 6 },
+    description:
+      "暖色系・スマホUI風（架空アプリ）・チェックリスト・架空レビュー画面が中心。実在店舗・実在アプリは絶対NG",
   },
 };
 

@@ -5,10 +5,13 @@ This file is read by AI coding agents (OpenAI Codex, etc.). Claude Code reads `C
 ## Source of Truth
 
 - **Technical conventions, CLI, architecture, channel definitions**: see [CLAUDE.md](CLAUDE.md). All patterns there apply equally to Codex.
-- **Brand strategy, voice/visual rules, production lessons learned, recent decisions**: see [docs/agent-context.md](docs/agent-context.md).
+- **Brand strategy, voice/visual rules, production lessons learned, recent decisions (common base)**: see [docs/agent-context.md](docs/agent-context.md).
+- **Channel-specific context** (per channelId):
+  - `genz-money` (お金の初期設定 / @okane_setup): primary content of `docs/agent-context.md`
+  - `takeout-gourmet` (Nobuグルメ / @nobu.913): [docs/channels/takeout-gourmet.md](docs/channels/takeout-gourmet.md)
 - **Open issues and continuing tasks**: see end of `docs/agent-context.md`.
 
-Read both before touching anything for `genz-money` (公開ブランド: お金の初期設定 / @okane_setup).
+Read CLAUDE.md + agent-context.md, then the relevant channel-specific doc before touching anything in that channel's pipeline.
 
 ## Quick Project Snapshot (2026-05-14)
 
